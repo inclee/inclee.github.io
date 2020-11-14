@@ -22,8 +22,7 @@ url     : # the base hostname & protocol for your site e.g. https://www.someone.
 baseurl : # does not include hostname
 title   :  inclee
 description: > # this means to ignore newlines until "Language & timezone"
-  Your Site Description
-
+  在人生的每个阶段，认清楚自己很重要
 
 ## => Language and Timezone
 ##############################
