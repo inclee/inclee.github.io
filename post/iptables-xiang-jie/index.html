@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>iptables 详解 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="iptables 详解 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="iptables 详解" />
+  <meta property="og:url" content="https://nomagic.cc/post/iptables-xiang-jie/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+              </span>
+              <h1>iptables 详解</h1>
+              <span class="meta">
+                Posted on
+                2021-08-23，7 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h2 id="实现原理参考">实现原理参考：</h2>
+<p><a href="https://www.51cto.com/article/694031.html?u_atoken=b2e0f61f-2d0b-4f27-b4bd-328439606c74&amp;u_asession=018dmuRO5Rsg4Omj8s1OZK7KqrbbQL2zKHUdgzEogMq4CY1N8VnZUjAXzAfCSvADDqtRzLtpNaa04MoeWJIPQI5Nsq8AL43dpOnCClYrgFm6o&amp;u_asig=05atklbMTwZVYERrQnXuWL4nVel7cHFiEbdVI7pMmpqSrf5uP_G141YpCZZt5TUVhlJkb1ESet7MR1MQaZodz-glJFBvupVsX0zMilAXgrNi7hkDj7-JKIpaLF2O950usVQjsoTm_twloBv0o_tyOCLox_A6ephRB0JzEMT6Qor4hTsBtJ6h-CplhiuJvkI7pKksmHjM0JOodanL5-M1Qs1YAfo6u4BcecY7oNsKCen65WshuvNO6Zc-Gaou_oDA2ALTBSVNv2UK_xAQZkyvFmS9b3QGqQce8Ch3Y5IVBpcArY94r_LXIIil3Y3aVPRGAe&amp;u_aref=Yo8uCT5nqFldevwY4zmOL2nv6tQ%3D">内核实现</a></p>
+<blockquote>
+<p>iptables 只是用户空间编写和传递规则的工具，真正起作用的事netfilter</p>
+</blockquote>
+<h2 id="表之间的优先级">表之间的优先级</h2>
+<p>iptables 表的优先级设定是为了解决不同的表之间可能存在的冲突和重叠问题。<br>
+iptables 包含了一系列的数据处理模块，它们被组织在不同的表中（例如 filter 表、nat 表、mangle 表等）。每个表都有自己的功能和用途，例如 filter 表用于过滤数据包，nat 表用于进行网络地址转换等。<br>
+然而，在某些情况下，不同的表可能会对同一个数据包进行不同的处理。例如，一个数据包可能先经过 filter 表被过滤掉，又被 nat 表进行了地址转换，那么这两个表之间的处理顺序就可能产生冲突。<br>
+为了解决这种问题，iptables 引入了表之间的优先级设定。通过为表设置优先级，可以确定处理数据包的顺序。较低的优先级意味着表的规则会在较高的优先级表之前被执行。例如，可以将 nat 表的优先级设置为比 filter 表高，这样 nat 表的规则就会在 filter 表之前被执行，是一种截断行为，也就是说nat表的规则执行后，filter表就不会被执行了，从而避免了可能的冲突。<br>
+此外，对于同一优先级的表，它们的执行顺序通常是按照定义的顺序进行的。也就是说，在定义 iptables 规则时，先定义的表通常会先被执行。<br>
+优先级是靠链实现的。</p>
+<h2 id="四张表的作用">四张表的作用</h2>
+<ul>
+<li>filter 表：这是默认表，如果没有指定表名，就默认使用 filter 表。它负责过滤掉某些数据包，确定是否放行该数据包(过滤)。在四个表中，filter表的应用相对较少。</li>
+<li>nat 表：网络地址转换表，用于进行网络地址转换，例如进行端口映射等操作。</li>
+<li>mangle 表：拦截表，可以修改数据包的 TTL、TOS 等字段，用于实现一些高级功能。这个表的应用相对较少。</li>
+<li>raw 表：原始表，主要用于设定豁免某些数据包经过 iptables 的过滤机制。</li>
+</ul>
+<h2 id="表与链的关系">表与链的关系</h2>
+<p><img src="https://nomagic.cc/post-images/1696755469062.png" alt="" loading="lazy"><br>
+根据每张表的用途，决定了和链的关系：<br>
+filter表：用于过滤数据包，实施访问控制和防火墙策略。包括INPUT、FORWARD和OUTPUT三个主要链。<br>
+nat表：用于进行网络地址转换（NAT）和端口转发等操作。包括PREROUTING、POSTROUTING和OUTPUT三个主要链。<br>
+mangle表：用于修改数据包的特定字段。包括PREROUTING、INPUT、FORWARD、OUTPUT和POSTROUTING五个主要链。<br>
+raw表：用于在数据包进入连接跟踪之前进行处理。包括PREROUTING、OUTPUT两个主要链。<br>
+每个表中都包含了多个预定义的链，这些链的作用不同，可以根据需要添加规则。例如，filter表中的INPUT链用于处理目标地址为本地主机的数据包，FORWARD链用于处理经过本机转发的数据包，OUTPUT链用于处理源地址为本地主机的数据包。<br>
+此外，用户还可以创建自定义的表和链，以满足特定的需求。这些自定义的表和链可以根据具体应用场景来添加规则。<br>
+理解起来：<strong>表用于组织规则，链用于按顺序应用规则</strong></p>
+<p>比如为什么filter表没有PREROUTING链：<br>
+<code>filter</code>表没有<code>PREROUTING</code>链是因为<code>PREROUTING</code>链主要用于对数据包进行网络地址转换（NAT）或端口转发等操作，而这些操作与<code>filter</code>表的目标不同。</p>
+<p><code>filter</code>表的主要目标是过滤数据包，实施访问控制和防火墙策略。因此，<code>filter</code>表中的链主要用于处理目标地址为本地主机的数据包（<code>INPUT</code>链）、经过本机转发的数据包（<code>FORWARD</code>链）和源地址为本地主机的数据包（<code>OUTPUT</code>链）。</p>
+<p>而<code>PREROUTING</code>链主要用于在数据包进入网络协议栈之前进行处理，通常用于进行网络地址转换（NAT）或端口转发等操作。这种操作需要更早地处理数据包，以确保数据包在进入协议栈后进行正确的转发或转换。因此，<code>PREROUTING</code>链不适合在<code>filter</code>表中，而是在<code>nat</code>表中。</p>
+<p>通过将不同的操作和处理过程分配给不同的表和链，可以更好地组织和管理规则，并使iptables更灵活和可扩展。这种设计使得iptables可以根据需要进行数据包过滤、地址转换、端口转发等不同类型的处理，以实现网络安全和网络功能的需求。</p>
+<h2 id="自定义链">自定义链</h2>
+<p><a href="https://www.zsythink.net/archives/1625">参考</a></p>
+<h2 id="常用模块">常用模块</h2>
+<h3 id="multiport-多端口匹配">multiport: 多端口匹配</h3>
+<p>可用于匹配非连续或连续端口；最多指定15个端口；</p>
+<pre><code>iptables -A INPUT -p tcp -m multiport --dport 22,80 -j ACCEPT
+iptables -A OUTPUT -p tcp -m multiport --sport 22,80 -j ACCEPT
+</code></pre>
+<h3 id="iprange-匹配指定范围内的地址">iprange: 匹配指定范围内的地址</h3>
+<p>匹配一段连续的地址而非整个网络时有用</p>
+<pre><code>iptables -A INPUT -p tcp -m iprange --src-range 192.168.118.0-192.168.118.60 --dport 22 -j ACCEPT
+iptables -A OUTPUT -p tcp -m iprange --dst-range 192.168.118.0-192.168.118.60 --sport 22 -j ACCEPT
+</code></pre>
+<h3 id="string-字符串匹配能够检测报文应用层中的字符串">string: 字符串匹配，能够检测报文应用层中的字符串</h3>
+<p>字符匹配检查高效算法：kmp, bm  能够屏蔽非法字符</p>
+<pre><code># 注意该条规则需要添加到OUTPUT链，当服务端返回数据报文检查到有关键字&quot;sex&quot;时，则丢弃该报文，可用于web敏感词过滤
+iptables -A OUTPUT -p tcp --dport 80 -m string --algo kmp --string &quot;sex&quot; -j DROP
+</code></pre>
+<h3 id="connlimit-连接数限制">connlimit: 连接数限制</h3>
+<p>对每IP所能够发起并发连接数做限制；</p>
+<pre><code># 默认INPUT 为 DROP. 每个ip对ssh服务的访问最大为3个并发连接，超过则丢弃
+iptables -A INPUT -p tcp  --dport 22 -m connlimit ! --connlimit-above 3 -j ACCEPT
+</code></pre>
+<h3 id="limit-速率限制">limit: 速率限制</h3>
+<p>limit-burst: 设置默认阀值</p>
+<pre><code># 默认放行10个，当到达limit-burst阀值后，平均6秒放行1个
+iptables -A INPUT -p icmp -m limit --limit 10/minute --limit-burst 10 -j ACCEPT
+</code></pre>
+<h3 id="state-状态检查">state: 状态检查</h3>
+<p>连接追踪中的状态：<br>
+NEW: 新建立一个会话<br>
+ESTABLISHED：已建立的连接<br>
+RELATED: 有关联关系的连接<br>
+INVALID: 无法识别的连接</p>
+<pre><code># 放行ssh的首次连接状态
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT   
+</code></pre>
+<h3 id="addrtype-基于地址类型的匹配">addrtype: =基于地址类型的匹配。</h3>
+<p>允许您根据地址类型（例如，是否是本地主机、本地网络、广播或组播地址）来匹配数据包</p>
+<pre><code># 允许本地回环地址（127.0.0.1）的所有流量：
+iptables -A INPUT -m addrtype --src-type LOCAL_PREF_SRC -j ACCEPT
+# 允许来自同一网络的所有流量：
+iptables -A INPUT -m addrtype --src-type LOCAL_NET -j ACCEPT
+# 允许来自不同网络的所有流量：
+iptables -A INPUT -m addrtype --src-type UNicast -j ACCEPT
+</code></pre>
+<h3 id="comment-添加注释或标记的命令">comment 添加注释或标记的命令。</h3>
+<pre><code>iptables -A &lt;chain&gt; -m comment --comment &quot;Your comment here&quot;
+</code></pre>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%8F%82%E8%80%83">实现原理参考：</a></li>
+<li><a href="#%E8%A1%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E4%BC%98%E5%85%88%E7%BA%A7">表之间的优先级</a></li>
+<li><a href="#%E5%9B%9B%E5%BC%A0%E8%A1%A8%E7%9A%84%E4%BD%9C%E7%94%A8">四张表的作用</a></li>
+<li><a href="#%E8%A1%A8%E4%B8%8E%E9%93%BE%E7%9A%84%E5%85%B3%E7%B3%BB">表与链的关系</a></li>
+<li><a href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%93%BE">自定义链</a></li>
+<li><a href="#%E5%B8%B8%E7%94%A8%E6%A8%A1%E5%9D%97">常用模块</a>
+<ul>
+<li><a href="#multiport-%E5%A4%9A%E7%AB%AF%E5%8F%A3%E5%8C%B9%E9%85%8D">multiport: 多端口匹配</a></li>
+<li><a href="#iprange-%E5%8C%B9%E9%85%8D%E6%8C%87%E5%AE%9A%E8%8C%83%E5%9B%B4%E5%86%85%E7%9A%84%E5%9C%B0%E5%9D%80">iprange: 匹配指定范围内的地址</a></li>
+<li><a href="#string-%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D%E8%83%BD%E5%A4%9F%E6%A3%80%E6%B5%8B%E6%8A%A5%E6%96%87%E5%BA%94%E7%94%A8%E5%B1%82%E4%B8%AD%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2">string: 字符串匹配，能够检测报文应用层中的字符串</a></li>
+<li><a href="#connlimit-%E8%BF%9E%E6%8E%A5%E6%95%B0%E9%99%90%E5%88%B6">connlimit: 连接数限制</a></li>
+<li><a href="#limit-%E9%80%9F%E7%8E%87%E9%99%90%E5%88%B6">limit: 速率限制</a></li>
+<li><a href="#state-%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5">state: 状态检查</a></li>
+<li><a href="#addrtype-%E5%9F%BA%E4%BA%8E%E5%9C%B0%E5%9D%80%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%8C%B9%E9%85%8D">addrtype: =基于地址类型的匹配。</a></li>
+<li><a href="#comment-%E6%B7%BB%E5%8A%A0%E6%B3%A8%E9%87%8A%E6%88%96%E6%A0%87%E8%AE%B0%E7%9A%84%E5%91%BD%E4%BB%A4">comment 添加注释或标记的命令。</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/mysql-shi-shi-tong-bu-clickhouse-she-ji/">
+              <span class="post-title">
+                数据同步&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

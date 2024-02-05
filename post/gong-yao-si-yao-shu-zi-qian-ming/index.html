@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>公钥、私钥、数字签名 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="公钥、私钥、数字签名 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="公钥、私钥、数字签名" />
+  <meta property="og:url" content="https://nomagic.cc/post/gong-yao-si-yao-shu-zi-qian-ming/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+              </span>
+              <h1>公钥、私钥、数字签名</h1>
+              <span class="meta">
+                Posted on
+                2018-09-23，7 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>目的：<br>
+保证发送方和发送的内容都没遭到篡改。其实就是说：<br>
+1 身份验证<br>
+2 数据完整性验证</p>
+<h1 id="加密的分类">加密的分类</h1>
+<h2 id="对称加密">对称加密</h2>
+<p>（私钥加密、共享密钥加密）<br>
+对称加密算法的特点是加密使用的密钥和解密使用的密钥是相同的。也就是说，加密和解密都是使用的同一个密钥。因此对称加密算法要保证安全性的话，密钥自然要做好保密，只能让使用的人知道，不能对外公开<br>
+只有一个加解密的密钥，没有公私之分，为什么叫做对称的？加解密的秘钥是对称的。</p>
+<h2 id="数字签名digital-signature">数字签名（digital signature）</h2>
+<p>微软官方给出的定义：“数字签名”是指可以添加到文件的电子安全标记。使用它可以验证文件的发行者以及帮助验证文件自被数字签名后是否发生更改。<br>
+对文件进行签名（数字的方式）</p>
+<h3 id="必要与联系">必要与联系</h3>
+<p>可以对外暴露传输的内容，只是为了保证内容不被修改。</p>
+<h3 id="数字签名原理">数字签名原理</h3>
+<p>(不要搞混了，签名和加密)<br>
+要达到这个目的，一般是对信息做一个hash计算得到一个hash值，注意，这个过程是不可逆的，也就是说无法通过hash值得出原来的信息内容。在把信息发送出去时，把这个hash值加密后做为一个签名和信息一起发出去。 接收方在收到信息后，会重新计算信息的hash值，并和信息所附带的hash值(解密后)进行对比，如果一致，就说明信息的内容没有被修改过，因为这里hash计算可以保证不同的内容一定会得到不同的hash值，所以只要内容一被修改，根据信息内容计算的hash值就会变化。当然，不怀好意的人也可以修改信息内容的同时也修改hash值，从而让它们可以相匹配，为了防止这种情况，hash值一般都会加密后(也就是签名)再和信息一起发送。</p>
+<h3 id="数字签名使用方式">数字签名使用方式</h3>
+<p>下面通过例子来说明这个过程：<br>
+B给A回信时，采用了数字签名的方式<br>
+1、B先用hash函数，生成信件的摘要(digest)<br>
+2、B使用自己的私钥，对这个摘要加密，这样就生成了数字签名(signature)<br>
+3、B将这个签名附在要回复的信息后面，一起发给A<br>
+4、A收到B的信息后，取下数字签名，并通过B的公钥解密，得到信件的摘要信息<br>
+5、A在对B发送的信息本身使用B指定的hash函数，将得到的结果同上一步解密得到的摘要进行对比，如果两者一致，就说明B发过来的信息未被修改过。</p>
+<h2 id="数字证书digital-certificate">数字证书（Digital Certificate）</h2>
+<p>名称挺形象的：验证某个对象是否拥有某种权利，给他颁发证书。 相当于身份证验证颁发和中心。</p>
+<p>问题就这样结束了吗？远没有，试想，虽然A确定了B回给他的信息是未修改过的，但是怎么确定给他回信息的就是B？如果有不怀好意的C把A保存的B的公钥偷偷换成自己的，并冒用B的名义给A发信息呢？<br>
+要解决这个问题，A只要能确定自己持有的公钥到底是不是B的就行了，这就需要用到数字证书。<br>
+数字证书是用来验证公钥所属的用户身份。在日常生活中，如果我们要验证一个人的身份，通常的做法是查看他的身份证。我们信任身份证颁发机构即政府机构的公信力，因此只要验证一个人的身份证不是伪造的，我们就相信这个人的身份和身份证上所描述的是一致的。<br>
+数字证书就是一个人或者组织在网络世界中的身份证，其发证机关是证书管理机构(certificate authority,CA)。CA用自己的私钥对用户的身份信息(主要是用户名和该用户的公钥)进行签名，该签名和用户的身份信息一起就形成了证书。</p>
+<p>A 要验证他所拥有的证书是否是自己想要访问的目标的证书。公钥和证书是绑定在一起的，证书正确，那么公钥就是正确的。</p>
+<p>数字证书的组成</p>
+<p>——————<br>
+用户公钥<br>
+——————<br>
+用户身份<br>
+——————<br>
+证书机构名称<br>
+——————<br>
+有效期<br>
+——————<br>
++<br>
+——————<br>
+证书机构签名    ---&gt; 只要保证证书本身没有被篡改<br>
+——————</p>
+<h2 id="非对称加密">非对称加密</h2>
+<h2 id="单向散列函数">单向散列函数</h2>
+<h1 id="私钥加密">私钥加密</h1>
+<p>私钥加密，说的很明白不能被公开的秘钥。<br>
+又称 对称加密算法，因为这种算法解密密钥和加密密钥是相同的。也正因为同一密钥既用于加密又用于解密，所以这个密钥是不能公开的。常见的有：<br>
+DES、 IDEA、 RC2、 RC4、 SKIPJACK、 RC5、 AES</p>
+<h1 id="公钥加密">公钥加密：</h1>
+<p>单向函数的数学原理，用公钥加密的文件只能用私钥解密，而私钥加密的文件只能用公钥解密,这样就保证了信息不被篡改，没能验证身份，因为得到公钥的任何一方都可以进行加密，所以，身份的验证通过其他的方式，比如身份信息包含在被加密的消息中传输。<br>
+常见非对称加密算法：<br>
+RSA</p>
+<h2 id="如何确保内容不被篡改">如何确保内容不被篡改</h2>
+<h2 id="hash明文-摘要a私钥摘要-数字签名明文签名-签名明文生成加密秘钥des-对签名明文进行加密-密文b公钥加密秘钥des-密文-发送">HASH(明文) ------&gt; 摘要<br>
+A私钥(摘要) ------&gt; 数字签名<br>
+明文+签名  ------&gt; 签名明文<br>
+生成加密秘钥DES 对签名明文进行加密 --&gt;密文<br>
+B公钥（加密秘钥DES）+ 密文--&gt;发送</h2>
+<p>B私钥（B公钥（加密秘钥））-----&gt;加密秘钥DES<br>
+DES(密文)  ---&gt;（明文） + 签名<br>
+A公钥(签名)---&gt; 摘要<br>
+HASH(内容)---&gt; 比较---&lt;&gt;摘要、</p>
+<p>SSL/TSL 为什么会有两种名称</p>
+<p>为了解决 HTTP 协议的以上缺点，在上世纪90年代中期，由网景（NetScape）公司设计了 SSL 协议。SSL 是“Secure Sockets Layer”的缩写，中文叫做“安全套接层”。（顺便插一句，网景公司不光发明了 SSL，还发明了很多 Web 的基础设施——比如“CSS 样式表”和“JS 脚本”）。</p>
+<p>到了1999年，SSL 因为应用广泛，已经成为互联网上的事实标准。IETF 就在那年把 SSL 标准化。标准化之后的名称改为 TLS（是“Transport Layer Security”的缩写），中文叫做“传输层安全协议”。<br>
+很多相关的文章都把这两者并列称呼（SSL/TLS），因为这两者可以视作同一个东西的不同阶段。</p>
+<p>HTTPS 和 SSL/TSL 的关系是什么？</p>
+<p>HTTPS 其实是“HTTP over SSL”或“HTTP over TLS</p>
+<p>HTTPS 利用 SSL/TSL 进行加密<br>
+和服务端的通信是加了密的，刚上来要根据ssl 协议进行握手。<br>
+HTTP                                 HTTPS<br>
+————————          ————————<br>
+HTTP                            HTTP<br>
+————————          ————————<br>
+TCP                              SSL/TSL<br>
+————————          ————————<br>
+TCP<br>
+————————</p>
+<p>URI 和 URL 的关系<br>
+统一资源标识符： 只是标识了这是一个资源，但资源的访问则是另一种步骤了。<br>
+统一资源定位符<br>
+URI 属于 URL 更高层次的抽象，一种字符串文本标准。就是说，URI 属于父类，而 URL 属于 URI 的子类。URL 是 URI 的一个子集。二者的区别在于，URI 表示请求服务器的路径，定义这么一个资源。而 URL 同时说明要如何访问这个资源（http://）。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E5%8A%A0%E5%AF%86%E7%9A%84%E5%88%86%E7%B1%BB">加密的分类</a>
+<ul>
+<li><a href="#%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86">对称加密</a></li>
+<li><a href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8Ddigital-signature">数字签名（digital signature）</a>
+<ul>
+<li><a href="#%E5%BF%85%E8%A6%81%E4%B8%8E%E8%81%94%E7%B3%BB">必要与联系</a></li>
+<li><a href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D%E5%8E%9F%E7%90%86">数字签名原理</a></li>
+<li><a href="#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F">数字签名使用方式</a></li>
+</ul>
+</li>
+<li><a href="#%E6%95%B0%E5%AD%97%E8%AF%81%E4%B9%A6digital-certificate">数字证书（Digital Certificate）</a></li>
+<li><a href="#%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86">非对称加密</a></li>
+<li><a href="#%E5%8D%95%E5%90%91%E6%95%A3%E5%88%97%E5%87%BD%E6%95%B0">单向散列函数</a></li>
+</ul>
+</li>
+<li><a href="#%E7%A7%81%E9%92%A5%E5%8A%A0%E5%AF%86">私钥加密</a></li>
+<li><a href="#%E5%85%AC%E9%92%A5%E5%8A%A0%E5%AF%86">公钥加密：</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E7%A1%AE%E4%BF%9D%E5%86%85%E5%AE%B9%E4%B8%8D%E8%A2%AB%E7%AF%A1%E6%94%B9">如何确保内容不被篡改</a></li>
+<li><a href="#hash%E6%98%8E%E6%96%87-%E6%91%98%E8%A6%81a%E7%A7%81%E9%92%A5%E6%91%98%E8%A6%81-%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D%E6%98%8E%E6%96%87%E7%AD%BE%E5%90%8D-%E7%AD%BE%E5%90%8D%E6%98%8E%E6%96%87%E7%94%9F%E6%88%90%E5%8A%A0%E5%AF%86%E7%A7%98%E9%92%A5des-%E5%AF%B9%E7%AD%BE%E5%90%8D%E6%98%8E%E6%96%87%E8%BF%9B%E8%A1%8C%E5%8A%A0%E5%AF%86-%E5%AF%86%E6%96%87b%E5%85%AC%E9%92%A5%E5%8A%A0%E5%AF%86%E7%A7%98%E9%92%A5des-%E5%AF%86%E6%96%87-%E5%8F%91%E9%80%81">HASH(明文) ------&gt; 摘要<br>
+A私钥(摘要) ------&gt; 数字签名<br>
+明文+签名  ------&gt; 签名明文<br>
+生成加密秘钥DES 对签名明文进行加密 --&gt;密文<br>
+B公钥（加密秘钥DES）+ 密文--&gt;发送</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-jie-gou/">
+              <span class="post-title">
+                Go micro 源码阅读-结构&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

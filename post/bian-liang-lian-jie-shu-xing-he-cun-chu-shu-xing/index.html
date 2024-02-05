@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>C/C++ 变量链接属性和存储属性 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="C/C++ 变量链接属性和存储属性 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="C/C++ 变量链接属性和存储属性" />
+  <meta property="og:url" content="https://nomagic.cc/post/bian-liang-lian-jie-shu-xing-he-cun-chu-shu-xing/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/71Awkfdg6/" class="tag">C/C++</a>
+                
+                <a href="https://nomagic.cc/tag/GFINS7rzD/" class="tag">编程语言</a>
+                
+              </span>
+              <h1>C/C++ 变量链接属性和存储属性</h1>
+              <span class="meta">
+                Posted on
+                2019-08-07，11 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>备注：</p>
+<blockquote>
+<p>文章中出现的标识符即C语言中定义的变量或者函数名称</p>
+</blockquote>
+<h2 id="问题">问题</h2>
+<p>我们知道C语言的代码实现文件（.c） 经过编译后（注意这里并没有.h文件），生成对应的.o文件，然后经过链接器链接成生成可执行程序，那么：</p>
+<ol>
+<li>当我们在不同的.c文件中定全局变量，这个全局变量只会被编译当前.o文件中，其他引用这个变量的文件编译时如何处理？</li>
+<li>定义了一个全局标识符之后，链接器又是如何把这个全局标识符链接点可执行程序的呢？</li>
+<li>更进一步的.c文件相当于C语言中的模块封装机制，链接器又是如何实现数据结构的封装与隔离的呢？</li>
+</ol>
+<p>这就不得不说一下C语言中标识符的链接属性和存储类型</p>
+<h2 id="链接属性">链接属性</h2>
+<p>链接熟悉决定了链接器如何处理不同文件中同名的标识符，从而限定了一个标识符的作用域。<br>
+在C语言中，链接属性分为三类：</p>
+<ul>
+<li>external 对应关键字是extern</li>
+<li>internal 对应关键字 static</li>
+<li>none  (无)</li>
+</ul>
+<h3 id="external">external</h3>
+<p>extern属性指定的标识符是定义在其他.c文件中，链接的是时候要从其他.o文件中链接。<br>
+例如：</p>
+<pre><code>//hello.c
+#include&lt;stdio.h&gt;
+
+const char* default_msg = &quot;hello,world&quot;;
+
+void say_hey(const char* msg){
+	printf(&quot;%s\n&quot;,msg);
+}
+//main.c
+const char* default_msg;
+
+void say_hey(const char*);
+
+int  main(){
+	say_hey(default_msg);
+}
+</code></pre>
+<p>编译时报错：</p>
+<pre><code>root@inspire:/data/cpp/test2# cc main.c hello.c
+/usr/bin/ld: /tmp/ccsINlvC.o:(.data.rel.local+0x0): multiple definition of `default_msg'; /tmp/cc780SKl.o:(.bss+0x0): first defined here
+collect2: error: ld returned 1 exit status
+</code></pre>
+<p>如果在main.c文件中不声明default_msg 变量,在单独编译.c文件的时候，会因为找不到变量声明而报错，如果普通声明了default_msg变量，链接的时候会提示全局变量default_msg分别定义在了两个.o文件中， 我们的本意是链接定义在hello.c文件中的default_msg。这个时候我们只需要添加extern属性标识</p>
+<pre><code>extern const char* default_msg;
+</code></pre>
+<p>标识default_msg定义在其他.o文件中，这样main.c就可以正常编译过，等链接时去其他.o文件中链接default_msg的定义。</p>
+<h2 id="internal">internal</h2>
+<p>任何的语言都提供封装抽象的能，C也不例外，除了按照函数或者struct 进行抽象分装，C也提供了文件作用域的封装，类似于其他语言中的模块，例如在一个文件中定义的变量或者函数，不想被其他文件作用域的程序引用到如何处理呢，答案就是把这个标识符声明为文件内部的，已达到抽象封装的目的<br>
+举例：</p>
+<pre><code>//fight_result_handle.h
+#ifndef FITHT_RESULT_HANDLE_H
+#define FITHT_RESULT_HANDLE_H
+
+enum result_t {win,lose};
+void onWin();
+void onLose();
+
+#endif
+//lottery.c
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+#include &quot;fight_result_handle.h&quot;
+
+
+static const int buf[] = {40,10};
+static const int threshold = 60;
+
+static void lottery(enum result_t t){
+	srand(time(0));
+    if (rand() % 100 + buf[t] &gt; threshold){
+		printf(&quot;获取奖励\n&quot;);
+		return;
+	}
+	printf(&quot;再接再厉\n&quot;);
+}
+
+void onWin(){
+	lottery(win);
+}
+
+void onLose(){
+	lottery(lose);
+}
+
+//main .c
+#include &quot;fight_result_handle.h&quot;
+
+int fight(){
+	return 0;
+}
+
+int main(){
+	int r = fight();
+	if (r &gt; 0){
+		onWin();
+	}else{
+		onLose();
+	}
+	return 0;
+}
+</code></pre>
+<p>lottery 中的</p>
+<pre><code>static const int buf[] = {40,10};
+static const int threshold = 60;
+</code></pre>
+<p>和</p>
+<pre><code>static void lottery(enum result_t t)
+</code></pre>
+<p>函数的算法都是lottery.c内部要封装掉的，其他.o文件链接不到，达到的隔离的作用。</p>
+<h3 id="none">none</h3>
+<p>在C语言中，如果没有显式地指定链接属性，变量或函数的默认链接属性取决于其定义的位置。在函数内部定义的变量具有&quot;none&quot;链接属性，其作用范围仅限于该函数内部。而在函数外部定义的变量和函数具有&quot;external&quot;链接属性，它们可以在整个程序中访问。</p>
+<h2 id="存储类型">存储类型</h2>
+<p>变量的存储类型(storage class)是指存储变量值的内存类型。变量的存储类型决定变量何时创建、何时销毁以及它的值将保持多久。有三个地方可以用于存储变量：普通内存、运行时堆栈、硬件寄存器。在这三个地方存储的变量具有不同的特性。</p>
+<p>变量的缺省存储类型取决于它的声明位置。凡是在任何代码块之外声明的变量总是存储于静态内存中，也就是不属于堆栈的内存，这类变量称为静态(static)变量。对于这类变量，你无法为它们指定其他存储类型。静态变量在程序运行之前创建，在程序的整个执行期间始终存在。它始终保持原先的值，除非给它赋一个不同的值或者程序结束，位于程序镜像的常量区。</p>
+<p>在代码块内部声明的变量的缺省存储类型是自动的(automatic)，也就是说它存储于堆栈中，称为自动(auto)变量。</p>
+<blockquote>
+<p>在C++中由于auto存储类型声明符，不经常使用，所以C++官方把auto含义替换掉了，作为类型推导的关键字。</p>
+</blockquote>
+<p>有一个关键字auto就是用于修饰这种存储类型的，但它极少使用，因为代码块中的变量在缺省情况下就是自动变量。在程序执行到声明自动变量的代码块时，自动变量才被创建，当程序的执行流离开该代码块时，这些自动变量便自行销毁。如果该代码块被数次执行，例如一个函数被反复调用，这些自动变量每次都将重新创建。在代码块再次执行时，这些自动变量在堆栈中所占据的内存位置有可能和原先的位置相同，也可能不同。即使它们所占据的位置相同，你也不能保证这块内存同时不会有其他的用途。因此，我们可以说自动变量在代码块执行完毕后就消失。当代码块再次执行时，它们的值一般并不是上次执行时的值。</p>
+<blockquote>
+<p>为什么C不像其他语言自动初始化为0值呢，出于效率的考虑。插入自动初始化的指令，但这个零值不一定是程序需要的，干脆要什么都让程序员自己初始吧，减少了初始化指令的负担。</p>
+</blockquote>
+<p>对于在代码块内部声明的变量，如果给它加上关键字static，可以使它的存储类型从自动变为静态。具有静态存储类型的变量在整个程序执行过程中一直存在，而不仅仅在声明它的代码块的执行时存在。注意，修改变量的存储类型并不表示修改该变量的作用域，它仍然只能在该代码块内部按名字访问。函数的形式参数不能声明为静态，因为实参总是在堆栈中传递给函数，用于支持递归。</p>
+<p>最后，关键字register可以用于自动变量的声明，提示它们应该存储于机器的硬件寄存器而不是内存中，这类变量称为寄存器变量。通常，寄存器变量比存储于内存的变量访问起来效率更高。但是，编译器并不一定要理睬register关键字，如果有太多的变量被声明为register，它只选取前几个实际存储于寄存器中，其余的就按普通自动变量处理。如果一个编译器自己具有一套寄存器优化方 法，它也可能忽略register关键字，其依据是由编译器决定哪些变量存储于寄存器中比人脑的决定更为合理一些。</p>
+<p>在典型情况下，你希望把使用频率最高的那些变量声明为寄存器变量。在有些计算机中，如果把指针声明为寄存器变量，程序的效率将能得到提高，尤其是那些频繁执行间接访问操作的指针。你可以把函数的形式参数声明为寄存器变量，编译器会在函数的起始位置生成指令，把这些值从堆栈复制到寄存器中。但是，完全有可能，这个优化措施所节省的时间和空间的开销还抵不上复制这几个值所用的开销。</p>
+<p>寄存器变量的创建和销毁时间和自动变量相同，但它需要一些额外的工作。在一个使用寄存器变量的函数返回之前，这些寄存器先前存储的值必须恢复，确保调用者的寄存器变量未被破坏。许多机器使用运行时堆栈来完成这个任务。当函数开始执行时，它把需要使用的所有寄存器的内容都保存到堆栈中，当函数返回时，这些值再复制回寄存器中。</p>
+<p>在许多机器的硬件实现中，并不为寄存器指定地址。同样，由于寄存器值的保存和恢复，某个特定的寄存器在不同的时刻所保存的值不一定相同。基于这些理由，机器并不向你提供寄存器变量的地址。</p>
+<h2 id="关于头文件的缘由">关于头文件的缘由</h2>
+<p>为什么有头文件这种工程文件组织形式？<br>
+还是采用例子一，不过这个时候我们把 main 函数中的say_hey的函数声明去除。</p>
+<pre><code>//hello.c
+#include&lt;stdio.h&gt;
+
+const char* default_msg = &quot;hello,world&quot;;
+
+void say_hey(const char* msg){
+	printf(&quot;%s\n&quot;,msg);
+}
+//main.c
+const char* default_msg;
+
+int  main(){
+	say_hey(default_msg);
+}
+</code></pre>
+<p>编译执行</p>
+<pre><code>root@inspire:/data/cpp/sayhey# cc main.c hello.c
+main.c: In function ‘main’:
+main.c:4:9: warning: implicit declaration of function ‘say_hey’ [-Wimplicit-function-declaration]
+    4 |         say_hey(default_msg);
+      |         ^~~~~~~
+root@inspire:/data/cpp/sayhey# ./a.out
+hello,world
+root@inspire:/data/cpp/sayhey#
+</code></pre>
+<p>这时候我们看到，虽然main.c 不知道say_hey的函数声明，但是不妨碍main.c的正确编译，链接时能够链接到对应的文件即可。<br>
+那么我们就知道，函数声明只是给编译器提供调用函数的声明信息，并不是强制的。如果我们提供了函数签名，然后和调用的不一致，这时候编译器就可以提出警告。</p>
+<p>如果函数声明写在.c文件中，每个调用地方都要写一次，显然不符合DRY(不要重复你自己)原则，如果要修改函数声明，每个地方还都要修改，所以把声明单独提取到.h文件。需要的地方用编译器#include指定导入即可。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%97%AE%E9%A2%98">问题</a></li>
+<li><a href="#%E9%93%BE%E6%8E%A5%E5%B1%9E%E6%80%A7">链接属性</a>
+<ul>
+<li><a href="#external">external</a></li>
+</ul>
+</li>
+<li><a href="#internal">internal</a>
+<ul>
+<li><a href="#none">none</a></li>
+</ul>
+</li>
+<li><a href="#%E5%AD%98%E5%82%A8%E7%B1%BB%E5%9E%8B">存储类型</a></li>
+<li><a href="#%E5%85%B3%E4%BA%8E%E5%A4%B4%E6%96%87%E4%BB%B6%E7%9A%84%E7%BC%98%E7%94%B1">关于头文件的缘由</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/huan-cun-she-ji/">
+              <span class="post-title">
+                缓存设计&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

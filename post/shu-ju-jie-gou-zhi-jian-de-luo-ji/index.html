@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>数据结构之间的逻辑 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="数据结构之间的逻辑 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="数据结构之间的逻辑" />
+  <meta property="og:url" content="https://nomagic.cc/post/shu-ju-jie-gou-zhi-jian-de-luo-ji/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/zy1lBI2aI/" class="tag">编程思想</a>
+                
+              </span>
+              <h1>数据结构之间的逻辑</h1>
+              <span class="meta">
+                Posted on
+                2019-09-21，4 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>这边文章只是试图理解每种数据结构之间的关系，理解每个数据结构是用来解决什么问题的，然后有什么不足，进而通过什么数据结构来解决这个不足</p>
+<h2 id="从分治说起">从分治说起</h2>
+<p>应对大数据量的方法。</p>
+<h3 id="分治和递归">分治和递归</h3>
+<p>递归是分治的一种程序性结构(碰巧解决方案一样了：非重叠子问题)。</p>
+<h2 id="从二分查找到二叉树">从二分查找到二叉树</h2>
+<p>使用二分法对有序列表进行查找，如果使用二分的思想对数据进行存储，那么我们就得到了一颗二叉树。<br>
+左右指针，只是二叉树的一种存储形式</p>
+<h2 id="为什么是二叉树不是345k分叉树">为什么是二叉树，不是3/4/5..k分叉树</h2>
+<p>函数：(k-1)log(k) 的含义和增长性</p>
+<h2 id="从二叉树到平衡树">从二叉树到平衡树</h2>
+<p>二叉树退化成链表</p>
+<h2 id="avl-btree-rbtree-之间的比较">AVL、BTree、RBTree 之间的比较</h2>
+<p>为什么有这么多种类型的平衡树</p>
+<h3 id="理解avl树的选择操作">理解AVL树的选择操作</h3>
+<p>avl 树的要求：每个节点的左子树和右子树的高度差至多为1。<br>
+<img src="https://nomagic.cc/post-images/1699688940791.png" alt="" loading="lazy"><br>
+<img src="https://nomagic.cc/post-images/1699688896557.gif" alt="" loading="lazy"></p>
+<h3 id="btree的自平衡以及自平衡的代价为什么db存储偏爱btree">BTree的自平衡，以及自平衡的代价，为什么DB存储偏爱BTree</h3>
+<p>自平衡：度(dgree)的概念，每个节点key数据 dgree-1 &lt;= count(key)&lt;=2*dgree-1，<br>
+插入节点分裂,导致树的增高，删除节点合并，导致树的高度降低<br>
+自平衡的代价：分裂和合并的复杂度过高，尤其是合并的实现复杂的</p>
+<p>为什么使用B+Tree实现索引<br>
+低高度的BTree就可以存储大量的节点（16KB/(8B+6B)≈1170），局部性更适用与磁盘的读写特性。</p>
+<h3 id="为什么rbtree的使用场景更广">为什么RBTree的使用场景更广</h3>
+<blockquote>
+<p>综合效率更高</p>
+</blockquote>
+<p>理解红黑树的性质：<br>
+性质1. 结点是红色或黑色。<br>
+性质2. 根结点是黑色。<br>
+性质3. 所有叶子都是黑色。（叶子是NIL结点）<br>
+性质4. 每个红色结点的两个子结点都是黑色。（从每个叶子到根的所有路径上不能有两个连续的红色结点）<br>
+性质5. 从任一结点到其每个叶子的所有路径都包含相同数目的黑色结点</p>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1699688977709.png" alt="" loading="lazy"></figure>
+<p>性质的结果：最长路径 &lt;= 2*（最短路径）==&gt; 树的失衡性保持在一定范围内<br>
+最长路径：红黑交替<br>
+最短路径：全黑</p>
+<p>保持的方法：旋转+着色</p>
+<p>红黑树适用的场景：<br>
+数据量有限，读写频繁。<br>
+使用的场景：<br>
+文件系统<br>
+linux 进程调度，用红黑树管理进程控制块<br>
+epoll实现中，poll对象的管理。<br>
+epoll 在内核中的实现，用红黑树管理事件块<br>
+nginx 中，用红黑树管理 timer</p>
+<h3 id="hash-table-和平衡树的比较">hash table 和平衡树的比较</h3>
+<p>hash 函数的性能损耗<br>
+hash 存储的离散性，无法支持range查询<br>
+hash 对于内存使用，需要先申请一段内存，后面对于扩容和缩容的需求。<br>
+但是在大内存，数据量客观的情况下，相对于平衡树。hash会更有优势，反观hash使用的场景。</p>
+<h3 id="为什么redis使用dict和zset为什么使用-skiplist-而不是平衡树">为什么redis使用dict和zset为什么使用 skiplist 而不是平衡树</h3>
+<p><img src="https://nomagic.cc/post-images/1699688997059.png" alt="" loading="lazy"><br>
+为什么使用disc，参数上面hash table 和平衡树的比较。</p>
+<p>redis 是内存型数据库，寻址的时间是一样的。zset 更多的范围查询，如果使用平衡树是使用btree还是rbtree？会有什么样的影响</p>
+<h2 id="拓展只做关键概念介绍">拓展（只做关键概念介绍）</h2>
+<h3 id="堆前缀树线段树集合">堆，前缀树，线段树（集合）</h3>
+<p><img src="https://nomagic.cc/post-images/1699689024204.png" alt="" loading="lazy"><br>
+堆<br>
+<img src="https://nomagic.cc/post-images/1699689041933.jpg" alt="" loading="lazy"><br>
+前缀树<br>
+<img src="https://nomagic.cc/post-images/1699689058054.webp" alt="" loading="lazy"><br>
+线段树：<br>
+求 [1,2,3,4,5] 任意字区间的和</p>
+<h1 id="总结">总结</h1>
+<p>可视化网站：<br>
+https://visualgo.net/zh<br>
+https://www.cs.usfca.edu/~galles/visualization/BTree.html</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BB%8E%E5%88%86%E6%B2%BB%E8%AF%B4%E8%B5%B7">从分治说起</a>
+<ul>
+<li><a href="#%E5%88%86%E6%B2%BB%E5%92%8C%E9%80%92%E5%BD%92">分治和递归</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BB%8E%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE%E5%88%B0%E4%BA%8C%E5%8F%89%E6%A0%91">从二分查找到二叉树</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%8D%E6%98%AF345k%E5%88%86%E5%8F%89%E6%A0%91">为什么是二叉树，不是3/4/5..k分叉树</a></li>
+<li><a href="#%E4%BB%8E%E4%BA%8C%E5%8F%89%E6%A0%91%E5%88%B0%E5%B9%B3%E8%A1%A1%E6%A0%91">从二叉树到平衡树</a></li>
+<li><a href="#avl-btree-rbtree-%E4%B9%8B%E9%97%B4%E7%9A%84%E6%AF%94%E8%BE%83">AVL、BTree、RBTree 之间的比较</a>
+<ul>
+<li><a href="#%E7%90%86%E8%A7%A3avl%E6%A0%91%E7%9A%84%E9%80%89%E6%8B%A9%E6%93%8D%E4%BD%9C">理解AVL树的选择操作</a></li>
+<li><a href="#btree%E7%9A%84%E8%87%AA%E5%B9%B3%E8%A1%A1%E4%BB%A5%E5%8F%8A%E8%87%AA%E5%B9%B3%E8%A1%A1%E7%9A%84%E4%BB%A3%E4%BB%B7%E4%B8%BA%E4%BB%80%E4%B9%88db%E5%AD%98%E5%82%A8%E5%81%8F%E7%88%B1btree">BTree的自平衡，以及自平衡的代价，为什么DB存储偏爱BTree</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88rbtree%E7%9A%84%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF%E6%9B%B4%E5%B9%BF">为什么RBTree的使用场景更广</a></li>
+<li><a href="#hash-table-%E5%92%8C%E5%B9%B3%E8%A1%A1%E6%A0%91%E7%9A%84%E6%AF%94%E8%BE%83">hash table 和平衡树的比较</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88redis%E4%BD%BF%E7%94%A8dict%E5%92%8Czset%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8-skiplist-%E8%80%8C%E4%B8%8D%E6%98%AF%E5%B9%B3%E8%A1%A1%E6%A0%91">为什么redis使用dict和zset为什么使用 skiplist 而不是平衡树</a></li>
+</ul>
+</li>
+<li><a href="#%E6%8B%93%E5%B1%95%E5%8F%AA%E5%81%9A%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D">拓展（只做关键概念介绍）</a>
+<ul>
+<li><a href="#%E5%A0%86%E5%89%8D%E7%BC%80%E6%A0%91%E7%BA%BF%E6%AE%B5%E6%A0%91%E9%9B%86%E5%90%88">堆，前缀树，线段树（集合）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/bian-liang-lian-jie-shu-xing-he-cun-chu-shu-xing/">
+              <span class="post-title">
+                C/C++ 变量链接属性和存储属性&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

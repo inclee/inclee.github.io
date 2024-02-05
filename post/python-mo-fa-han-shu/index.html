@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>python 魔法函数 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="python 魔法函数 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="python 魔法函数" />
+  <meta property="og:url" content="https://nomagic.cc/post/python-mo-fa-han-shu/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/UAtIUe2o9/" class="tag">Python</a>
+                
+                <a href="https://nomagic.cc/tag/GFINS7rzD/" class="tag">编程语言</a>
+                
+              </span>
+              <h1>python 魔法函数</h1>
+              <span class="meta">
+                Posted on
+                2018-04-01，15 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="魔法函数">魔法函数</h1>
+<h2 id="1-前言">1. 前言</h2>
+<h3 id="11-什么是魔法函数">1.1 什么是魔法函数？</h3>
+<p>所谓魔法函数（Magic Methods），是Python的一种高级语法，允许你在类中自定义函数（函数名格式一般为__xx__），并绑定到类的特殊方法中。比如在类A中自定义__str__()函数，则在调用str(A())时，会自动调用__str__()函数，并返回相应的结果。在我们平时的使用中，可能经常使用**__init__函数（构造函数）<strong>和</strong>__del__函数（析构函数）**，其实这也是魔法函数的一种。</p>
+<ul>
+<li>Python中以双下划线(__xx__)开始和结束的函数（不可自己定义）为魔法函数。</li>
+<li>调用类实例化的对象的方法时自动调用魔法函数。</li>
+<li>在自己定义的类中，可以实现之前的内置函数。</li>
+</ul>
+<h3 id="12-魔法函数有什么作用">1.2 魔法函数有什么作用？</h3>
+<p>魔法函数可以为你写的类增加一些额外功能，方便使用者理解。举个简单的例子，我们定义一个“人”的类People，当中有属性姓名name、年龄age。让你需要利用sorted函数对一个People的数组进行排序，排序规则是按照name和age同时排序，即name不同时比较name，相同时比较age。由于People类本身不具有比较功能，所以需要自定义，你可以这么定义People类：</p>
+<pre><code>class People(object):
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+        return
+
+    def __str__(self):
+        return self.name + &quot;:&quot; + str(self.age)
+
+    def __lt__(self, other):
+        return self.name &lt; other.name if self.name != other.name else self.age &lt; other.age
+
+
+if __name__==&quot;__main__&quot;:
+
+    print(&quot;\t&quot;.join([str(item) for item in sorted([People(&quot;abc&quot;, 18),
+        People(&quot;abe&quot;, 19), People(&quot;abe&quot;, 12), People(&quot;abc&quot;, 17)])]))
+</code></pre>
+<p>输出结果：</p>
+<pre><code>abc:17	abc:18	abe:12	abe:19
+</code></pre>
+<p>上个例子中的__lt__函数即less than函数，即当比较两个People实例时自动调用。</p>
+<h2 id="2-常见的魔法函数">2. 常见的魔法函数</h2>
+<p>我们将魔法方法分为：非数学运算和数学运算两大类。</p>
+<h3 id="21-非数学运算">2.1 非数学运算</h3>
+<h3 id="211-字符串表示">2.1.1 <strong>字符串表示</strong></h3>
+<p>__repr__函数和__str__函数：</p>
+<p>Python 中，每个对象都有两个特殊方法，用于将对象转换为字符串：<strong>repr__和__str</strong>。</p>
+<p><strong>repr</strong> 方法返回一个对象的“官方”字符串表示形式，它的输出通常可以直接用作代码片段来创建该对象的副本。它的主要目的是提供一种明确且详细的表示形式，以便开发者可以了解对象的内部结构和状态。</p>
+<p><strong>str</strong> 方法返回一个对象的“用户友好”字符串表示形式，适合显示给终端用户。</p>
+<p><strong>区别</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>功能</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>repr</strong></td>
+<td>对象的“官方”字符串表示形式</td>
+<td>适合开发者</td>
+</tr>
+<tr>
+<td><strong>str</strong></td>
+<td>对象的“用户友好”字符串表示形式</td>
+<td>适合终端用户</td>
+</tr>
+</tbody>
+</table>
+<p><strong>示例</strong></p>
+<p>Python</p>
+<pre><code>class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f&quot;Point({self.x}, {self.y})&quot;
+
+    def __str__(self):
+        return f&quot;({self.x}, {self.y})&quot;
+
+
+p1 = Point(1, 2)
+
+print(repr(p1))  # Point(1, 2)
+print(str(p1))  # (1, 2)
+</code></pre>
+<p>输出：</p>
+<pre><code>Point(1, 2)
+(1, 2)
+</code></pre>
+<p><strong>注意</strong></p>
+<ul>
+<li>如果对象没有定义__repr__方法，Python 会使用__str__方法的返回值作为__repr__方法的返回值。</li>
+<li>如果对象定义了__repr__方法，但没有定义__str__方法，Python 会使用__repr__方法的返回值作为__str__方法的返回值。</li>
+</ul>
+<p><strong>使用建议</strong></p>
+<ul>
+<li>建议在类中定义__repr__方法，以便开发者可以使用它来创建对象的副本。</li>
+<li>建议在类中定义__str__方法，以便终端用户可以使用它来显示对象的信息。</li>
+</ul>
+<h3 id="212-集合-序列相关">2.1.2 集合、序列相关</h3>
+<p>__len__函数、__getitem__函数、__setitem__函数、__delitem__函数和__contains__函数：</p>
+<p>在 Python 中，<strong>len</strong>、<strong>getitem</strong>、<strong>setitem</strong>、<strong>delitem</strong> 和 <strong>contains</strong> 是五个特殊方法，用于实现序列的行为。</p>
+<p><strong>序列</strong></p>
+<p>序列是 Python 中的一种数据类型，可以存储多个元素。序列的常见类型包括列表、元组、字符串和 range。</p>
+<p><strong>len 方法</strong></p>
+<p><strong>len</strong> 方法用于返回序列的长度。</p>
+<p>Python</p>
+<pre><code>class MySequence:
+    def __len__(self):
+        return 10
+
+
+seq = MySequence()
+
+print(len(seq))  # 10
+</code></pre>
+<p>在上述示例中，<code>MySequence</code> 类定义了 <code>__len__</code> 方法。该方法返回 <code>10</code>，因此 <code>seq</code> 对象的长度为 <code>10</code>。</p>
+<p><strong>getitem 方法</strong></p>
+<p><strong>getitem</strong> 方法用于获取序列中指定位置的元素。</p>
+<p>Python</p>
+<pre><code>class MySequence:
+    def __init__(self, data):
+        self.data = data
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+
+seq = MySequence([1, 2, 3])
+
+print(seq[0])  # 1
+print(seq[1])  # 2
+print(seq[2])  # 3
+</code></pre>
+<p>在上述示例中，<code>MySequence</code> 类定义了 <code>__getitem__</code> 方法。该方法根据索引 <code>index</code> 返回序列中对应的元素。</p>
+<p><strong>setitem 方法</strong></p>
+<p><strong>setitem</strong> 方法用于设置序列中指定位置的元素。</p>
+<p>Python</p>
+<pre><code class="language-python">class MySequence:
+    def __init__(self, data):
+        self.data = data
+
+    def __setitem__(self, index, value):
+        self.data[index] = value
+
+
+seq = MySequence([1, 2, 3])
+
+seq[0] = 100
+
+print(seq)  # [100, 2, 3]
+</code></pre>
+<p>在上述示例中，<code>MySequence</code> 类定义了 <code>__setitem__</code> 方法。该方法根据索引 <code>index</code> 和值 <code>value</code> 设置序列中对应的元素。</p>
+<p><strong>delitem 方法</strong></p>
+<p><strong>delitem</strong> 方法用于删除序列中指定位置的元素。</p>
+<p>Python</p>
+<pre><code>class MySequence:
+    def __init__(self, data):
+        self.data = data
+
+    def __delitem__(self, index):
+        del self.data[index]
+
+
+seq = MySequence([1, 2, 3])
+
+del seq[0]
+
+print(seq)  # [2, 3]
+</code></pre>
+<p>在上述示例中，<code>MySequence</code> 类定义了 <code>__delitem__</code> 方法。该方法根据索引 <code>index</code> 删除序列中对应的元素。</p>
+<p><strong>contains 方法</strong></p>
+<p><strong>contains</strong> 方法用于判断序列中是否包含指定元素。</p>
+<pre><code>class MySequence:
+    def __init__(self, data):
+        self.data = data
+
+    def __contains__(self, value):
+        return value in self.data
+
+
+seq = MySequence([1, 2, 3])
+
+print(1 in seq)  # True
+print(4 in seq)  # False
+</code></pre>
+<p>在上述示例中，<code>MySequence</code> 类定义了 <code>__contains__</code> 方法。该方法根据值 <code>value</code> 判断序列中是否包含指定元素。</p>
+<p><strong>使用建议</strong></p>
+<ul>
+<li>建议在实现自定义序列时，使用上述五个特殊方法。</li>
+<li>建议在使用上述特殊方法时，尽量使用 <code>super().__len__()</code>、<code>super().__getitem__()</code>、<code>super().__setitem__()</code>、<code>super().__delitem__()</code> 和 <code>super().__contains__()</code> 方法来调用父类的序列方法。</li>
+</ul>
+<h3 id="213-迭代相关">2.1.3 迭代相关</h3>
+<p>__iter__函数和__next__函数：</p>
+<p></p>
+<p>Python 中，迭代器可以通过两种方式实现：</p>
+<ul>
+<li>使用类</li>
+<li>使用生成器</li>
+</ul>
+<p><strong>使用类实现迭代器</strong></p>
+<p>要使用类实现迭代器，需要在类中实现两个方法：<strong>iter</strong> 和 <strong>next</strong>。</p>
+<pre><code>class MyIterator:
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.start &gt; self.end:
+            raise StopIteration
+        else:
+            value = self.start
+            self.start += 1
+            return value
+
+
+iterator = MyIterator(1, 10)
+
+for item in iterator:
+    print(item)
+</code></pre>
+<p>输出：</p>
+<pre><code>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</code></pre>
+<p><strong>使用生成器实现迭代器</strong></p>
+<p>要使用生成器实现迭代器，可以使用 yield 关键字。</p>
+<pre><code>def my_iterator(start, end):
+    for i in range(start, end):
+        yield i
+
+
+iterator = my_iterator(1, 10)
+
+for item in iterator:
+    print(item)
+</code></pre>
+<p>输出：</p>
+<pre><code>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</code></pre>
+<p><strong>迭代器的使用场景</strong></p>
+<p>迭代器可以用于以下场景：</p>
+<ul>
+<li>遍历可迭代对象</li>
+<li>实现惰性计算</li>
+<li>实现生成器</li>
+</ul>
+<p><strong>遍历可迭代对象</strong></p>
+<p>迭代器可以用于遍历可迭代对象，例如列表、元组、字典和集合。</p>
+<pre><code>list1 = [1, 2, 3]
+
+iterator = iter(list1)
+
+for item in iterator:
+    print(item)
+</code></pre>
+<p>输出：</p>
+<pre><code>1
+2
+3
+</code></pre>
+<p><strong>实现惰性计算</strong></p>
+<p>迭代器可以用于实现惰性计算，即只有在需要时才会计算下一个元素。</p>
+<pre><code>def fibonacci(n):
+    a, b = 0, 1
+    for i in range(n):
+        yield a
+        a, b = b, a + b
+
+
+for i in fibonacci(10):
+    print(i)
+</code></pre>
+<p>输出：</p>
+<pre><code>0
+1
+1
+2
+3
+5
+8
+13
+21
+34
+</code></pre>
+<p><strong>实现生成器</strong></p>
+<p>迭代器可以用于实现生成器，生成器是一种特殊的迭代器，可以使用 yield 关键字生成值。</p>
+<pre><code>def fibonacci(n):
+    a, b = 0, 1
+    for i in range(n):
+        yield a
+        a, b = b, a + b
+
+
+for i in fibonacci(10):
+    print(i)
+</code></pre>
+<p>输出：</p>
+<pre><code>0
+1
+1
+2
+3
+5
+8
+13
+21
+34
+</code></pre>
+<h3 id="214-可调用">2.1.4 <strong>可调用</strong></h3>
+<p>__call__函数：</p>
+<h3 id="215-with上下文管理器">2.1.5 <strong>with上下文管理器</strong></h3>
+<p>__enter__函数和__exit__函数：</p>
+<p>在 Python 中，<strong>enter</strong> 和 <strong>exit</strong> 是两个特殊方法，用于实现上下文管理器。上下文管理器是一种对象，可以用于管理资源的访问。</p>
+<p><strong>enter 方法</strong></p>
+<p><strong>enter</strong> 方法在 with 语句中执行时被调用一次。该方法的返回值会被赋值给 with 语句的目标，即 as 语句后面的名称。</p>
+<p><strong>exit 方法</strong></p>
+<p><strong>exit</strong> 方法在 with 语句执行完毕时被调用。该方法的参数为三个：</p>
+<ul>
+<li>exc_type：异常类型，如果没有异常，则为 None。</li>
+<li>exc_value：异常值，如果没有异常，则为 None。</li>
+<li>exc_traceback：异常堆栈跟踪，如果没有异常，则为 None。</li>
+</ul>
+<p><strong>exit</strong> 方法可以返回 True 或 False。如果返回 True，则表示 with 语句正常执行完毕。如果返回 False，则表示 with 语句在执行过程中发生了异常。</p>
+<p><strong>示例</strong></p>
+<pre><code>class MyContextManager:
+    def __init__(self):
+        self.resource = open(&quot;my_file.txt&quot;, &quot;w&quot;)
+
+    def __enter__(self):
+        return self.resource
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.resource.close()
+
+
+with MyContextManager() as f:
+    f.write(&quot;Hello, world!&quot;)
+</code></pre>
+<p>在上述示例中，<code>MyContextManager</code> 类实现了上下文管理器。<code>__enter__</code> 方法返回 <code>f</code> 对象，该对象是 <code>open()</code> 函数的返回值，表示文件对象。<code>__exit__</code> 方法在 with 语句执行完毕时调用，关闭文件对象。</p>
+<p><strong>使用建议</strong></p>
+<ul>
+<li>建议在实现上下文管理器时，在 <code>__enter__</code> 方法中初始化资源，在 <code>__exit__</code> 方法中释放资源。</li>
+<li>建议在 <code>__exit__</code> 方法中捕获异常，并根据异常类型进行处理。</li>
+</ul>
+<h3 id="216-数值转换">2.1.6 数值转换</h3>
+<p>__abs__函数、__bool__函数、__int__函数、__float__函数、__hash__函数和__index__函数：</p>
+<h3 id="217-元类相关">2.1.7 元类相关</h3>
+<p>__new__函数和__init__函数：</p>
+<h3 id="218-属性相关">2.1.8 <strong>属性相关</strong></h3>
+<p>__getattr__函数、__setattr__函数、__getattribute__函数、__setattribute__函数和__dir__函数：</p>
+<p><strong>__getattr_/__setattr__ 不存在时调用。</strong></p>
+<p>在 Python 中，<strong>getattr</strong>、<strong>setattr</strong>、<strong>getattribute</strong>、<strong>setattribute</strong> 和 <strong>dir</strong> 是五个特殊方法，用于自定义对象的属性访问行为。</p>
+<p><strong>getattr 方法</strong></p>
+<p><strong>getattr</strong> 方法用于在对象没有指定属性时返回属性值。</p>
+<pre><code>class MyClass:
+    def __init__(self):
+        self.name = &quot;Bard&quot;
+
+    def __getattr__(self, name):
+        if name == &quot;age&quot;:
+            return 100
+        else:
+            raise AttributeError(f&quot;No attribute named {name}.&quot;)
+
+
+obj = MyClass()
+
+print(obj.name)  # Bard
+print(obj.age)  # 100
+print(obj.not_exists)  # AttributeError: No attribute named not_exists.
+</code></pre>
+<p><strong>setattr 方法</strong></p>
+<p><strong>setattr</strong> 方法用于在设置对象属性时执行自定义操作</p>
+<pre><code>class MyClass:
+    def __init__(self):
+        self.name = &quot;Bard&quot;
+
+    def __setattr__(self, name, value):
+        if name == &quot;age&quot;:
+            print(f&quot;Setting age to {value}.&quot;)
+        else:
+            super().__setattr__(name, value)
+
+
+obj = MyClass()
+
+obj.name = &quot;Bard&quot;
+obj.age = 100
+</code></pre>
+<p>输出：</p>
+<pre><code>Setting age to 100.
+</code></pre>
+<p><strong>getattribute 方法</strong></p>
+<p><strong>getattribute</strong> 方法用于获取对象属性的值。</p>
+<pre><code>class MyClass:
+    def __init__(self):
+        self.name = &quot;Bard&quot;
+
+    def __getattribute__(self, name):
+        print(f&quot;Getting attribute {name}.&quot;)
+        return super().__getattribute__(name)
+
+
+obj = MyClass()
+
+print(obj.name)  # Getting attribute name.
+print(obj.age)  # Getting attribute age.
+</code></pre>
+<p>输出：</p>
+<pre><code>Getting attribute name.
+Bard
+Getting attribute age.
+</code></pre>
+<p><strong>setattribute 方法</strong></p>
+<p><strong>setattribute</strong> 方法用于设置对象属性的值。</p>
+<p>Python</p>
+<pre><code>class MyClass:
+    def __init__(self):
+        self.name = &quot;Bard&quot;
+
+    def __setattribute__(self, name, value):
+        print(f&quot;Setting attribute {name} to {value}.&quot;)
+        super().__setattribute__(name, value)
+
+
+obj = MyClass()
+
+obj.name = &quot;Bard&quot;
+obj.age = 100
+</code></pre>
+<p>输出：</p>
+<pre><code>Setting attribute name to Bard.
+Setting attribute age to 100.
+</code></pre>
+<p><strong>dir 方法</strong></p>
+<p><strong>dir</strong> 方法用于返回对象的属性列表。</p>
+<pre><code>class MyClass:
+    def __init__(self):
+        self.name = &quot;Bard&quot;
+
+
+obj = MyClass()
+
+print(dir(obj))  # ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 'name']
+</code></pre>
+<p><strong>使用建议</strong></p>
+<ul>
+<li>建议在实现自定义属性访问行为时，使用 <code>__getattribute__</code> 和 <code>__setattr__</code> 方法。</li>
+<li>建议在使用 <code>__getattr__</code> 方法时，尽量使用 <code>super().__getattr__()</code> 方法来调用父类的 <code>__getattr__()</code> 方法。</li>
+<li>建议在使用 <code>__setattribute__</code> 方法时，尽量使用 <code>super().__setattribute__()</code> 方法来调用父类的 <code>__setattribute__()</code> 方法。</li>
+</ul>
+<h3 id="219-属性描述符">2.1.9 属性描述符</h3>
+<p>__get__函数、__set__函数和__delete_函数：</p>
+<p>在 Python 中，<strong>get</strong>、<strong>set</strong> 和 <strong>delete</strong> 是三个特殊方法，用于实现描述符的行为。</p>
+<p><strong>描述符</strong></p>
+<p>描述符是一种特殊的类，可以用于控制属性的访问。描述符可以用于以下场景：</p>
+<ul>
+<li>验证属性值</li>
+<li>在访问属性时执行自定义操作</li>
+<li>在删除属性时执行自定义操作</li>
+</ul>
+<p><strong>get 方法</strong></p>
+<p><strong>get</strong> 方法用于获取属性值。</p>
+<pre><code>class MyDescriptor:
+    def __get__(self, instance, owner):
+        print(f&quot;Getting attribute {self.name}.&quot;)
+        return getattr(instance, self.name)
+
+
+class MyClass:
+    name = MyDescriptor()
+
+
+obj = MyClass()
+
+print(obj.name)  # Getting attribute name.
+</code></pre>
+<p>在上述示例中，<code>MyDescriptor</code> 类定义了 <code>__get__</code> 方法。当访问 <code>obj.name</code> 时，会调用 <code>__get__</code> 方法。在 <code>__get__</code> 方法中，会打印一条日志，然后调用父类的 <code>__getattribute__</code> 方法来获取属性值。</p>
+<p><strong>set 方法</strong></p>
+<p><strong>set</strong> 方法用于设置属性值。</p>
+<pre><code>class MyDescriptor:
+    def __set__(self, instance, value):
+        print(f&quot;Setting attribute {self.name} to {value}.&quot;)
+        setattr(instance, self.name, value)
+
+
+class MyClass:
+    name = MyDescriptor()
+
+
+obj = MyClass()
+
+obj.name = &quot;Bard&quot;
+
+print(obj.name)  # Getting attribute name.
+</code></pre>
+<p>在上述示例中，<code>MyDescriptor</code> 类定义了 <code>__set__</code> 方法。当设置 <code>obj.name</code> 为 &quot;Bard&quot; 时，会调用 <code>__set__</code> 方法。在 <code>__set__</code> 方法中，会打印一条日志，然后调用父类的 <code>__setattr__</code> 方法来设置属性值。</p>
+<p><strong>delete 方法</strong></p>
+<p><strong>delete</strong> 方法用于删除属性。</p>
+<pre><code>class MyDescriptor:
+    def __delete__(self, instance):
+        print(f&quot;Deleting attribute {self.name}.&quot;)
+        delattr(instance, self.name)
+
+
+class MyClass:
+    name = MyDescriptor()
+
+
+obj = MyClass()
+
+del obj.name
+
+print(obj.name)  # AttributeError: 'MyClass' object has no attribute 'name'
+</code></pre>
+<p>在上述示例中，<code>MyDescriptor</code> 类定义了 <code>__delete__</code> 方法。当删除 <code>obj.name</code> 时，会调用 <code>__delete__</code> 方法。在 <code>__delete__</code> 方法中，会打印一条日志，然后调用父类的 <code>__delattr__</code> 方法来删除属性。</p>
+<p><strong>使用建议</strong></p>
+<ul>
+<li>建议在实现自定义属性访问行为时，使用描述符。</li>
+<li>建议在使用描述符时，尽量使用 <code>super().__get__()</code>、<code>super().__set__()</code> 和 <code>super().__delete__()</code> 方法来调用父类的描述符方法。</li>
+</ul>
+<h3 id="2110-协程">2.1.10 <strong>协程</strong></h3>
+<p>__await__函数、__aiter__函数、__anext__函数、__aenter__函数和__aexit__函数</p>
+<h3 id="22-数学运算">2.2 <strong>数学运算</strong></h3>
+<h3 id="221-一元运算符"><strong>2.2.1 一元运算符</strong></h3>
+<p>__neg__ (-)、__pos__ (+)和__abs__函数。</p>
+<h3 id="222-二元运算符">2.2.2 <strong>二元运算符</strong></h3>
+<p>__lt__ (&lt;)、__le__ (&lt;=)、__eq__ (==)、__ne__ (!=)、__gt__ (&gt;)和__ge__ (&gt;=)。</p>
+<h3 id="223-算术运算符">2.2.3 <strong>算术运算符</strong></h3>
+<p>__add__ (+)、__sub__ (-)、__mul__ (*)、__truediv__ (/)、__floordiv__ (//)、__mod__ (%)、__divmod__ 或divmod()、__pow__ 或pow() (**)和__round__ 或round()。</p>
+<h3 id="224-反向算术运算符">2.2.4 <strong>反向算术运算符</strong></h3>
+<p>__radd__、__rsub__、__rmul__、__rtruediv__、__rfloordiv__、__rmod__、__rdivmod__和__rpow__。</p>
+<h3 id="225-增量赋值算术运算符">2.2.5 <strong>增量赋值算术运算符</strong></h3>
+<p>__iadd__、__isub__、__imul__、__ifloordiv__和__ipow__。</p>
+<h3 id="226-位运算符">2.2.6 <strong>位运算符</strong></h3>
+<p>__invert__ (~)、__lshift__ (&lt;&lt;)、__rshift__ (&gt;&gt;)、__and__ (&amp;)、__or__ (|)和__xor__ (^)。</p>
+<h3 id="227-反向位运算符">2.2.7 <strong>反向位运算符</strong></h3>
+<p>__rlshift__、__rrshift__、__iand__、__ixor__和__ior__。</p>
+<h3 id="228-增量赋值运算符">2.2.8 <strong>增量赋值运算符</strong></h3>
+<p>__ilshift__、__irshift__、__iand__、__ixor__和__ior__。</p>
+<h3 id="23-其他魔法函数">2.3 其他魔法函数</h3>
+<p>__ unicode__()函数，__ delattr__()函数， __ del__()函数， __dict__()函数，__all__()函数：</p>
+<h2 id="参考">参考</h2>
+<ol>
+<li><a href="https://zhuanlan.zhihu.com/p/344951719">^</a></li>
+</ol>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E9%AD%94%E6%B3%95%E5%87%BD%E6%95%B0">魔法函数</a>
+<ul>
+<li><a href="#1-%E5%89%8D%E8%A8%80">1. 前言</a>
+<ul>
+<li><a href="#11-%E4%BB%80%E4%B9%88%E6%98%AF%E9%AD%94%E6%B3%95%E5%87%BD%E6%95%B0">1.1 什么是魔法函数？</a></li>
+<li><a href="#12-%E9%AD%94%E6%B3%95%E5%87%BD%E6%95%B0%E6%9C%89%E4%BB%80%E4%B9%88%E4%BD%9C%E7%94%A8">1.2 魔法函数有什么作用？</a></li>
+</ul>
+</li>
+<li><a href="#2-%E5%B8%B8%E8%A7%81%E7%9A%84%E9%AD%94%E6%B3%95%E5%87%BD%E6%95%B0">2. 常见的魔法函数</a>
+<ul>
+<li><a href="#21-%E9%9D%9E%E6%95%B0%E5%AD%A6%E8%BF%90%E7%AE%97">2.1 非数学运算</a></li>
+<li><a href="#211-%E5%AD%97%E7%AC%A6%E4%B8%B2%E8%A1%A8%E7%A4%BA">2.1.1 <strong>字符串表示</strong></a></li>
+<li><a href="#212-%E9%9B%86%E5%90%88-%E5%BA%8F%E5%88%97%E7%9B%B8%E5%85%B3">2.1.2 集合、序列相关</a></li>
+<li><a href="#213-%E8%BF%AD%E4%BB%A3%E7%9B%B8%E5%85%B3">2.1.3 迭代相关</a></li>
+<li><a href="#214-%E5%8F%AF%E8%B0%83%E7%94%A8">2.1.4 <strong>可调用</strong></a></li>
+<li><a href="#215-with%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86%E5%99%A8">2.1.5 <strong>with上下文管理器</strong></a></li>
+<li><a href="#216-%E6%95%B0%E5%80%BC%E8%BD%AC%E6%8D%A2">2.1.6 数值转换</a></li>
+<li><a href="#217-%E5%85%83%E7%B1%BB%E7%9B%B8%E5%85%B3">2.1.7 元类相关</a></li>
+<li><a href="#218-%E5%B1%9E%E6%80%A7%E7%9B%B8%E5%85%B3">2.1.8 <strong>属性相关</strong></a></li>
+<li><a href="#219-%E5%B1%9E%E6%80%A7%E6%8F%8F%E8%BF%B0%E7%AC%A6">2.1.9 属性描述符</a></li>
+<li><a href="#2110-%E5%8D%8F%E7%A8%8B">2.1.10 <strong>协程</strong></a></li>
+<li><a href="#22-%E6%95%B0%E5%AD%A6%E8%BF%90%E7%AE%97">2.2 <strong>数学运算</strong></a></li>
+<li><a href="#221-%E4%B8%80%E5%85%83%E8%BF%90%E7%AE%97%E7%AC%A6"><strong>2.2.1 一元运算符</strong></a></li>
+<li><a href="#222-%E4%BA%8C%E5%85%83%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.2 <strong>二元运算符</strong></a></li>
+<li><a href="#223-%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.3 <strong>算术运算符</strong></a></li>
+<li><a href="#224-%E5%8F%8D%E5%90%91%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.4 <strong>反向算术运算符</strong></a></li>
+<li><a href="#225-%E5%A2%9E%E9%87%8F%E8%B5%8B%E5%80%BC%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.5 <strong>增量赋值算术运算符</strong></a></li>
+<li><a href="#226-%E4%BD%8D%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.6 <strong>位运算符</strong></a></li>
+<li><a href="#227-%E5%8F%8D%E5%90%91%E4%BD%8D%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.7 <strong>反向位运算符</strong></a></li>
+<li><a href="#228-%E5%A2%9E%E9%87%8F%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6">2.2.8 <strong>增量赋值运算符</strong></a></li>
+<li><a href="#23-%E5%85%B6%E4%BB%96%E9%AD%94%E6%B3%95%E5%87%BD%E6%95%B0">2.3 其他魔法函数</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/you-qu-de-unownedunsafe/">
+              <span class="post-title">
+                有趣的unowned(unsafe)&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

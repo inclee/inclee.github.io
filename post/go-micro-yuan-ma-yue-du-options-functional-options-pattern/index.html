@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>go micro 源码阅读-Options [Functional Options Pattern] | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="go micro 源码阅读-Options [Functional Options Pattern] |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="go micro 源码阅读-Options [Functional Options Pattern]" />
+  <meta property="og:url" content="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-options-functional-options-pattern/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/V4vnSrl0y/" class="tag">微服务</a>
+                
+              </span>
+              <h1>go micro 源码阅读-Options [Functional Options Pattern]</h1>
+              <span class="meta">
+                Posted on
+                2018-08-24，4 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="解决的问题">解决的问题</h1>
+<p>如果想提供一个具有可选参数的方法，那么在其他语言中很简单使用默认值就好了。然而在Go中不支持默认值的做法，退而求其次那么使用函数重载好了，接着就会发现Go中同样不支持函数重载，那么我使用不同的函数名好了。。。。（代码估计很丑，并且不容易辨析）<br>
+**  Go 不支持默认值参数和函数重载的原因 **</p>
+<blockquote>
+<p>​	Method dispatch is simplified if it doesn't need to do type matching as well. Experience with other languages told us that having a variety of methods with the same name but different signatures was occasionally useful but that it could also be confusing and fragile in practice. Matching only by name and requiring consistency in the types was a major simplifying decision in Go's type system.</p>
+<p>Regarding operator overloading, it seems more a convenience than an absolute requirement. Again, things are simpler without it<br>
+如果不需要做类型匹配的话那么函数分发的处理就会简单。并且具有同样函数名的函数却有不同的类型（增加了代码的理解难度，比如你在读一份代码的时候，看到一个函数调用，然而这个函数调用却有不同的重载或者不同数量的调用参数的话，那么头脑里就要维护这个函数的多个版本，始终不如只存在一个版本理解上来的容易），并且保持函数名和函数类型的一致，可以是Go的类型系统的处理更加简单。<br>
+#解决方案<br>
+以上对Go不支持可选参数和函数重载的原因进行了说明，可是实际的编程中确实有这种模型的需要，如何解决这种问题呢。及如何使用不变的接口，实行可变的构造行为（可变----》 不变的转换）</p>
+</blockquote>
+<h2 id="构造者模式">构造者模式</h2>
+<p>本身这个一个对象的够着的问题，可以从构造模式的方向进行考虑，显然通过Builder（构造者模式）可以解决这个问题。</p>
+<h2 id="可变参数">可变参数</h2>
+<p>func Fun(arg ...int)的方式，可是这种方式可变参数的类型只能是统一中类型，那么如果用interface，当然可以，只是函数体内充满了类型断言，对函数本身的逻辑造成了很大的干扰。（职能单一原则）</p>
+<h2 id="functional-options-pattern">Functional Options Pattern</h2>
+<p>与Builder模式类似，变---》不变的转换，找到变动的元素，然后固定他。把变的东西通过特定的设计归一它，把变动的参数类型，归约为不变的函数类型，类似于变换到同类型的可变参数（函数类型）。（及变动的逻辑，只以一种方式存在）<br>
+比如说我想制作一杯咖啡，（糖，牛奶，咖啡粉，盐，酒，冰淇淋，蜂蜜。。。。。）这些原料应该是可以选择添加的。那么：一杯 \二/，就可以随意添加自己喜欢的原料了。</p>
+<pre><code class="language-go">
+type func CoffeeOption (Opts *CoffeeOptions)
+
+type CoffeeOptions struct{
+   sugar int
+   milk  int
+   cofferPowder int
+   ...
+}
+
+type Coffee struct{
+    opts *CoffeeOptions
+}
+
+func CoffeeSugar（sugar int)CoffeeOption{
+    return func(opts *ConffeeOptions){
+        opts.sugar = sugar
+    }
+}
+
+func CoffeeMilk（milk int)CoffeeOption{
+    return func(opts *ConffeeOptions){
+        opts.milk = milk
+    }
+}
+
+func newDefaultCoffeeOptions()*CoffeeOptions{
+    return &amp;CoffeeOptions{
+        sugar:2,
+        milk:5,
+        coffeePowder:100,
+        .....
+    }
+}
+
+func NewCoffee(opts ...CoffeeOption)*Coffer{
+    defaultOptions = newDefaultCoffeeOptions()
+    for _,opt := range opts{
+        opt(defaultOptions)
+    }
+    return &amp;Coffee{
+        opts:defaultOptions,
+    }
+}
+</code></pre>
+<h1 id="应用">应用</h1>
+<p>在go-micro中你可以看到很多functional options pattern的应用，基本每个micro组件都使用了这种方式进行构造。</p>
+<p>在grpc中同样很多地方也使用了这种方式。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E8%A7%A3%E5%86%B3%E7%9A%84%E9%97%AE%E9%A2%98">解决的问题</a>
+<ul>
+<li><a href="#%E6%9E%84%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8F">构造者模式</a></li>
+<li><a href="#%E5%8F%AF%E5%8F%98%E5%8F%82%E6%95%B0">可变参数</a></li>
+<li><a href="#functional-options-pattern">Functional Options Pattern</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BA%94%E7%94%A8">应用</a></li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/python-mo-fa-han-shu/">
+              <span class="post-title">
+                python 魔法函数&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>理解分布式系统的 8 个谬误（译） | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="理解分布式系统的 8 个谬误（译） |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="理解分布式系统的 8 个谬误（译）" />
+  <meta property="og:url" content="https://nomagic.cc/post/li-jie-fen-bu-shi-xi-tong-de-8-ge-miu-wu/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+              </span>
+              <h1>理解分布式系统的 8 个谬误（译）</h1>
+              <span class="meta">
+                Posted on
+                2018-09-11，18 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>您正在开发分布式系统吗？微服务、Web API、SOA、Web 服务器、应用程序服务器、数据库服务器、缓存服务器、负载均衡器 – 如果这些描述了系统设计中的组件，那么答案是肯定的。分布式系统由许多计算机组成，这些计算机通过协调来实现共同的目标。</p>
+<p>20 多年前，Peter Deutsch 和 James Gosling 定义了分布式计算的 8 个谬误。这些是许多开发人员对分布式系统做出的错误假设。从长远来看，这些通常被证明是错误的，导致难以修复错误。</p>
+<p>这8个谬误是：</p>
+<ul>
+<li>网络是可靠</li>
+<li>延迟为零</li>
+<li>带宽是无限的</li>
+<li>网络是安全</li>
+<li>拓扑是不变</li>
+<li>有1名管理员</li>
+<li>运输成本为零</li>
+<li>网络是同构的</li>
+</ul>
+<p>让我们回顾一下每个谬误，讨论问题和潜在的解决方案。</p>
+<h2 id="网络是可靠">网络是可靠</h2>
+<p>如今，大多数系统都会调用其他系统。您是否与第三方系统（支付网关、会计系统、CRM）集成？您正在进行网络服务调用吗？如果呼叫失败会发生什么情况？如果您正在查询数据，只需重试一次即可。但是如果您发送命令会发生什么？让我们举一个简单的例子：</p>
+<pre><code>var creditCardProcessor = new CreditCardPaymentService();
+creditCardProcessor.Charge(chargeRequest);
+</code></pre>
+<p>如果我们收到 HTTP 超时异常会发生什么？如果服务器没有处理该请求，那么我们可以重试。但是，如果它确实处​​理了请求，我们需要确保不会向客户收取双重费用。您可以通过使服务器幂等来做到这一点。这意味着，如果您针对同一收费请求调用 10 次，则客户只需支付一次费用。如果您没有正确处理这些错误，则您的系统是不确定的。处理所有这些情况可能很快就会变得非常复杂。</p>
+<h3 id="解决方案">解决方案</h3>
+<p>那么，如果网络呼叫失败，我们该怎么办？好吧，我们可以自动重试。排队系统在这方面非常擅长。他们通常使用一种称为存储和转发的模式。他们在将消息转发给收件人之前将其存储在本地。如果收件人离线，排队系统将重试发送消息。MSMQ就是此类排队系统的一个示例。</p>
+<p>但这个变化会对你的系统设计产生很大的影响。您正在从请求/响应模型转向即发即忘模型。由于您不再等待响应，因此您需要更改系统中的用户旅程。您不能仅用队列发送来替换每个 Web 服务调用。</p>
+<h3 id="结论">结论</h3>
+<p>您可能会说现在的网络更加可靠——事实确实如此。但事情发生了。硬件和软件可能会出现故障——电源、路由器、更新或补丁失败、无线信号弱、网络拥塞、啮齿动物或鲨鱼。是的，鲨鱼： 在发生一系列鲨鱼咬伤事件后，谷歌正在用 Kevlar 加固海底数据电缆。</p>
+<p>还有人方面。人们可以发起 DDOS 攻击，也可以破坏物理设备。</p>
+<p>这是否意味着您需要放弃当前的技术堆栈并使用消息传递系统？可能不会！您需要权衡失败的风险和需要进行的投资。您可以通过投资基础设施和软件来最大限度地减少失败的可能性。在许多情况下，失败是一种选择。但在设计分布式系统时确实需要考虑失败。</p>
+<h2 id="延迟为零">延迟为零</h2>
+<p>内存调用和互联网调用之间存在七个数量级的差异。您的应用程序应该具有网络感知能力。这意味着您应该明确区分本地调用和远程调用。让我们看一下我在代码库中看到的一个示例：</p>
+<pre><code>var viewModel = new ViewModel();
+var documents = new DocumentsCollection();
+foreach (var document in documents)
+{
+    var snapshot = document.GetSnapshot();
+    viewModel.Add(snapshot);
+}
+</code></pre>
+<p>无需进一步检查，这看起来很好。但是，有两个远程调用。第 2 行进行一次调用以获取文档摘要列表。第 5 行有另一个调用，用于检索有关每个文档的更多信息。这是一个经典的Select n+1 问题。为了考虑网络延迟，您应该在一次调用中返回所有必需的数据。一般的建议是本地调用可以细粒度，但远程调用应该更粗粒度。这就是分布式对象和“网络透明性”的想法消亡的原因。但是，尽管每个人都同意分布式对象是一个坏主意，但有些人仍然认为延迟加载始终是一个好主意：</p>
+<pre><code>var employee = EmployeeRepository.GetBy(someCriteria)
+ 
+var department = employee.Department;
+var manager = department.Manager;
+ 
+foreach (var peer in manager.Employees;)
+{
+    // do something
+}
+</code></pre>
+<p>您不会期望属性获取器执行网络调用。但是，每个“。” 上面代码中的调用实际上可以触发对数据库的访问。</p>
+<h3 id="解决方案-2">解决方案</h3>
+<p>带回您可能需要的所有数据<br>
+如果您进行远程调用，请确保带回您可能需要的所有数据。网络交流不应该是闲聊的。</p>
+<ul>
+<li>
+<p>让数据更接近客户<br>
+另一种可能的解决方案是将数据移至更靠近客户端的位置。如果您使用云，请根据客户的位置仔细选择可用区域。缓存还可以帮助减少网络调用的数量。对于静态内容，内容交付网络 (CDN) 是另一个不错的选择。</p>
+</li>
+<li>
+<p>反转数据流<br>
+删除远程调用的另一个选择是反转数据流。我们可以使用 Pub/Sub 并将数据存储在本地，而不是查询其他服务。这样，我们就可以在需要时获得数据。当然，这会带来一些复杂性，但它可以成为工具箱中的一个好工具。</p>
+</li>
+</ul>
+<h3 id="结论-2">结论</h3>
+<p>尽管延迟在 LAN 中可能不是问题，但当您转移到 WAN 或 Internet 时，您会注意到延迟。这就是为什么将网络调用与内存调用明确分开很重要。采用微服务架构模式时应该牢记这一点。您不应该仅仅用远程调用来代替本地调用。这很可能会将您的系统变成一个分布式的大泥球。</p>
+<h2 id="带宽是无限的">带宽是无限的</h2>
+<p>带宽是网络在一段时间内发送数据的能力。到目前为止，我还没有发现它是一个问题，但我可以理解为什么它在某些情况下可能是一个问题。尽管带宽随着时间的推移而提高，但我们发送的数据量也增加了。视频流或 VoIP 比通过网络传递简单 DTO 的应用程序需要更多的带宽。带宽对于移动应用程序来说更为重要，因此开发人员在设计后端 API 时需要考虑这一点。</p>
+<p>错误地使用 ORM 也会造成伤害。我见过开发人员在查询中过早调用 .ToList() 的示例，从而将整个表加载到内存中。</p>
+<h3 id="解决方案-3">解决方案</h3>
+<ul>
+<li>领域驱动设计模式<br>
+那么我们如何确保不会带来太多数据呢？领域驱动设计模式可以帮助：<br>
+首先，您不应该追求单一的、企业范围的域模型。您应该将域划分为有界上下文。<br>
+为了避免有界上下文中出现大型且复杂的对象图，您可以使用聚合模式。聚合确保一致性并定义事务边界。<br>
+命令和查询职责分离<br>
+我们有时会加载复杂的对象图，因为我们需要在屏幕上显示它的一部分。如果我们在很多地方这样做，我们最终会得到一个庞大而复杂的模型，对于写作和阅读来说都是次优的。另一种方法是使用命令和查询职责分离——CQRS。这意味着将领域模型一分为二：</li>
+</ul>
+<p>写入模型将确保不变性成立并且数据一致。由于写入模型不关心视图问题，因此它可以保持较小且集中。<br>
+读取模型针对视图问题进行了优化，因此我们可以检索特定视图（例如应用程序中的屏幕）所需的所有数据。</p>
+<h3 id="结论-3">结论</h3>
+<p>第二个谬论（延迟不为 0）和第三个谬论（带宽无限）之间存在着矛盾。您应该传输更多数据以最大程度地减少网络往返次数。您应该传输较少的数据以最大限度地减少带宽使用。您需要平衡这两种力量并找到通过线路发送的适量数据。</p>
+<p>尽管您可能不会经常遇到带宽限制，但考虑传输的数据很重要。数据越少越容易理解。更少的数据意味着更少的耦合。因此，仅传输您可能需要的数据。</p>
+<h2 id="网络是安全">网络是安全</h2>
+<p>这一假设比其他假设得到了更多的媒体报道。您的系统的安全程度取决于您最薄弱的环节。坏消息是分布式系统中有很多链接。您正在使用 HTTPS，除非与不支持它的第三方旧系统进行通信。您正在检查自己的代码，寻找安全问题，但正在使用可能存在风险的开源库。OpenSSL 漏洞允许人们窃取受 SSL/TLS 保护的数据。Apache Struts 中的一个错误允许攻击者在服务器上执行代码。即使您正在防范所有这些，仍然存在人为因素。恶意 DBA 可能会“放错”数据库备份。今天的攻击者手中拥有大量的计算能力和足够的耐心。因此，问题不在于他们是否会攻击您的系统，而在于何时攻击。</p>
+<h3 id="解决方案-4">解决方案</h3>
+<ul>
+<li>
+<p>纵深防御<br>
+您应该使用分层方法来保护您的系统。您需要在网络、基础设施和应用程序级别进行不同的安全检查。</p>
+</li>
+<li>
+<p>安全心态<br>
+设计系统时请牢记安全性。 过去 5 年来，十大漏洞列表没有太大变化。您应该遵循安全软件设计的最佳实践，并检查代码是否存在常见的安全缺陷。您应该定期搜索第三方库以查找新漏洞。常见漏洞和暴露列表可以提供帮助。</p>
+</li>
+<li>
+<p>威胁建模<br>
+威胁建模是识别系统中可能的安全威胁的系统方法。您首先要确定系统中的所有资产（数据库中的用户数据、文件等）以及它们的访问方式。之后，您确定可能的攻击并开始执行它们。我建议阅读高级 API 安全性中的第 2 章 ，以更好地概述威胁建模。</p>
+</li>
+</ul>
+<h2 id="结论-4">结论</h2>
+<p>唯一安全的系统是断电的、不连接到任何网络的系统（理想情况下浇铸在混凝土块中）。这是一个多么有用的系统呀！事实是，安全既困难又昂贵。分布式系统中有很多组件和链接，其中每一个都可能成为恶意用户的目标。企业需要平衡攻击的风险和概率与实施预防机制的成本。</p>
+<p>攻击者拥有大量的耐心和计算能力。我们可以通过使用威胁建模来防止某些类型的攻击，但我们不能保证 100% 的安全。因此，最好向企业明确这一点，共同决定在安全方面投资多少，并制定安全漏洞发生时的计划。</p>
+<h2 id="拓扑不变">拓扑不变</h2>
+<p>网络拓扑一直在变化。有时它会因意外原因而发生变化——当您的应用程序服务器出现故障而您需要更换它时。很多时候这是故意的——在新服务器上添加新进程。如今，随着云和容器的兴起，这一点更加明显。弹性扩展（根据工作负载添加或删除服务器的能力）需要一定程度的网络敏捷性。</p>
+<h3 id="解决方案-5">解决方案</h3>
+<ul>
+<li>抽象网络的物理结构<br>
+您需要做的第一件事是抽象网络的物理结构。您可以通过多种方式来做到这一点：</li>
+</ul>
+<p>1 停止对 IP 进行硬编码 – 您应该更喜欢使用主机名。通过使用 URI，我们依靠 DNS 将主机名解析为 IP。<br>
+2 当 DNS 不够用时（例如，当您需要映射 IP 和端口时），请使用发现服务。<br>
+3 服务总线框架还可以提供位置透明性。</p>
+<ul>
+<li>
+<p>无价值的，而非重要的<br>
+通过将您的服务器视为没有价值的，而不是重要的，您可以确保没有服务器是不可替代的。这一点智慧可以帮助您进入正确的心态：任何服务器都可能发生故障（从而改变拓扑），因此您应该尽可能地实现自动化。</p>
+</li>
+<li>
+<p>测试<br>
+最后一条建议是测试你的假设。停止服务或关闭服务器并查看您的系统是否仍在运行。Netflix 的Chaos Monkey等工具通过随机关闭生产环境中的虚拟机或容器，将这一点提升了一个档次。通过解决这个问题，您就会更有动力去构建一个更具弹性的系统来处理拓扑变化。</p>
+</li>
+</ul>
+<h3 id="结论-5">结论</h3>
+<p>十年前，大多数拓扑变化并不那么频繁。但当它发生时，它可能发生在生产中并导致一些停机时间。如今，随着云和容器的兴起，这种谬论很难被忽视。您需要为失败做好准备并对其进行测试。不要等待它在生产中发生！</p>
+<h2 id="有一名管理员">有一名管理员</h2>
+<p>嗯，这一点看起来很明显。当然，没有一个人知道一切。这是一个问题吗？只要应用程序运行顺利，就不是这样。但是，当出现问题时，您需要修复它。因为有太多人接触过该应用程序，所以知道如何解决问题的人可能并不在那里。</p>
+<p>有很多事情可能会出错。一个例子是配置。当今的应用程序将配置存储在多个存储中：配置文件、环境变量、数据库、命令行参数。没有人知道每个可能的配置值的效果是什么。</p>
+<p>另一件可能出错的事情是系统升级。分布式应用程序有许多移动部件，您需要确保它们同步。例如，您需要确保当前版本的代码适用于当前版本的数据库。如今，人们关注的是 DevOps 和持续交付。但支持零停机部署并非易事。</p>
+<p>但是，至少这些事情都在你的掌控之中。许多应用程序与第三方系统交互。这意味着，如果它们下降，您无能为力。因此，即使您的系统有一名管理员，您仍然无法控制第 3 方系统。</p>
+<h3 id="解决方案-6">解决方案</h3>
+<ul>
+<li>
+<p>每个人都应该对发布过程负责<br>
+这意味着从一开始就让运维人员或系统管理员参与其中。理想情况下，他们应该成为团队的一部分。尽早让系统管理员了解您的进度可以帮助您发现限制。例如，生产环境可能具有与开发环境不同的配置、安全限制、防火墙规则或可用端口。</p>
+</li>
+<li>
+<p>记录和监控<br>
+系统管理员应该拥有正确的工具来报告错误和管理问题。您应该从一开始就考虑监控。分布式系统应该有集中式日志记录。访问十个不同服务器上的日志来调查问题并不是一种可接受的方法。</p>
+</li>
+<li>
+<p>解耦<br>
+您应该努力在系统升级期间尽量减少停机时间。这意味着您应该能够独立升级系统的不同部分。通过使组件向后兼容，您可以在不同时间更新服务器和客户端。</p>
+</li>
+</ul>
+<p>通过在组件之间放置队列，您可以暂时解耦它们。这意味着，例如，即使后端关闭，Web 服务器仍然可以接受请求。</p>
+<ul>
+<li>隔离第 3 方依赖项<br>
+您应该以不同于您拥有的组件的方式对待您无法控制的系统。这意味着让您的系统对第三方故障更具弹性。您可以通过引入抽象层来减少外部依赖项的影响。这意味着当第 3 方系统出现故障时，您查找错误的地方就会减少。</li>
+</ul>
+<h3 id="结论-6">结论</h3>
+<p>要解决这个谬论，您需要使您的系统易于管理。DevOps、日志记录和监控可以提供帮助。您还需要考虑系统的升级过程。如果升级需要数小时的停机时间，则您无法部署每个冲刺。没有一个管理员，因此每个人都应该对发布过程负责。</p>
+<h2 id="运输成本为零">运输成本为零</h2>
+<p>这个谬论与第二个谬论有关——延迟为零。通过网络传输东西是有代价的，包括时间和资源。如果第二个谬论讨论的是时间方面，那么谬论#7 则解决资源消耗问题。</p>
+<p>这个谬论有两个不同的方面：</p>
+<ul>
+<li>
+<p>网络基础设施的成本<br>
+网络基础设施是有成本的。服务器、SAN、网络交换机、负载平衡器以及维护这些设备的人员——所有这些都需要花钱。如果您的系统是在本地部署的，那么您需要预先支付此价格。如果您使用云，那么您只需为使用的内容付费 – 但您仍然需要为其付费。</p>
+</li>
+<li>
+<p>序列化/反序列化的成本<br>
+这个谬论的第二个方面是在传输层和应用层之间传输数据的成本。序列化和反序列化会消耗CPU时间，因此需要花钱。如果您的应用程序部署在本地，并且您不主动监控资源消耗，则此成本在某种程度上是隐藏的。但如果您的应用程序部署在云中，这种成本就非常明显，因为您要为使用的内容付费。</p>
+</li>
+</ul>
+<h3 id="解决方案-7">解决方案</h3>
+<p>对于基础设施的成本，您无能为力。您只能确保尽可能有效地使用它。SOAP 或 XML 比 JSON 更昂贵。JSON 比 Google 的 Protocol Buffers 等二进制协议更昂贵。根据系统的类型，这可能或多或少重要。例如，对于与视频流或 VoIP 相关的应用程序来说，传输成本更为重要。</p>
+<h3 id="结论-7">结论</h3>
+<p>您应该注意传输成本以及应用程序正在执行的序列化和反序列化量。这并不意味着您应该进行优化，除非有必要。您应该对资源消耗进行基准测试和监控，并确定运输成本是否对您来说是一个问题。</p>
+<h2 id="网络是同构的">网络是同构的</h2>
+<p>同质网络是使用相似配置和相同通信协议的计算机网络。拥有具有相似配置的计算机是一项很难完成的任务。例如，您几乎无法控制哪些移动设备可以连接到您的应用程序。这就是为什么关注标准协议很重要。</p>
+<h3 id="解决方案-8">解决方案</h3>
+<p>您应该选择标准格式以避免供应商锁定。这可能意味着 XML、JSON 或 Protocol Buffers。有很多选项可供选择。</p>
+<h3 id="结论-8">结论</h3>
+<p>您需要确保系统的组件可以相互通信。使用专有协议会损害应用程序的互操作性。</p>
+<p>设计分布式系统很困难<br>
+这些谬论早在20多年前就已发表。但它们在今天仍然适用，其中一些比其他更重要。我认为当今许多开发人员都知道它们，但我们编写的代码并没有显示这一点。</p>
+<p>我们必须接受这些事实：网络不可靠、不安全并且需要花钱。带宽有限。网络的拓扑将会改变。其组件的配置方式不同。意识到这些限制将有助于我们设计更好的分布式系统。<br>
+[原文地址]（https://www.simpleorientedarchitecture.com/8-fallacies-of-distributed-systems/）</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E7%BD%91%E7%BB%9C%E6%98%AF%E5%8F%AF%E9%9D%A0">网络是可靠</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BB%B6%E8%BF%9F%E4%B8%BA%E9%9B%B6">延迟为零</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-2">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA-2">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B8%A6%E5%AE%BD%E6%98%AF%E6%97%A0%E9%99%90%E7%9A%84">带宽是无限的</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-3">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA-3">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BD%91%E7%BB%9C%E6%98%AF%E5%AE%89%E5%85%A8">网络是安全</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-4">解决方案</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BB%93%E8%AE%BA-4">结论</a></li>
+<li><a href="#%E6%8B%93%E6%89%91%E4%B8%8D%E5%8F%98">拓扑不变</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-5">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA-5">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E6%9C%89%E4%B8%80%E5%90%8D%E7%AE%A1%E7%90%86%E5%91%98">有一名管理员</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-6">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA-6">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E8%BF%90%E8%BE%93%E6%88%90%E6%9C%AC%E4%B8%BA%E9%9B%B6">运输成本为零</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-7">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA-7">结论</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BD%91%E7%BB%9C%E6%98%AF%E5%90%8C%E6%9E%84%E7%9A%84">网络是同构的</a>
+<ul>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88-8">解决方案</a></li>
+<li><a href="#%E7%BB%93%E8%AE%BA-8">结论</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-options-functional-options-pattern/">
+              <span class="post-title">
+                go micro 源码阅读-Options [Functional Options Pattern]&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

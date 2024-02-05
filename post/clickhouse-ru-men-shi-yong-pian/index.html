@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>Clickhouse 入门使用篇 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="Clickhouse 入门使用篇 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="Clickhouse 入门使用篇" />
+  <meta property="og:url" content="https://nomagic.cc/post/clickhouse-ru-men-shi-yong-pian/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/XEuTzWD0l/" class="tag">OLAP</a>
+                
+                <a href="https://nomagic.cc/tag/7WO-7vE-Pv/" class="tag">DB</a>
+                
+              </span>
+              <h1>Clickhouse 入门使用篇</h1>
+              <span class="meta">
+                Posted on
+                2020-08-12，24 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="简介">简介</h1>
+<p>ClickHouse（Click Stream,Data Warehouse）是一个用于联机分析(<a href="https://www.cnblogs.com/htfeng/p/9931674.html">OLAP</a>)的列式数据库管理系统。<br>
+其独立于Hadoop大数据体系，最核心的特点是极致压缩率和极速查询性能。同时，ClickHouse支持SQL查询，且查询性能好，特别是基于大宽表的聚合分析查询性能非常优异，比其他分析型数据库速度快一个数量级</p>
+<h1 id="特性">特性</h1>
+<ul>
+<li>列式存储<br>
+对于分析类查询，大部分事件只需要读取特定的列。在列式数据库中你可以只读取你需要的数据。例如，如果只需要读取100列中的5列，这将帮助你最少减少20倍的<strong>I/O消耗</strong>。由于数据总是打包成批量读取的，所以<strong>压缩是非常容易</strong>的。由于数据被压缩，减少IO的读取量，也使跟多的数据更容易被系统缓存。[<a href="https://xp-zhao.cn/2019/03/25/CPU-%E7%A1%AC%E7%9B%98-%E7%BD%91%E7%BB%9C%E9%80%9F%E5%BA%A6%E5%AF%B9%E6%AF%94/">CPU 磁盘速度对比</a>]</li>
+<li>极致压缩<br>
+在磁盘空间和CPU消耗之间进行不同权衡的高效通用压缩编解码器之外，针对特定类型数据的专用编解码器。</li>
+<li>DBMS功能：<br>
+几乎覆盖了标准 SQL 的大部分语法，包括 DDL 和 DML</li>
+<li>多样化引擎<br>
+决定了数据的存放和读取方式，从而也就决定了IO效率。</li>
+<li>高吞吐的写入能力（合理使用的情况下）<br>
+批量异步写入，按照数据分片的方式合并数据，列式存储所以是顺序的IO操作</li>
+<li>多节点多核并行处理<br>
+单条SQL可以完全利用整机CPU[mysql MyISAM nor InnoDB 是单SQL单线程模式 ];数据分片，化整为零，从而利用多核的优势。</li>
+<li>支持向量化处理</li>
+</ul>
+<h1 id="限制">限制</h1>
+<p>1.不支持事务（大数据量的事务会降低系统吞吐）。<br>
+2.不支持直接的Update/Delete操作，需要使用alter来更新或删除。<br>
+3.只有主键没有索引，并且主键使用稀疏索引的结构实现<br>
+4.不支持高并发的操作，并发低，并行高。ClickHouse的目标是保证单条查询的相应足够快，单条SQL可以跑满一大半的CPU，多shard多parts的并行操作，一条SQL有可能把CPU、内存、磁盘IO拉到很高的利用度。</p>
+<h1 id="集群架构与部署设计">集群架构与部署设计</h1>
+<p>ClickHouse不同于Elasticsearch、HDFS这类主从架构的分布式系统，它采用无中心架构模式，集群中每个节点角色对等，客户端可以访问任意一个节点发起请求。</p>
+<p><strong>通过分片（Shard）来水平扩展集群，将总数据水平分成M份，每个分片保存其中的一份数据避开单节点的性能瓶颈。</strong></p>
+<p><strong>通过副本（Replication）来保障集群的高可用，即每个分片拥有若干个数据一样的副本。</strong><br>
+可以设置不同的分片配置不同数量的副本。即分片0可能有1个副本，分片1可能有3个副本。</p>
+<p><strong>实现层面通过分布式表和本地表来完成，分布式表不存储数据，本地表存储数据，分布式表把请求转发到对应的本地表;【可以理解成常规的分表，分布式表是一个分表的访问中间件，代理转发作用】</strong></p>
+<p>分片机制提供的是一种数据分割的逻辑视图，具体到物理层面的存储由副本来承载，副本是分片在物理方面的呈现，一个分片下可以有多个副本，由ReplicatedMergeTree复制表系列引擎实现同一分片下不同副本之间的数据同步，借助ZooKeeper实现数据的一致性。<br>
+<img src="https://nomagic.cc/post-images/1696916562369.png" alt="" loading="lazy"><br>
+集群部署和节点划分，完全通过xml配置文件以声明的方式来实现。<br>
+一个副本节点的配置例子和说明</p>
+<pre><code class="language-&lt;yandex&gt;">&lt;clickhouse_remote_servers&gt;
+// 声明一个集群 集群名称是ck_cluster
+&lt;ck_cluster&gt;
+// 数据分片1
+&lt;shard&gt;
+//此参数设置为«true»时，写操作只选一个正常的副本写入数据。如果分布式表的子表是复制表(*ReplicaMergeTree)，请使用此方案。换句话说，这其实是把数据的复制工作交给实际需要写入数据的表本身而不是分布式表。
+//若此参数设置为«false»（默认值），写操作会将数据写入所有副本。实质上，这意味着要分布式表本身来复制数据。这种方式不如使用复制表的好，因为不会检查副本的一致性，并且随着时间的推移，副本数据可能会有些不一样.
+&lt;internal_replication&gt;true&lt;/internal_replication&gt;
+//副本1
+&lt;replica&gt;
+&lt;host&gt;ck_node1&lt;/host&gt;
+&lt;port&gt;9011&lt;/port&gt;
+&lt;user&gt;default&lt;/user&gt;
+&lt;password&gt;V0JusUK7b6pHTqRX&lt;/password&gt;
+&lt;/replica&gt;
+//副本2
+&lt;replica&gt;
+&lt;host&gt;ck_node3&lt;/host&gt;
+&lt;port&gt;9011&lt;/port&gt;
+&lt;user&gt;default&lt;/user&gt;
+&lt;password&gt;V0JusUK7b6pHTqRX&lt;/password&gt;
+&lt;/replica&gt;
+&lt;/shard&gt;
+// 数据分片2
+&lt;shard&gt;
+&lt;internal_replication&gt;true&lt;/internal_replication&gt;
+&lt;replica&gt;
+&lt;host&gt;ck_node2&lt;/host&gt;
+&lt;port&gt;9011&lt;/port&gt;
+&lt;user&gt;default&lt;/user&gt;
+&lt;password&gt;V0JusUK7b6pHTqRX&lt;/password&gt;
+&lt;/replica&gt;
+&lt;replica&gt;
+&lt;host&gt;ck_node4&lt;/host&gt;
+&lt;port&gt;9011&lt;/port&gt;
+&lt;user&gt;default&lt;/user&gt;
+&lt;password&gt;V0JusUK7b6pHTqRX&lt;/password&gt;
+&lt;/replica&gt;
+&lt;/shard&gt;
+&lt;/ck_cluster&gt;
+&lt;/clickhouse_remote_servers&gt;
+&lt;zookeeper-servers&gt;
+&lt;node index=&quot;1&quot;&gt;
+&lt;host&gt;10.86.0.11&lt;/host&gt;
+&lt;port&gt;2181&lt;/port&gt;
+&lt;/node&gt;
+&lt;node index=&quot;2&quot;&gt;
+&lt;host&gt;10.86.0.12&lt;/host&gt;
+&lt;port&gt;2181&lt;/port&gt;
+&lt;/node&gt;
+&lt;node index=&quot;3&quot;&gt;
+&lt;host&gt;10.86.0.16&lt;/host&gt;
+&lt;port&gt;2181&lt;/port&gt;
+&lt;/node&gt;
+&lt;/zookeeper-servers&gt;
+&lt;macros&gt;//影响表在zookeeper中的路径，表明当前是哪个分片哪个副本即可
+&lt;shard&gt;01&lt;/shard&gt;
+&lt;replica&gt;01-01&lt;/replica&gt;
+&lt;/macros&gt;
+&lt;settings&gt;
+&lt;insert_distributed_sync&gt;1&lt;/insert_distributed_sync&gt;
+&lt;/settings&gt;
+&lt;/yandex&gt;
+</code></pre>
+<h1 id="和zookeeper的关系">和zookeeper的关系</h1>
+<h2 id="存储元数据信息">存储元数据信息</h2>
+<h2 id="执行分布式ddl-添加-on-cluster-关键字">执行分布式DDL （添加 on cluster 关键字）</h2>
+<p>ClickHouse对库、表的管理都是在存储节点级别独立的，集群中各节点之间的库、表元数据信息没有一致性约束.<br>
+ClickHouse集群的每个节点都会把收到的分布式执行DDL请求放入到一个公共Zookeeper任务队列中然后每个节点的后台线程会依次任务队列里的DDL（<br>
+/ClickHouse/task_queue/ddl），保证了所有分布式DDL的串行执行顺序,不会引起整个集群的节点不同节点的元数据不一致。<br>
+利用Zookeeper序列自增节点（Sequence Znodes）的特性来实现同步环境下的串行提交任务。每个节点下生成 status类型节点(<br>
+active Znode用来管理当前有多少节点正在执行这个DDL,finished Znode 表示已经执行成功的节点，节点执行完成有active 迁移到finished<br>
+)来维护每个节点的DDL执行状态，保证DDL在集群中每个节点执行成功。【<strong>同时也会导致单个节点有问题导致DDL Task 无法执行成功，然后堵塞掉整个集群的DDL任务执行</strong>】<br>
+由上面可以看出 这里zookeeper 主要时记录任务状态，数据量较小，不会构成zookeeper的压力点。</p>
+<h2 id="replicate-主从同步">Replicate 主从同步</h2>
+<p>Merge/Mutation 操作引发同一个sharding之间的节点需要进行数据同步。每一个数据分片变更过程和Zookeeper交互的次数不下10次，如果一次Batch数据写入数据跨10个数据分区的话那就是100次数据交互（<strong>数据写入前应该进行预聚合，争取同一批次写入的数据的分片数要少</strong>），并且会提交很多的logEntry到对应表的同步队列下，节点数量增多，如果节点数量增加到很高的状态，会使得zookeeper占用更多的内存，引发本身的full gc ,这些节点又在短时间内无法合并清理不掉的，就会不停的gc,然后引发 zookeeper的session过期，任务超时等各种问题，</p>
+<p><strong>可以看出节点数据同步构成了clickhouse对zookeeper的主要压力。</strong></p>
+<h1 id="表引擎">表引擎</h1>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1696916577207.png" alt="" loading="lazy"></figure>
+<h2 id="常用表引擎介绍">常用表引擎介绍</h2>
+<h2 id="kafka">Kafka</h2>
+<p>为了能让 ClickHouse 消费 Kafka 数据，我们需要三张表：首先需要一张存数据的表也就是 MergeTree；然后需要一张 Kafka 表，它负责描述 Topic、消费数据和解析数据；最后需要一个物化视图去把两张表关联起来，它也描述了数据的流向</p>
+<pre><code class="language-CREATE">ENGINE = Kafka
+SETTINGS
+kafka_cluster = 'cluster'
+kafka_topic_list = 'topic-xxx'
+kafka_group_name = 'group-xxx'
+kafka_format = 'JSONEachRow';
+CREATE MATERIALIZED VIEW consuter_mview to data_table
+AS SELECT * FROM consumer_t
+CREATE TABLE data_table (col coltype ....)
+ENGINE = MergeTree PARTITION BY ... ORDER BY ...;
+</code></pre>
+<p><strong>当无法对客户端进行写入限流的时候（以防同一个时刻写入数据过多，导致待合并分片过多拖垮系统）</strong><br>
+业务方可以把数据写写入kafka，然后有kafka引擎去消费topic，导入到库中。</p>
+<h2 id="mergetree系列">MergeTree系列</h2>
+<h3 id="mergetree">MergeTree</h3>
+<p>主要用于海量数据分析，支持数据分区、存储有序、主键索引、稀疏索引、数据TTL等。MergeTree支持所有ClickHouse SQL语法，虽然有主键，但是主键是为了快速读取数据用的，不保证唯一性。<br>
+ClickHouse中最常用也是最基础的表引擎为MergeTree，在它的功能基础上添加特定功能就构成了MergeTree系列引擎【<strong>从下面的介绍可以看到附加的操作只有在分片合并的时候才会执行</strong>】</p>
+<h3 id="replacingmergetree">ReplacingMergeTree</h3>
+<p><strong>用来解决当出现主键相同的记录时，保留哪一条数据的问题</strong>。ReplacingMergeTree就是在MergeTree的基础上加入了去重的功能，根据特定的算法，决定仅保留主键相同的哪一条数据。<strong>但它仅会在合并分区时，去删除重复的数据</strong><br>
+可以收动optimize,大数据量情况下影响系统性能。</p>
+<h3 id="collapsingmergetree">CollapsingMergeTree</h3>
+<p><strong>用来折叠掉不再需要的记录</strong><br>
+ClickHouse实现了CollapsingMergeTree来消除ReplacingMergeTree的限制。该引擎要求在建表语句中指定一个标记列Sign和特定的<a href="https://clickhouse.com/docs/zh/engines/table-engines/mergetree-family/collapsingmergetree/">折叠算法</a>来达到数据消除的效果<br>
+使用的限制：<br>
+需要对业务代码进行改造<br>
+写入时： 执行删除操作需要写入取消行，而取消行中需要包含与原始状态行一样的数据（Sign列除外）。所以在应用层需要记录原始状态行的值，或者在执行删除操作前先查询数据库获取原始状态行；<br>
+查询时： 由于后台Compaction时机无法预测，在发起查询时，状态行和取消行可能尚未被折叠；另外，ClickHouse无法保证primary key相同的行落在同一个节点上，不在同一节点上的数据无法折叠。因此在进行count(* )、sum(col)等聚合计算时，可能会存在数据冗余的情况。为了获得正确结果，业务层需要改写SQL，将count()、sum(col)分别改写为sum(Sign)、sum(col * Sign)。<br>
+数据状态维护成本高： CollapsingMergeTree虽然解决了主键相同的数据即时删除的问题，但是状态持续变化且<strong>多线程并行写入情况下，状态行与取消行位置可能乱序，导致无法正常折叠</strong>。</p>
+<h3 id="versionedcollapsingmergetree">VersionedCollapsingMergeTree</h3>
+<p><strong>CollapsingMergeTree 并发环境下的版本</strong><br>
+VersionedCollapsingMergeTree为了解决CollapsingMergeTree乱序写入情况下无法正常折叠问题，VersionedCollapsingMergeTree表引擎在建表语句中新增了一列Version，用于在乱序情况下记录状态行与取消行的对应关系。主键相同，且Version相同、Sign相反的行，在Compaction时会被删除。与CollapsingMergeTree类似， 为了获得正确结果，业务层需要改写SQL，将count()、sum(col)分别改写为sum(Sign)、sum(col * Sign)。</p>
+<h3 id="summingmergetree">SummingMergeTree</h3>
+<p>ClickHouse通过SummingMergeTree来支持对主键列进行预先聚合。在后台合并数据分片时，会将主键相同的多行进行sum求和，然后使用一行数据取而代之，从而大幅度降低存储空间占用，提升聚合计算性能。<br>
+值得注意的是：ClickHouse只在分片合并时才会进行数据的预先聚合，而执行时机无法预测，所以可能存在部分数据已经被预先聚合、部分数据尚未被聚合的情况。因此，在执行聚合计算时，SQL中仍需要使用GROUP BY子句。在预先聚合时，ClickHouse会对主键列之外的其他所有列进行预聚合。如果这些列是可聚合的（比如数值类型），则直接sum；如果不可聚合（比如String类型），则随机选择一个值。通常建议将SummingMergeTree与MergeTree配合使用，使用MergeTree来存储具体明细，使用SummingMergeTree来存储预先聚合的结果加速查询。</p>
+<h3 id="aggregatingmergetree">AggregatingMergeTree</h3>
+<p>AggregatingMergeTree也是预先聚合引擎的一种，用于提升聚合计算的性能。与SummingMergeTree的区别在于：SummingMergeTree对非主键列进行sum聚合，而AggregatingMergeTree则可以指定各种聚合函数。AggregatingMergeTree的语法比较复杂，需要结合物化视图或ClickHouse的特殊数据类型AggregateFunction一起使用。在insert和select时，也有独特的写法和要求：写入时需要使用-State语法，查询时使用-Merge语法。</p>
+<h3 id="物化视图">物化视图</h3>
+<p>主要针对于OLAP场景，为业务方提供稳定高效的查询服务。在业务场景下，实时事件流上报可能会在不同的日志，以不同的格式、途径写入到clickhouse。在之前的使用中，通过查询多个日志表join实现多个指标的整合。用传统JOIN方式，我们遇到如下困难: 1.每个查询会有非常长的代码，有的甚至1500行、2000行sql，使用和理解上特别痛苦; 2.性能上无法满足业务诉求，日志量大会爆内存不足; 如何将这些数据进行整合，以ClickHouse宽表的方式呈现给上层使用，用户可以在一张表中查到所需的所有指标，避免提供多表带来的代码复杂度和性能开销问题。<br>
+主要有3个方面：</p>
+<ol>
+<li>物化视图的创建、新增维度和指标，聚合函数的使用</li>
+<li>物化视图结合字典的使用；</li>
+<li>通过物化视图组合指标宽表</li>
+</ol>
+<h1 id="常见问题">常见问题</h1>
+<h2 id="too-many-partsxxx-merges-are-processing-significantly-slower-than-inserts">Too many parts(xxx). Merges are processing significantly slower than inserts**</h2>
+<p>插入语句导致本地有太多的分片目录需要合并，每一条插入语句都会根据插入语句生成对应本次写入分片目录，如果文件目录生成过快，merge跟不上就会报这个错误。<br>
+检查插入语句的频次是否过高，是否是批次批次的方式写入，并且每一个批次影响的分片数应该足够小</p>
+<h2 id="memory-limit-for-query-exceededwould-use-937-gib-attempt-to-allocate-chunk-of-301989888-bytes-maximum-931-gib">Memory limit (for query) exceeded:would use 9.37 GiB (attempt to allocate chunk of 301989888 bytes), maximum: 9.31 GiB**</h2>
+<p>内存使用(max_memory_usage)使用的实现，查询被强制KILL<br>
+1）group by, order by , count distinct，join这样的复杂的SQL，查询的空间需要使用大量的内存。<br>
+如果是group by内存不够，推荐配置上max_bytes_before_external_group_by参数，当使用内存到达该阈值，进行磁盘group by<br>
+如果是order by内存不够，推荐配置上max_bytes_before_external_sort参数，当使用内存到达该阈值，进行磁盘order by如果是count distinct内存不够，推荐使用一些预估函数(如果业务场景允许)，这样不仅可以减少内存的使用同时还会提示查询速度<br>
+对于JOIN场景，我们需要注意的是clickhouse在进行JOIN的时候都是将&quot;右表&quot;进行多节点的传输的(右表广播)</p>
+<ol start="2">
+<li>当前查询使用内存不高的情况下，确认是否是分区合并占用掉了内存，查看system.merges/system.muations确认情况。</li>
+</ol>
+<h2 id="table-readonly">table readonly</h2>
+<p>1, zk 的响应超时，table 可能变成只读模式，整体的zk的压力或者当前表下znode节点结果过多</p>
+<p>2, zk 中的元数据信息不正确，无法完成数据同步</p>
+<h2 id="cannot-create-table-from-metadata-file-varlibclickhousemetadataxxxxxsql-error-coordinationexception-cant-get-data-for-node-clickhousetablesxxcluster_xxx-01xxxxmetadata-node-doesnt-exist-no-node-stack-trace">Cannot create table from metadata file /var/lib/clickhouse/metadata/xx/xxx.sql, error: Coordination::Exception: Can’t get data for node /clickhouse/tables/xx/cluster_xxx-01/xxxx/metadata: node doesn’t exist (No node), stack trace:**</h2>
+<p>zk中元数据丢失导致节点无法启动<br>
+将/var/lib/clickhouse/metadata/ 下的SQL与/var/lib/clickhouse/data/xxxx/ 下的数据备份之后删除<br>
+启动数据库；<br>
+创建与原来表数据结构的MergeTree表；<br>
+将之前分布式表的数据文件夹复制到新表的数据目录中；<br>
+重启数据库；<br>
+重新创建原结构本地表；<br>
+重新创建原结构分布式表；<br>
+insert into [分布式表] select * from [MergeTree表]。</p>
+<h2 id="cannot-execute-replicated-ddl-query-on-leader">Cannot execute replicated DDL query on leader**</h2>
+<p>DDL语句由于超时无法执行<br>
+通过 system.replicas 表查看当前表的leader节点，在leader节点日志中搜索DDLWorker，找到具体的query-&lt;query_number&gt;日志、<br>
+或者通过下面的SQL语句查看当前堵住的任务，哪一个节点无法完成，然后在对应的节点下查看具体日志<br>
+SELECT name, numChildren as success_nodes FROM system.zookeeper WHERE path = '/clickhouse/task_queue/ddl/query-0000001000/'</p>
+<h2 id="not-executing-log-entry-is-greater-than-the-current-maximum">Not executing log entry ... is greater than the current maximum</h2>
+<p>当前副本合并数量过多，检查当前是否是有小批次的写入或者写入影响到的分片过多，导致用于合并的磁盘空间被完全占用，可以提高max_bytes_to_merge_at_max_space_in_pool这个值的配置，提高用于合并的磁盘空间</p>
+<h2 id="内存增高直至节点oom">内存增高直至节点OOM</h2>
+<p>在没有使用大内存SQL查询的情况下，陷入内存增高OOM节点重启的循环， 先调整max_server_memory_usage_to_ram_ratio参数现在整个节点可使用的最大内存，查看system.merges表看当前正在合并的分片的情况，有可能是由的数据分片数据过大，合并时拉入内存时撑爆内存</p>
+<h2 id="分片数据错误无法完成合并一直占用合并队列后续数据无法写入">分片数据错误，无法完成合并，一直占用合并队列，后续数据无法写入</h2>
+<p>查看表system.replication_queue里的正在执行同步和merge的情况，<br>
+把对应无法完成的任务从队列中删除，<br>
+<code>clickhouse-client --query &quot;SELECT replica_path || '/queue/' || node_name FROM system.replication_queue JOIN system.replicas USING (database, table) WHERE create_time &lt; now() - INTERVAL 1 DAY AND type = 'MERGE_PARTS' AND last_exception LIKE '%No active replica has part%'&quot; | while read i; do zk-cli.py --host ... -n $i rm; done</code><br>
+然后重启同步<br>
+SYSTEM RESTART REPLICAS<br>
+//这个操作会重置 ReplicatedMergeTree表的Zookeeper会话状态。以Zookeeper为参照，对比当前状态，有需要的情况下将任务添加到ZooKeeper队列。在复制表和需要同步的parts比较多的情况下，基本上无法完成。<br>
+如果不行，就只能重启节点重置同步状态。</p>
+<h2 id="clickhouse重启时默认执行-chown-101-varlibclickhouse耗时很长导致启动需要花很久服务才可用">clickhouse重启时，默认执行 chown 101 /var/lib/clickhouse,耗时很长,导致启动需要花很久服务才可用</h2>
+<p>设置环境变量 CLICKHOUSE_DO_NOT_CHOWN=1</p>
+<h1 id="优化">优化</h1>
+<h2 id="数据类型选择">数据类型选择</h2>
+<p>1 建表时能用数值型或日期时间型表示的字段就不要用字符串，String类型为非固定长度数据类型，相对于固定长度的数据类型，处理效率更低。<br>
+2 ClickHouse底层将DateTime存储为时间戳Long类型，但不建议存储Long类型，因为DateTime不需要经过函数转换处理，执行效率高、可读性好。<br>
+3 Nullable类型几乎总是会拖累性能，因为存储Nullable列时需要创建一个额外的文件来存储NULL的标记，并且Nullable列无法被索引。因此除非极特殊情况，应直接使用字段默认值表示空，或者自行指定一个在业务中无意义的值</p>
+<h2 id="分区">分区</h2>
+<p>考虑到Clickhouse的底层存储结构，写入、读取、查询条件预先筛选满足条件的分区，设立合适的分区条件，减少分区的合并操作和提高使用过程中的效率</p>
+<h2 id="主键排序键">主键排序键</h2>
+<p>主键用于生成稀疏索引（Granule中的起始值），排序建用于part内数据排序。<br>
+所以主键序列和Order By序列要排序方式保存一致的（主键序列是和Order By序列保存完全一致的，或者把主键序列定义成Order By序列的部分前缀。），这样数据的一致性较高，压缩性会好。<br>
+2 在CollapsingMergeTree 和 SummingMergeTree 引擎里进行数据合并时会提供额外的处理逻辑。<br>
+在这种情况下，需要执行主键和排序键不同<br>
+通常在使用SummingMergeTree 和 AggregatingMergeTree 引擎时引擎时，表里的列分两种：维度 和 度量 。典型的查询会通过任意的 GROUP BY 对度量列进行聚合并通过维度列进行过滤。由于 SummingMergeTree 和 AggregatingMergeTree 会对排序键相同的行进行聚合，所以把所有的维度放进排序键是很自然的做法。但这将导致排序键中包含大量的列，并且排序键会伴随着新添加的维度不断的更新。【分片变更会更多】<br>
+在这种情况下合理的做法是，只保留少量的列在主键当中用于提升扫描效率，将维度列添加到排序键中。减少分片的变更数量</p>
+<h2 id="join-查询">Join 查询</h2>
+<p>1 当多表联查是，查询的数据仅从其中一张表出时，可考虑用 IN 操作而不是JOIN<br>
+<code>select a.* from a where a.uid in (select uid from b) #不要写成select a.* from a left join b on a.uid=b.uid</code><br>
+2 多表join时要满足小表在右的原则，右表关联时被加载到内存中与左表进行比较，无论是Left join 、Right join 还是 Inner join 永远都是拿着右表中的每一条记录到左表中查找该记录是否存在，所以右表必须是小表。<br>
+3 <a href="https://zhuanlan.zhihu.com/p/377506070">利用GLOBAL JOIN 避免查询放大带来性能损失</a></p>
+<h2 id="写入和删除">写入和删除</h2>
+<p>不要执行单条或小批量删除和插入操作，这样会产生小分区文件，给后台Merge任务带来巨大压力，<br>
+每次写入影响到的分片应该更小，不要一次写入太多分区，或数据写入太快，数据写入太快会导致Merge速度跟不上而报错</p>
+<h1 id="常用表和语句">常用表和语句</h1>
+<p>system.clusters：当前节点关联到的集群信息<br>
+system.crash_log: 堆栈跟踪的致命错误信息。默认情况下，该表在数据库中不存在，仅在发生致命错误时才创建该表<br>
+system.dictionaries: 当前系统中所有的字典<br>
+system.distributed_ddl_queue: 分布式DDL任务队列记录<br>
+system.merges: 当前正在执行的的合并任务<br>
+system.mutations: 当前的mutation任务<br>
+system.replicas: 当前系统的同步表的相关信息<br>
+system.metrics: 当前系统状态监控。<br>
+比如，查看当前可用与合并的磁盘情况</p>
+<pre><code class="language-SELECT">FROM system.metrics
+WHERE metric = 'DiskSpaceReservedForMerge'
+┌─metric────────────────────┬─────value─┬─description──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ DiskSpaceReservedForMerge │ 414118102 │ Disk space reserved for currently running background merges. It is slightly more than the total size of currently merging parts. │
+└───────────────────────────┴───────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>system.processes： 查看当前正在执行的查询任务<br>
+system.events: 查看从系统启动后关键事件的发生次数<br>
+system.settings: 查看当前系统的配置信息<br>
+system.zookeeper: 当前系统在zookeeper中存储的信息，节点路径，子节点数量等信息</p>
+<h2 id="确认当前连接情况">确认当前连接情况</h2>
+<p><code>SELECT * FROM system.metrics WHERE metric LIKE '%Connection</code></p>
+<h2 id="当前正在执行的查询">当前正在执行的查询</h2>
+<p><code>SELECT query_id, user, address, query FROM system.processes ORDER BY query_id;</code></p>
+<h2 id="kill-query">KILL Query</h2>
+<p><code>KILL QUERY WHERE query_id='ff695827-dbf5-45ad-9858-a853946ea140';</code></p>
+<h2 id="慢查询">慢查询</h2>
+<pre><code class="language-SELECT">user,
+client_hostname AS host,
+client_name AS client,
+formatDateTime(query_start_time, '%T') AS started,
+query_duration_ms / 1000 AS sec,
+round(memory_usage / 1048576) AS MEM_MB,
+result_rows AS RES_CNT,
+result_bytes / 1048576 AS RES_MB,
+read_rows AS R_CNT,
+round(read_bytes / 1048576) AS R_MB,
+written_rows AS W_CNT,
+round(written_bytes / 1048576) AS W_MB,
+query
+FROM system.query_log
+WHERE type = 2
+ORDER BY query_duration_ms DESC
+LIMIT 10```
+## 表级别的空间占用
+```select database, \
+table, \
+sum(rows) AS &quot;总行数&quot;, \
+formatReadableSize(sum(data_uncompressed_bytes)) as &quot;原始大小&quot;, \
+formatReadableSize(sum(data_compressed_bytes)) AS &quot;压缩大小&quot;, \
+round((sum(data_compressed_bytes) / sum(data_uncompressed_bytes)) * 100.,2) AS &quot;压缩率/%&quot; \
+from system.parts \
+group by database,table \
+order by database```
+</code></pre>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#%E7%89%B9%E6%80%A7">特性</a></li>
+<li><a href="#%E9%99%90%E5%88%B6">限制</a></li>
+<li><a href="#%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%E4%B8%8E%E9%83%A8%E7%BD%B2%E8%AE%BE%E8%AE%A1">集群架构与部署设计</a></li>
+<li><a href="#%E5%92%8Czookeeper%E7%9A%84%E5%85%B3%E7%B3%BB">和zookeeper的关系</a>
+<ul>
+<li><a href="#%E5%AD%98%E5%82%A8%E5%85%83%E6%95%B0%E6%8D%AE%E4%BF%A1%E6%81%AF">存储元数据信息</a></li>
+<li><a href="#%E6%89%A7%E8%A1%8C%E5%88%86%E5%B8%83%E5%BC%8Fddl-%E6%B7%BB%E5%8A%A0-on-cluster-%E5%85%B3%E9%94%AE%E5%AD%97">执行分布式DDL （添加 on cluster 关键字）</a></li>
+<li><a href="#replicate-%E4%B8%BB%E4%BB%8E%E5%90%8C%E6%AD%A5">Replicate 主从同步</a></li>
+</ul>
+</li>
+<li><a href="#%E8%A1%A8%E5%BC%95%E6%93%8E">表引擎</a>
+<ul>
+<li><a href="#%E5%B8%B8%E7%94%A8%E8%A1%A8%E5%BC%95%E6%93%8E%E4%BB%8B%E7%BB%8D">常用表引擎介绍</a></li>
+<li><a href="#kafka">Kafka</a></li>
+<li><a href="#mergetree%E7%B3%BB%E5%88%97">MergeTree系列</a>
+<ul>
+<li><a href="#mergetree">MergeTree</a></li>
+<li><a href="#replacingmergetree">ReplacingMergeTree</a></li>
+<li><a href="#collapsingmergetree">CollapsingMergeTree</a></li>
+<li><a href="#versionedcollapsingmergetree">VersionedCollapsingMergeTree</a></li>
+<li><a href="#summingmergetree">SummingMergeTree</a></li>
+<li><a href="#aggregatingmergetree">AggregatingMergeTree</a></li>
+<li><a href="#%E7%89%A9%E5%8C%96%E8%A7%86%E5%9B%BE">物化视图</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98">常见问题</a>
+<ul>
+<li><a href="#too-many-partsxxx-merges-are-processing-significantly-slower-than-inserts">Too many parts(xxx). Merges are processing significantly slower than inserts**</a></li>
+<li><a href="#memory-limit-for-query-exceededwould-use-937-gib-attempt-to-allocate-chunk-of-301989888-bytes-maximum-931-gib">Memory limit (for query) exceeded:would use 9.37 GiB (attempt to allocate chunk of 301989888 bytes), maximum: 9.31 GiB**</a></li>
+<li><a href="#table-readonly">table readonly</a></li>
+<li><a href="#cannot-create-table-from-metadata-file-varlibclickhousemetadataxxxxxsql-error-coordinationexception-cant-get-data-for-node-clickhousetablesxxcluster_xxx-01xxxxmetadata-node-doesnt-exist-no-node-stack-trace">Cannot create table from metadata file /var/lib/clickhouse/metadata/xx/xxx.sql, error: Coordination::Exception: Can’t get data for node /clickhouse/tables/xx/cluster_xxx-01/xxxx/metadata: node doesn’t exist (No node), stack trace:**</a></li>
+<li><a href="#cannot-execute-replicated-ddl-query-on-leader">Cannot execute replicated DDL query on leader**</a></li>
+<li><a href="#not-executing-log-entry-is-greater-than-the-current-maximum">Not executing log entry ... is greater than the current maximum</a></li>
+<li><a href="#%E5%86%85%E5%AD%98%E5%A2%9E%E9%AB%98%E7%9B%B4%E8%87%B3%E8%8A%82%E7%82%B9oom">内存增高直至节点OOM</a></li>
+<li><a href="#%E5%88%86%E7%89%87%E6%95%B0%E6%8D%AE%E9%94%99%E8%AF%AF%E6%97%A0%E6%B3%95%E5%AE%8C%E6%88%90%E5%90%88%E5%B9%B6%E4%B8%80%E7%9B%B4%E5%8D%A0%E7%94%A8%E5%90%88%E5%B9%B6%E9%98%9F%E5%88%97%E5%90%8E%E7%BB%AD%E6%95%B0%E6%8D%AE%E6%97%A0%E6%B3%95%E5%86%99%E5%85%A5">分片数据错误，无法完成合并，一直占用合并队列，后续数据无法写入</a></li>
+<li><a href="#clickhouse%E9%87%8D%E5%90%AF%E6%97%B6%E9%BB%98%E8%AE%A4%E6%89%A7%E8%A1%8C-chown-101-varlibclickhouse%E8%80%97%E6%97%B6%E5%BE%88%E9%95%BF%E5%AF%BC%E8%87%B4%E5%90%AF%E5%8A%A8%E9%9C%80%E8%A6%81%E8%8A%B1%E5%BE%88%E4%B9%85%E6%9C%8D%E5%8A%A1%E6%89%8D%E5%8F%AF%E7%94%A8">clickhouse重启时，默认执行 chown 101 /var/lib/clickhouse,耗时很长,导致启动需要花很久服务才可用</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BC%98%E5%8C%96">优化</a>
+<ul>
+<li><a href="#%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E9%80%89%E6%8B%A9">数据类型选择</a></li>
+<li><a href="#%E5%88%86%E5%8C%BA">分区</a></li>
+<li><a href="#%E4%B8%BB%E9%94%AE%E6%8E%92%E5%BA%8F%E9%94%AE">主键排序键</a></li>
+<li><a href="#join-%E6%9F%A5%E8%AF%A2">Join 查询</a></li>
+<li><a href="#%E5%86%99%E5%85%A5%E5%92%8C%E5%88%A0%E9%99%A4">写入和删除</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B8%B8%E7%94%A8%E8%A1%A8%E5%92%8C%E8%AF%AD%E5%8F%A5">常用表和语句</a>
+<ul>
+<li><a href="#%E7%A1%AE%E8%AE%A4%E5%BD%93%E5%89%8D%E8%BF%9E%E6%8E%A5%E6%83%85%E5%86%B5">确认当前连接情况</a></li>
+<li><a href="#%E5%BD%93%E5%89%8D%E6%AD%A3%E5%9C%A8%E6%89%A7%E8%A1%8C%E7%9A%84%E6%9F%A5%E8%AF%A2">当前正在执行的查询</a></li>
+<li><a href="#kill-query">KILL Query</a></li>
+<li><a href="#%E6%85%A2%E6%9F%A5%E8%AF%A2">慢查询</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/guan-yu-wei-fu-wu/">
+              <span class="post-title">
+                关于微服务&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

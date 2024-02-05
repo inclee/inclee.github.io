@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>python 装饰器 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="python 装饰器 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="python 装饰器" />
+  <meta property="og:url" content="https://nomagic.cc/post/python-zhuang-shi-qi/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/UAtIUe2o9/" class="tag">Python</a>
+                
+                <a href="https://nomagic.cc/tag/GFINS7rzD/" class="tag">编程语言</a>
+                
+                <a href="https://nomagic.cc/tag/MKDAiPLhmq/" class="tag">装饰器</a>
+                
+              </span>
+              <h1>python 装饰器</h1>
+              <span class="meta">
+                Posted on
+                2019-01-11，11 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>{{TOC}}</p>
+<p>简述<br>
+装饰器是Python语言的一种高级语法糖，它可以用于动态地修改函数或类的行为。装饰器的使用可以简化代码，提高代码的可读性和可维护性。</p>
+<h2 id="装饰器的实现原理">装饰器的实现原理</h2>
+<p>Python的装饰器实质上是一个语法糖，它允许我们在不修改函数或方法源代码的情况下，给函数或者方法增加新的行为和处理逻辑。装饰器的实现原理主要基于以下两点：</p>
+<p>函数和方法在 Python 中都是一等对象：这就意味着它们可以被赋值给其他变量，可以作为参数传递给其他函数，也可以作为函数的返回值。<br>
+Python 的可调用对象：在 Python 中，任何定义了 <strong>call</strong> 方法的对象都是可调用的。这不仅包括函数和方法，还包括类和类的实例。</p>
+<p>了解了以上两个原则，我们可以知道装饰器无非就是：</p>
+<p>接收一个函数（或类）作为输入<br>
+返回新的函数（或类）作为输出。</p>
+<p>从上面我们可以看出，装饰器可以实现成函数或者类都调用对象，可以用来修饰函数或者类。</p>
+<h2 id="以函数的形式实现装饰器">以函数的形式实现装饰器</h2>
+<h3 id="一个简单装饰器的例子">一个简单装饰器的例子</h3>
+<pre><code>def simple_decorator(function):
+    def wrapper():
+        print(&quot;在函数执行前做些什么&quot;)
+        function()
+        print(&quot;在函数执行后做些什么&quot;)
+    return wrapper
+
+@simple_decorator
+def my_function():
+    print(&quot;我是被装饰的函数&quot;)
+&quot;&quot;&quot;
+实际的过程类似如下：
+my_function=simple_decorator(my_function)
+&quot;&quot;&quot;
+my_function()
+</code></pre>
+<p>我们可以给函数增加多层装饰来扩展函数的功能，例如：</p>
+<pre><code>def first_decorator(func):
+    def wrapper():
+        print(&quot;First decorator before function execution.&quot;)
+        func()
+        print(&quot;First decorator after function execution.&quot;)
+    return wrapper
+
+def second_decorator(func):
+    def wrapper():
+        print(&quot;Second decorator before function execution.&quot;)
+        func()
+        print(&quot;Second decorator after function execution.&quot;)
+    return wrapper
+
+@first_decorator
+@second_decorator
+def my_function():
+    print(&quot;Original Function.&quot;)
+
+my_function()
+</code></pre>
+<h3 id="装饰器的参数">装饰器的参数</h3>
+<p>Python装饰器的参数可以分为以下两种：<br>
+被装饰函数的参数：被装饰函数的参数可以通过装饰器函数的包装函数传递给被装饰函数。<br>
+装饰器函数的参数：装饰器函数可以接受一个或多个参数，这些参数可以用于装饰器的逻辑。</p>
+<h4 id="被装饰函数的参数">被装饰函数的参数</h4>
+<pre><code>import time
+
+def timethis(func):
+    def wrapper(*args,**kwargs):
+        start = time.time()
+        result = func(*args,**kwargs)
+        end = time.time()
+        print(func.__name__,end-start)
+        return result
+    return wrapper
+
+@timethis
+def countdown(n:int):
+    while n &gt;0:
+        n -=1
+
+countdown(100000)
+</code></pre>
+<h4 id="装饰器函数的参数">装饰器函数的参数</h4>
+<p>在这里的装饰器函数我们称为<strong>装饰器工厂函数</strong>，装饰器工厂函数返回实际的装饰器函数<br>
+装饰器工厂函数可以接受一个或多个参数，这些参数可以用于装饰器的逻辑。例如，以下是一个接受两个参数的装饰器工厂函数：</p>
+<pre><code>def decorator_with_args(arg1, arg2):
+    def actual_decorator(function):
+        def wrapper(*args, **kwargs):
+            print(&quot;装饰器参数：&quot;, arg1, arg2)
+            result = function(*args, **kwargs)
+            return result
+        return wrapper
+    return actual_decorator
+
+@decorator_with_args(&quot;hello&quot;, &quot;world&quot;)
+def my_function(a, b):
+    print(&quot;函数参数：&quot;, a, b)
+</code></pre>
+<p>在上述代码中，decorator_with_args()函数接受一个参数arg1,arg2 这个是装饰器的参数，内部的wrapper(*args, **kwargs)对应被装饰函数的参数。</p>
+<blockquote>
+<p>注意观察装饰器应用的过程 @timethis的时候是没有函数调用的，在@decorator_with_args(&quot;hello&quot;, &quot;world&quot;)的时候，其实是调用了工厂函数然后返回对一个的装饰器函数进行应用</p>
+</blockquote>
+<h4 id="装饰器的参数的应用">装饰器的参数的应用</h4>
+<p>装饰器的参数可以用于各种场景，例如：</p>
+<p>控制被装饰函数的行为：装饰器函数可以根据参数来控制被装饰函数的行为。例如，以下是一个根据参数来决定是否执行被装饰函数的装饰器函数：</p>
+<pre><code>
+def decorator(enable=True):
+    def inner_decorator(func):
+        def wrapper(*args, **kwargs):
+            if enable:
+                return func(*args, **kwargs)
+            else:
+                return None
+        return wrapper
+    return inner_decorator
+
+@decorator(enable=False)
+def target():
+    print(&quot;Hello, world!&quot;)
+
+target()
+</code></pre>
+<p>在上述代码中，decorator()函数接受一个参数enable，该参数用于控制是否执行被装饰函数。</p>
+<h3 id="元信息丢失">元信息丢失</h3>
+<pre><code>def my_decorator(func):
+    def wrapper():
+        &quot;&quot;&quot;This is wrapper function&quot;&quot;&quot;
+        print('Calling', func.__name__)
+        return func()
+    return wrapper
+
+@my_decorator
+def greet():
+    &quot;&quot;&quot;This is greet function&quot;&quot;&quot;
+    print('Hello!')
+
+print(greet.__name__)
+print(greet.__doc__)
+</code></pre>
+<p>输出结果为：</p>
+<pre><code>wrapper
+This is wrapper function
+</code></pre>
+<p>我们知道greet函数已经被装饰器返回的函数替代了，已经不是原来的greet函数，但是站在使用者的角度上我们只是想扩展元函数的功能，并不想丢失对应的原信息，并且greet.__name__返回wrapper 也不是我们想要的。<br>
+这种情况下，Python的functools库提供了一个wraps装饰器，可以用来解决这个问题。wraps装饰器作用在包装函数上，可以将原函数的元信息复制到包装函数上，避免元信息丢失。使用方法如下：</p>
+<pre><code>from functools import wraps
+from inspect import signature
+
+def my_decorator(func):
+    @wraps(func)
+    def wrapper(*args,**kwargs):
+        &quot;&quot;&quot;This is wrapper function&quot;&quot;&quot;
+        print('Calling', func.__name__)
+        return func(*args,**kwargs)
+    return wrapper
+
+@my_decorator
+def greet(say:str):
+    &quot;&quot;&quot;This is greet function&quot;&quot;&quot;
+    print(say)
+greet('Hello')
+print(greet.__name__)
+print(greet.__doc__)
+greet.__wrapped__('World')
+print(signature(greet))
+</code></pre>
+<p>使用@wraps(func)后，打印greet函数的__name__和__doc__属性，这些信息都是greet函数本身的信息，元信息没有丢失。<br>
+@wraps 有一个重要特征是它能让你通过属性 wrapped 直接访问被包装函数。例 如:</p>
+<pre><code>greet.__wrapped__('hello')
+</code></pre>
+<p>我们可以通过__wrapped__来解除装饰器例如：</p>
+<pre><code>greet = greet.__wrapped__
+</code></pre>
+<p>wrapped 属性还能让被装饰函数正确暴露底层的参数签名信息。例如:</p>
+<pre><code>print(signature(greet))
+</code></pre>
+<p>一个很普遍的问题是怎样让装饰器去直接复制原始函数的参数签名信息，如果想自 己手动实现的话需要做大量的工作，最好就简单的使用 wrapped 装饰器。通过底层的 wrapped 属性访问到函数签名信息。</p>
+<h3 id="通过装饰器给函数添加属性来扩展函数的功能">通过装饰器给函数添加属性，来扩展函数的功能</h3>
+<pre><code>from functools import wraps, partial
+import logging
+
+def attach_wrapper(obj, func=None):
+    if func is None:
+        return partial(attach_wrapper, obj)
+    setattr(obj, func.__name__, func)
+    return func
+
+def logged(level, name=None, message=None):
+    def decorate(func):
+        logname = name if name else func.__module__
+        log = logging.getLogger(logname)
+        logmsg = message if message else func.__name__
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            log.log(level, logmsg)
+            return func(*args, **kwargs)
+   
+        @attach_wrapper(wrapper)
+        def set_level(newlevel):
+            nonlocal level
+            level = newlevel
+
+        @attach_wrapper(wrapper)
+        def set_message(newmsg):
+            nonlocal logmsg
+            logmsg = newmsg
+
+        return wrapper
+
+    return decorate
+
+# Example use
+@logged(logging.DEBUG)
+def add(x, y):
+    return x + y
+
+@logged(logging.CRITICAL,'example')
+def spam():
+    print('Spam!')
+
+logging.basicConfig(level=logging.DEBUG)
+
+add(2,3)
+add.set_message('Add called')
+add.set_level(logging.WARNING)
+add(2,3)
+</code></pre>
+<p>输出</p>
+<pre><code>DEBUG:__main__:add
+WARNING:__main__:Add called
+</code></pre>
+<h3 id="使用装饰器来验证参数类型">使用装饰器来验证参数类型</h3>
+<pre><code>from inspect import  signature
+from  functools import wraps
+def typeassert(*ty_args, **ty_kwargs):
+    def decorate(func):
+        if not __debug__:
+            return func
+        sig = signature(func)
+        bound_type = sig.bind_partial(*ty_args, **ty_kwargs).arguments
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            bound_values = sig.bind(*args, **kwargs)
+            for name,value in bound_values.arguments.items():
+                if name in bound_type:
+                    if not isinstance(value, bound_type[name]):
+                        raise  TypeError(
+                            'Argument {} must be {}'.format(name, bound_type[name])
+                        )
+            return func(*args,**kwargs)
+        return wrapper
+    return decorate
+
+
+@typeassert(int, int)
+def add(x, y):
+    return x+y
+
+add(2,'Hello')
+</code></pre>
+<h3 id="类装饰器-使用装饰器来装饰类">类装饰器-使用装饰器来装饰类</h3>
+<p>类装饰器可以对一个类进行装饰。类装饰器通常会在类被实例化之前或之后执行。</p>
+<pre><code>def decorator(cls):
+    # 装饰器代码
+    return cls
+
+@decorator
+class MyClass:
+    def __init__(self):
+        print(&quot;Hello, world!&quot;)
+
+my_class = MyClass()
+</code></pre>
+<p>在上面的代码中，decorator函数是一个类装饰器。decorator函数会在类被实例化之前执行。</p>
+<p>我们可以看到类装饰器是把类作为参数调用函数，然后用函数返回的类替换掉原定义的类</p>
+<pre><code>@decorator
+class MyClass:
+</code></pre>
+<p>相当于</p>
+<pre><code>MyClass = decorator(MyClass)
+</code></pre>
+<p>所以也可以用下面的方式进行实现：</p>
+<pre><code>def my_decorator(cls):
+    class Wrapper(cls):
+        def __init__(self, *args, **kwargs):
+            print(&quot;Before init&quot;)
+            super().__init__(*args, **kwargs)
+            print(&quot;After init&quot;)
+
+        def extra_method(self):
+            print(&quot;This is an extra method&quot;)
+
+    return Wrapper
+
+@my_decorator
+class MyClass:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def my_method(self):
+        print(&quot;This is my method&quot;)
+
+obj = MyClass(1, 2)
+obj.my_method() # 这将会打印 &quot;This is my method&quot;
+obj.extra_method() # 这将会打印 &quot;This is an extra method&quot;
+</code></pre>
+<p>上面的类似返回了一个集成MyClass的子类，进行类的扩展。</p>
+<h2 id="以类的方法来实现装饰器">以类的方法来实现装饰器</h2>
+<pre><code>from functools import wraps
+
+class A:
+    # Decorator as an instance method
+    def decorator1(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            print('Decorator 1')
+            return func(*args, **kwargs)
+        return wrapper
+
+    # Decorator as a class method
+    @classmethod
+    def decorator2(cls, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            print('Decorator 2')
+            return func(*args, **kwargs)
+        return wrapper
+        
+a = A() 
+@a.decorator1 
+def spam():
+	pass
+@A.decorator2
+def grok(): 
+	pass
+</code></pre>
+<h2 id="以类的形式来实现装饰器">以类的形式来实现装饰器</h2>
+<pre><code>import types
+from functools import wraps
+
+class Profiled:
+    def __init__(self, func):
+        wraps(func)(self)
+        self.ncalls = 0
+
+    def __call__(self, *args, **kwargs):
+        self.ncalls += 1
+        return self.__wrapped__(*args, **kwargs)
+
+    def __get__(self, instance, cls):
+        if instance is None:
+            return self
+        else:
+            return types.MethodType(self, instance)
+            
+@Profiled
+def add(x, y):
+    return x + y
+
+class Spam: 
+    @Profiled
+    def bar(self, x):
+        print(self, x)   
+
+s = Spam()
+s.bar(1)         
+</code></pre>
+<p>我们知道当调用一个类的时候，会调用类的__new__/__init__方法，然后返回类的实例<br>
+在第一个例子实质是</p>
+<pre><code>add = Profiled(add)
+</code></pre>
+<p>返回的事Profiled的实力，当执行add的调用是，实际上是执行实例的__call__方法<br>
+在第二个例子中，bar实际上已经是Spam的一个属性（可以参考python的属性协议）<br>
+当执行s.bar的时候实际上是执行的Profiled的__get__方法，然后把s实例绑定到bar的第一个参数执行。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%A3%85%E9%A5%B0%E5%99%A8%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86">装饰器的实现原理</a></li>
+<li><a href="#%E4%BB%A5%E5%87%BD%E6%95%B0%E7%9A%84%E5%BD%A2%E5%BC%8F%E5%AE%9E%E7%8E%B0%E8%A3%85%E9%A5%B0%E5%99%A8">以函数的形式实现装饰器</a>
+<ul>
+<li><a href="#%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E8%A3%85%E9%A5%B0%E5%99%A8%E7%9A%84%E4%BE%8B%E5%AD%90">一个简单装饰器的例子</a></li>
+<li><a href="#%E8%A3%85%E9%A5%B0%E5%99%A8%E7%9A%84%E5%8F%82%E6%95%B0">装饰器的参数</a>
+<ul>
+<li><a href="#%E8%A2%AB%E8%A3%85%E9%A5%B0%E5%87%BD%E6%95%B0%E7%9A%84%E5%8F%82%E6%95%B0">被装饰函数的参数</a></li>
+<li><a href="#%E8%A3%85%E9%A5%B0%E5%99%A8%E5%87%BD%E6%95%B0%E7%9A%84%E5%8F%82%E6%95%B0">装饰器函数的参数</a></li>
+<li><a href="#%E8%A3%85%E9%A5%B0%E5%99%A8%E7%9A%84%E5%8F%82%E6%95%B0%E7%9A%84%E5%BA%94%E7%94%A8">装饰器的参数的应用</a></li>
+</ul>
+</li>
+<li><a href="#%E5%85%83%E4%BF%A1%E6%81%AF%E4%B8%A2%E5%A4%B1">元信息丢失</a></li>
+<li><a href="#%E9%80%9A%E8%BF%87%E8%A3%85%E9%A5%B0%E5%99%A8%E7%BB%99%E5%87%BD%E6%95%B0%E6%B7%BB%E5%8A%A0%E5%B1%9E%E6%80%A7%E6%9D%A5%E6%89%A9%E5%B1%95%E5%87%BD%E6%95%B0%E7%9A%84%E5%8A%9F%E8%83%BD">通过装饰器给函数添加属性，来扩展函数的功能</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E8%A3%85%E9%A5%B0%E5%99%A8%E6%9D%A5%E9%AA%8C%E8%AF%81%E5%8F%82%E6%95%B0%E7%B1%BB%E5%9E%8B">使用装饰器来验证参数类型</a></li>
+<li><a href="#%E7%B1%BB%E8%A3%85%E9%A5%B0%E5%99%A8-%E4%BD%BF%E7%94%A8%E8%A3%85%E9%A5%B0%E5%99%A8%E6%9D%A5%E8%A3%85%E9%A5%B0%E7%B1%BB">类装饰器-使用装饰器来装饰类</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BB%A5%E7%B1%BB%E7%9A%84%E6%96%B9%E6%B3%95%E6%9D%A5%E5%AE%9E%E7%8E%B0%E8%A3%85%E9%A5%B0%E5%99%A8">以类的方法来实现装饰器</a></li>
+<li><a href="#%E4%BB%A5%E7%B1%BB%E7%9A%84%E5%BD%A2%E5%BC%8F%E6%9D%A5%E5%AE%9E%E7%8E%B0%E8%A3%85%E9%A5%B0%E5%99%A8">以类的形式来实现装饰器</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-transport/">
+              <span class="post-title">
+                go micro 源码阅读-transport&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

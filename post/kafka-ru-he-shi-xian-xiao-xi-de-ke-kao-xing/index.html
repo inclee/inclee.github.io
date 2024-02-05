@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>kafka如何实现消息的可靠性？ | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="kafka如何实现消息的可靠性？ |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="kafka如何实现消息的可靠性？" />
+  <meta property="og:url" content="https://nomagic.cc/post/kafka-ru-he-shi-xian-xiao-xi-de-ke-kao-xing/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/hfuIIFfPD/" class="tag">消息队列</a>
+                
+                <a href="https://nomagic.cc/tag/GZ4dHebu8b/" class="tag">中间件</a>
+                
+              </span>
+              <h1>kafka如何实现消息的可靠性？</h1>
+              <span class="meta">
+                Posted on
+                2020-11-12，7 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h2 id="持久化存储">持久化存储</h2>
+<p>Kafka 使用可靠的持久性存储来保存所有的消息，这样即使在消息发送后，即使消费者暂时离线或无法立即处理消息，或者broker节点down掉，消息仍然可以保留在 磁盘中不会丢失，另外Kafka的消费者使用基于偏移量的提交方式，确保已提交的消息被可靠地消费。消费者在读取消息后，会将偏移量提交给Kafka，表示该消息已被消费。如果提交失败，消费者可以手动提交偏移量。这个offset 也是持久化了的</p>
+<blockquote>
+<p>在Kafka 0.9版本之前，offset默认保存在Zookeeper中，而在Kafka 0.9版本及以后，offset默认保存在Kafka中的一个内置主题中。这个主题为__consumer_offsets，里面采用key-value的方式存储数据，其中key是group.id+topic+分区号，value就是当前offset的值。每隔一段时间，Kafka会对这个主题进行compact操作，即每个group.id+topic+分区号会保留最新数据。</p>
+</blockquote>
+<p>另外至于本地存储的结构：稀疏索引+顺序日志文件 主要是为了写入和读取的高效，不在这里展开。</p>
+<h2 id="ack机制">ACK机制</h2>
+<p>为了确认producer发送的消息，已经成功的被broker接收，在broker接收成功后会相应的回复一个ACK消息，这样producer才会继续发送下一轮消息，否则就会重新发送消息。但是这个ACK消息是什么时候返回的呢？<br>
+Kafka 的 ACK 机制有以下三种可选值：</p>
+<ul>
+<li>ack=0：Producer 发送消息后，不等待 Broker 返回确认信息，直接发送下一条消息。这种方式的吞吐量最高，但可靠性最低。</li>
+<li>ack=1：Producer 发送消息后，等待 Leader Broker 返回确认信息，表示消息已被 Leader Broker 接收。这种方式的可靠性较高，但吞吐量较低。</li>
+<li>ack=all：Producer 发送消息后，等待 Leader Broker 和所有 Follower Broker 都返回确认信息，表示消息已被所有 Broker 接收。这种方式的可靠性最高，但吞吐量最低。<br>
+Kafka 的 ACK 机制可以根据应用场景的需要进行选择。例如，对于实时数据处理场景，需要保证消息的可靠性，因此可以选择 ack=all 或 ack=1。对于日志采集场景，可以选择 ack=0，以提高吞吐量。</li>
+</ul>
+<p>Kafka 的 ACK 机制的主要作用如下：</p>
+<ul>
+<li>保证消息的可靠性：ACK 机制可以确保消息已被 Broker 接收，即使 Broker 发生故障，消息也不会丢失。</li>
+<li>提高吞吐量：ACK 机制可以根据应用场景的需要，灵活调整，以提高吞吐量。</li>
+</ul>
+<h2 id="副本机制">副本机制</h2>
+<p>我们根据kafka的存储架构可以知道，每一个topic partition都可以选择多副本机制，通过多副本机制，可以保证在leader副本挂掉的时候，其他副本可以选举成为leader提供服务。这本身是一个日志复制机制。<br>
+leader 副本根据什么决定返回ACK给producer的呢？<br>
+这就不得不说Kafka的ISR机制</p>
+<h4 id="isr-机制">ISR 机制</h4>
+<p>Kafka的ISR（In-Sync Replicas）机制是Kafka为确保数据可靠性和一致性而设计的重要机制。ISR是一组副本，包括分区的领导者（Leader）和追随者（Follower）副本，这些副本与领导者保持数据同步。<br>
+每个分区都有一个领导者（Leader）和零个或多个追随者（Follower）。领导者负责处理客户端的写请求，而追随者主要用于数据复制。ISR集合是分区领导者的一组追随者副本，它们与领导者保持数据同步。只有在ISR集合中的追随者副本可以参与数据的写入和读取操作。</p>
+<h6 id="数据复制同步过程">数据复制同步过程</h6>
+<p>数据复制过程中，领导者将消息写入其本地日志，并定期将这些消息发送给ISR集合中的追随者。追随者接收消息后，将其写入本地日志，以保持数据同步。ISR集合中的每个追随者都维护了领导者的日志信息，包括领导者的Leader Epoch和Log Start Offset。这些信息用于确保数据的正确复制和同步。只有当ISR集合中的所有追随者都成功复制了一条消息后，领导者才会将该消息标记为已提交，确保数据的一致性。<br>
+如果某个追随者发生故障或者追赶进度过慢，那么该追随者可能会被从ISR集合中移除。这有助于保持数据的可靠性和避免影响性能。</p>
+<h5 id="副本分区的管理">副本分区的管理</h5>
+<p>分区中的所有副本统称为AR（Assigned Replicas）。所有Leader副本加上和Leader副本保持同步的Follower副本组成ISR（In-Sync Replicas）。所有没有保持同步的Follower副本组成OSR（Out-of-Sync Replicas）。AR = ISR + OSR。正常情况下，所有Follower副本都应该和Leader副本一致，即AR=ISR。<br>
+如果follower长时间未向leader同步数据，则该follower将被踢出ISR，该时间阈值由replica.lag.time.max.ms参数设定。Leader发生故障之后，就会从ISR中选举新的leader。<br>
+follower从leader同步数据有一些延迟（包括延迟时间replica.lag.time.max.ms和延迟条数replica.lag.max.messages两个维度, 当前最新的版本0.10.x中只支持replica.lag.time.max.ms这个维度），任意一个超过阈值都会把follower剔除出ISR, 存入OSR(Outof-Sync Replicas)列表，新加入的follower也会先存放在OSR中。AR=ISR+OSR</p>
+<h2 id="容错机制">容错机制</h2>
+<ul>
+<li>Broker节点的容错：当Kafka集群中的一个Broker节点宕机时，由于Broker节点在启动后会向Zookeeper进行注册并保存当前节点信息，因此可以通过Zookeeper来查看节点信息。此时可以发现Isr（In-Sync Replicas）中的内容和Replicas中的不一样了，因为Isr中显示的是目前正常运行的节点。</li>
+<li>分区的容错：Kafka通过复制机制来保证分区的可靠性。每个分区都有一个领导者（Leader）和零个或多个追随者（Follower）。当领导者发生故障时，Kafka会从ISR（In-Sync Replicas）集合中选举一个新的领导者。ISR集合中包含了与领导者保持数据同步的追随者副本。只有当ISR集合中的所有追随者都成功复制了一条消息后，领导者才会将该消息标记为已提交，确保数据的一致性。</li>
+<li>生产者和消费者的容错：Kafka通过ack机制来保证生产者发送消息的可靠性。生产者可以设置ack参数来指定消息被成功发送到目的地的保证级别。对于消费者，Kafka通过偏移量提交来确保已提交的消息被可靠地消费。消费者在读取消息后，会将偏移量提交给Kafka，表示该消息已被消费。如果提交失败，消费者可以手动提交偏移量。</li>
+<li>自动均衡策略：Kafka的自动均衡策略允许在集群中动态地添加或删除Broker节点，以保持集群的负载均衡和高可用性。当新增一个Broker节点时，Zookeeper会自动识别并在适当的机会选择此节点提供服务。</li>
+</ul>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E6%8C%81%E4%B9%85%E5%8C%96%E5%AD%98%E5%82%A8">持久化存储</a></li>
+<li><a href="#ack%E6%9C%BA%E5%88%B6">ACK机制</a></li>
+<li><a href="#%E5%89%AF%E6%9C%AC%E6%9C%BA%E5%88%B6">副本机制</a><br>
+*
+<ul>
+<li><a href="#isr-%E6%9C%BA%E5%88%B6">ISR 机制</a><br>
+*
+<ul>
+<li><a href="#%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6%E5%90%8C%E6%AD%A5%E8%BF%87%E7%A8%8B">数据复制同步过程</a></li>
+<li><a href="#%E5%89%AF%E6%9C%AC%E5%88%86%E5%8C%BA%E7%9A%84%E7%AE%A1%E7%90%86">副本分区的管理</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%AE%B9%E9%94%99%E6%9C%BA%E5%88%B6">容错机制</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/clickhouse-ru-men-shi-yong-pian/">
+              <span class="post-title">
+                Clickhouse 入门使用篇&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

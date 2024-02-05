@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>存储引擎 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="存储引擎 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="存储引擎" />
+  <meta property="og:url" content="https://nomagic.cc/post/cun-chu-yin-qing/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+              </span>
+              <h1>存储引擎</h1>
+              <span class="meta">
+                Posted on
+                2024-01-25，5 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>众多文章通常直截了当地开始探讨各类存储引擎，却未对存储引擎本身下足功夫。那么，什么才是存储引擎呢？或许你是否曾经思考过，MySQL是如何管理我们输入的数据的？</p>
+<p>说得直白一些，我认为存储引擎实际上是一套处理存储问题的方法，它负责数据的插入、更新以及索引的创建等多个功能。</p>
+<p>我们可以选择哪些存储引擎呢？</p>
+<p>比如，InnoDB、MyISAM、Memory、CSV、Archive、Blackhole、Merge、Federated、Example等。</p>
+<p>尽管可选的存储引擎类型众多，但目前最常被使用的无疑是InnoDB和MyISAM，这两种存储引擎也是我将要重点讨论的。</p>
+<p>InnoDB是目前应用最广泛的MySQL存储引擎，自MySQL5.5版本起，InnoDB已经成为默认的存储引擎。那么，为何InnoDB能获得如此广泛的应用呢？在探讨此问题之前，我们需先了解一下InnoDB存储引擎的基本原理。</p>
+<p>InnoDB的内存架构主要由三大部分组成，分别是缓冲池（Buffer Pool）、重做日志缓冲区（Redo Log Buffer）和其他内存区域。</p>
+<h2 id=""></h2>
+<p>缓冲池<br>
+为了实现数据的持久化，InnoDB需要将数据存放在磁盘上。然而，面对大量的请求，CPU的处理速度远大于磁盘的IO速度，这就导致了很大的性能瓶颈。为了提高整体的运行效率，InnoDB引进了缓冲池。</p>
+<p>当请求数据时，如果数据不在缓冲池中，InnoDB则需要从磁盘中查找，并将找到的数据储存到缓冲池中。同样，当修改数据时，MySQL并不直接修改磁盘中的数据，而是修改缓冲池中存储的数据页，然后再将更改的数据写回磁盘。因此，缓冲池的目标就是提高读写速度和降低与磁盘的IO交互频率。</p>
+<p>简单来说，缓冲池就是将磁盘中的数据储存在内存中。因此，可能会出现内存空间不足的情况。为了解决这个问题，缓冲池采用了LRU（最近最少使用）算法，当缓冲池没有空闲的页面时，进行页面的置换。然而，这种方法可能会导致缓冲池污染。</p>
+<p>例如，当进行大规模扫描甚至全表扫描时，可能将缓冲池中的高频数据页全部替换出去。这样一来，就可能导致MySQL的处理性能急剧下滑。因此，InnoDB对LRU算法进行了优化，以避免这种情况。</p>
+<p>MySQL实施日志先行技术，在真正写入数据之前，它会首先记录一个日志，名为Redo Log，并会定期使用CheckPoint技术将更新的Redo Log写入磁盘。</p>
+<p>除了数据，缓冲池还储存了索引页、Undo页、插入缓冲、自适应哈希索引、InnoDB锁信息以及数据字典等内容。下面，我们将挑选其中几个重要的部分进行简单的介绍</p>
+<h2 id="插入缓冲区">插入缓冲区</h2>
+<p>MySQL的插入缓冲是一种优化磁盘 I/O 操作的机制。其主要应用于非唯一二级索引的插入和更新操作。</p>
+<p>当我们要插入或更新一个记录时，如果索引的键值在缓冲池中没有对应的数据页，那么MySQL可以将这个更新操作和待插入的键值暂存在内存的插入缓冲区中，而不是立即读取并更新磁盘上的索引页。这样一来，MySQL就可以把许多小的更新操作合并到一个大的操作中去，然后在合适的时候再刷新到磁盘，大大减少了磁盘I/O的次数，提升了数据库操作效率。</p>
+<p>插入缓冲区并不是总是有利的，对于唯一索引的更新操作或者现有的键值已经在缓冲池中的情况，采用插入缓冲区可能并不是最佳选择。这时候，直接完成插入或更新操作对应的数据页会更加高效。</p>
+<p>虽然插入缓冲可以全方位地提升数据库的性能，但是我们应当适当地控制插入缓冲区的大小，避免消耗过多的内存资源。</p>
+<h2 id="两次写">两次写</h2>
+<p>MySQL的“两次写”是InnoDB存储引擎的一项重要特性，旨在保护数据库在异常宕机或者磁盘故障时，数据页的完整性。</p>
+<p>在InnoDB以普通方式将页刷新到磁盘之前，首先将页的一个副本写入到一个专门的地方，这个地方称为双写缓冲区（doublewrite buffer）。 双写缓冲区位于共享表空间内，是磁盘上的一个固定位置。如果在页写入磁盘的过程中发生电源失败或其他故障，有可能只写入了部分页，从而导致该页在磁盘上的内容变得不完整。然而，由于刷新操作在写入页之前已将页的副本写入双写缓冲区，所以可以从双写缓冲区中恢复该页的完整版本。</p>
+<p>“两次写”策略可以保护数据库免受部分页写入错误的影响。然而，它也会带来额外的磁盘I/O负载，因为每个页都要写两次。在一些特殊场景中，如果对数据完整性要求不是非常严格，或者对性能有极高要求，也可以关闭两次写特性，减少I/O负载。不过通常情况下，我们还是推荐开启两次写特性，以保证数据的安全性。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li></li>
+<li><a href="#%E6%8F%92%E5%85%A5%E7%BC%93%E5%86%B2%E5%8C%BA">插入缓冲区</a></li>
+<li><a href="#%E4%B8%A4%E6%AC%A1%E5%86%99">两次写</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

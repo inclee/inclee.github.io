@@ -1,0 +1,2514 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://nomagic.cc</id>
+    <title></title>
+    <updated>2024-02-05T15:39:38.501Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://nomagic.cc"/>
+    <link rel="self" href="https://nomagic.cc/atom.xml"/>
+    <subtitle>面对问题，解决问题</subtitle>
+    <logo>https://nomagic.cc/images/avatar.png</logo>
+    <icon>https://nomagic.cc/favicon.ico</icon>
+    <rights>All rights reserved 2024, </rights>
+    <entry>
+        <title type="html"><![CDATA[容器基础-namespace的实现原理]]></title>
+        <id>https://nomagic.cc/post/rong-qi-ji-chu-namespace-de-shi-xian-yuan-li/</id>
+        <link href="https://nomagic.cc/post/rong-qi-ji-chu-namespace-de-shi-xian-yuan-li/">
+        </link>
+        <updated>2023-09-13T09:27:52.000Z</updated>
+        <content type="html"><![CDATA[<p>[Toc]<br>
+namespace的主要目的是为了<strong>实现资源的隔离和管理</strong>，以避免不同进程之间的资源竞争和冲突。同时，它也可以提供更高的安全性，因为每个进程只能访问其namespace中的资源，而无法访问其他进程的资源。因此，namespace机制对于需要隔离和管理资源的系统来说是非常有用的。</p>
+<p>这种隔离机制使得不同进程可以运行在各自独立的系统中，不会互相干扰。例如，一个进程的改变不会影响到其他进程，其他进程也无法访问这个进程所拥有的资源。这种特性可以用来实现轻量级虚拟化（容器）服务，让容器中的进程产生错觉，认为它们置身于一个独立的系统中。</p>
+<p>目前支持以下6种Namespace：</p>
+<ul>
+<li>IPC：用于进程间通信，包括SystemV IPC和Posix消息队列等。</li>
+<li>Network：用于隔离Linux系统的设备、IP地址、端口、路由表、防火墙规则等网络资源。</li>
+<li>PID：用于隔离进程。</li>
+<li>UTS：用于隔离主机名和域名。</li>
+<li>Mount：用于隔离文件系统挂载点。</li>
+<li>User：用于隔离用户和权限。</li>
+</ul>
+<h2 id="pid_namespace-实现pid-隔离原理">pid_namespace 实现pid 隔离原理</h2>
+<pre><code>struct task_struct {
+    ...
+    /* namespaces */
+    struct nsproxy *nsproxy;
+    ...
+    struct pid			*thread_pid;
+	struct hlist_node		pid_links[PIDTYPE_MAX];
+    struct pid_link pids[PIDTYPE_MAX];
+    ...
+}
+enum pid_type {
+    PIDTYPE_PID, //进程ID
+    PIDTYPE_PGID, //进程组ID
+    PIDTYPE_SID, //进程会话（session）ID 
+    PIDTYPE_MAX //最大值
+};
+
+struct nsproxy {
+	atomic_t count;
+	struct uts_namespace *uts_ns;
+	struct ipc_namespace *ipc_ns;
+	struct mnt_namespace *mnt_ns;
+	struct pid_namespace *pid_ns_for_children;
+	struct net 	     *net_ns;
+	struct time_namespace *time_ns;
+	struct time_namespace *time_ns_for_children;
+	struct cgroup_namespace *cgroup_ns;
+};
+struct pid
+{
+	refcount_t count;
+	unsigned int level;
+	spinlock_t lock;
+	/* lists of tasks that use this pid */
+	struct hlist_head tasks[PIDTYPE_MAX];
+	struct hlist_head inodes;
+	/* wait queue for pidfd notifications */
+	wait_queue_head_t wait_pidfd;
+	struct rcu_head rcu;
+	struct upid numbers[];
+};
+//user process id
+struct upid {
+	int nr;
+	struct pid_namespace *ns;
+};
+</code></pre>
+<p>通过task_struct结构我们可以看到，隔离的实现被代理到nsproxy</p>
+<blockquote>
+<p>pid_links字段是用于表示进程之间的链接关系的哈希表。<br>
+进程组和会话是Linux内核中的重要概念。进程组是一组具有相同进程的集合，而会话则是一组进程组的集合。每个进程都被分配一个全局进程号（PID），用于唯一标识该进程。<br>
+pid_links字段存储了进程号（PID）与进程组标识符（PGID）和会话标识符（SID）之间的链接关系。通过该字段，可以确定哪些进程属于同一个进程组或同一会话。<br>
+当创建一个新的进程时，内核会根据PID和PID namespace来确定该进程的进程组和会话信息，并将这些信息存储在pid_links字段中。这样，当需要查找或操作某个进程时，可以通过pid_links字段快速定位到该进程的进程组和会话信息，以便进行相应的操作。</p>
+</blockquote>
+<pre><code>struct pid_namespace {
+	struct idr idr; //存储pid
+	struct rcu_head rcu;
+	unsigned int pid_allocated;
+	struct task_struct *child_reaper;
+	struct kmem_cache *pid_cachep;
+	unsigned int level;
+	struct pid_namespace *parent;
+	struct user_namespace *user_ns;
+	struct ucounts *ucounts;
+	int reboot;	/* group exit code if this pidns was rebooted */
+	struct ns_common ns;
+} 
+</code></pre>
+<p>从pid_namespace可以看出，pid_namespace是按照树的结构进行组织的，在下面的pid分配中可以看到(参考pid 分配)，分配nr是会同样在低层级的namespace 中 分配nr,这样，低层级的namespace 就可以访问到高层级的nr(参考下面的pid 查找过程)<br>
+<img src="https://nomagic.cc/post-images/1697536925534.png" alt="" loading="lazy"></p>
+<h3 id="pid-分配">pid 分配</h3>
+<p>可以看到主要是对pid层级结构的初始化，从每一层namespace的idr结构中申请nr ，然后初始化到每一个层级的upid,</p>
+<pre><code>struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+		      size_t set_tid_size)
+{
+	struct pid *pid;
+	enum pid_type type;
+	int i, nr;
+	struct pid_namespace *tmp;
+	struct upid *upid;
+	int retval = -ENOMEM;
+
+	if (set_tid_size &gt; ns-&gt;level + 1)
+		return ERR_PTR(-EINVAL);
+
+	pid = kmem_cache_alloc(ns-&gt;pid_cachep, GFP_KERNEL);
+	if (!pid)
+		return ERR_PTR(retval);
+
+	tmp = ns;
+	pid-&gt;level = ns-&gt;level;
+
+	for (i = ns-&gt;level; i &gt;= 0; i--) {
+		int tid = 0;
+		if (set_tid_size) {
+			tid = set_tid[ns-&gt;level - i];
+			retval = -EINVAL;
+			if (tid &lt; 1 || tid &gt;= pid_max)
+				goto out_free;
+		
+			if (tid != 1 &amp;&amp; !tmp-&gt;child_reaper)
+				goto out_free;
+			retval = -EPERM;
+			if (!checkpoint_restore_ns_capable(tmp-&gt;user_ns))
+				goto out_free;
+			set_tid_size--;
+		}
+
+		idr_preload(GFP_KERNEL);
+		spin_lock_irq(&amp;pidmap_lock);
+        // 在每一层的-dir中分配nr(也就是进程号)
+		if (tid) {
+			nr = idr_alloc(&amp;tmp-&gt;idr, NULL, tid,
+				       tid + 1, GFP_ATOMIC);
+			if (nr == -ENOSPC)
+				nr = -EEXIST;
+		} else {
+			int pid_min = 1;
+			if (idr_get_cursor(&amp;tmp-&gt;idr) &gt; RESERVED_PIDS)
+				pid_min = RESERVED_PIDS;
+			nr = idr_alloc_cyclic(&amp;tmp-&gt;idr, NULL, pid_min,
+					      pid_max, GFP_ATOMIC);
+		}
+		spin_unlock_irq(&amp;pidmap_lock);
+		idr_preload_end();
+
+		if (nr &lt; 0) {
+			retval = (nr == -ENOSPC) ? -EAGAIN : nr;
+			goto out_free;
+		}
+       //初始化每一层的数据
+		pid-&gt;numbers[i].nr = nr;
+		pid-&gt;numbers[i].ns = tmp;
+		tmp = tmp-&gt;parent;
+	}
+	retval = -ENOMEM;
+
+	get_pid_ns(ns);
+	refcount_set(&amp;pid-&gt;count, 1);
+	spin_lock_init(&amp;pid-&gt;lock);
+	for (type = 0; type &lt; PIDTYPE_MAX; ++type)
+		INIT_HLIST_HEAD(&amp;pid-&gt;tasks[type]);
+
+	init_waitqueue_head(&amp;pid-&gt;wait_pidfd);
+	INIT_HLIST_HEAD(&amp;pid-&gt;inodes);
+
+	upid = pid-&gt;numbers + ns-&gt;level;
+	spin_lock_irq(&amp;pidmap_lock);
+	if (!(ns-&gt;pid_allocated &amp; PIDNS_ADDING))
+		goto out_unlock;
+	for ( ; upid &gt;= pid-&gt;numbers; --upid) {
+		/* Make the PID visible to find_pid_ns. */
+		idr_replace(&amp;upid-&gt;ns-&gt;idr, pid, upid-&gt;nr);
+		upid-&gt;ns-&gt;pid_allocated++;
+	}
+	spin_unlock_irq(&amp;pidmap_lock);
+
+	return pid;
+
+out_unlock:
+	spin_unlock_irq(&amp;pidmap_lock);
+	put_pid_ns(ns);
+
+out_free:
+	spin_lock_irq(&amp;pidmap_lock);
+	while (++i &lt;= ns-&gt;level) {
+		upid = pid-&gt;numbers + i;
+		idr_remove(&amp;upid-&gt;ns-&gt;idr, upid-&gt;nr);
+	}
+
+	/* On failure to allocate the first pid, reset the state */
+	if (ns-&gt;pid_allocated == PIDNS_ADDING)
+		idr_set_cursor(&amp;ns-&gt;idr, 0);
+
+	spin_unlock_irq(&amp;pidmap_lock);
+
+	kmem_cache_free(ns-&gt;pid_cachep, pid);
+	return ERR_PTR(retval);
+}
+</code></pre>
+<h3 id="pid隔离">pid隔离</h3>
+<p>进程查找：</p>
+<pre><code>struct pid *find_get_pid(pid_t nr)
+{
+	struct pid *pid;
+
+	rcu_read_lock();
+	pid = get_pid(find_vpid(nr));
+	rcu_read_unlock();
+
+	return pid;
+}
+static inline struct pid *get_pid(struct pid *pid)
+{
+	if (pid)
+		refcount_inc(&amp;pid-&gt;count);
+	return pid;
+}
+struct pid *find_vpid(int nr)
+{
+	return find_pid_ns(nr, task_active_pid_ns(current));
+}
+struct pid_namespace *task_active_pid_ns(struct task_struct *tsk)
+{
+	return ns_of_pid(task_pid(tsk));
+}
+static inline struct pid *task_pid(struct task_struct *task)
+{
+	return task-&gt;thread_pid;
+}
+static inline struct pid_namespace *ns_of_pid(struct pid *pid)
+{
+	struct pid_namespace *ns = NULL;
+	if (pid)
+		ns = pid-&gt;numbers[pid-&gt;level].ns;
+	return ns;
+}
+struct pid *find_pid_ns(int nr, struct pid_namespace *ns)
+{
+	return idr_find(&amp;ns-&gt;idr, nr);
+}
+</code></pre>
+<p>我们看到查找是根据current上下文，获取到current-&gt; pid-&gt;numbers[pid-&gt;level].ns,在这个namespace的idr中进行查找，实现了pid的隔离。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Istio 基本原理与使用实践]]></title>
+        <id>https://nomagic.cc/post/istio-jie-shao-yu-ji-ben-shi-yong/</id>
+        <link href="https://nomagic.cc/post/istio-jie-shao-yu-ji-ben-shi-yong/">
+        </link>
+        <updated>2023-04-02T15:28:56.000Z</updated>
+        <content type="html"><![CDATA[<blockquote>
+<p>备注：实例代码参考：https://github.com/inclee/istio-demo.git</p>
+</blockquote>
+<h2 id="什么是服务网格它的技术背景是什么">什么是服务网格，它的技术背景是什么</h2>
+<p>随着业务发展，服务量持续增长，系统需要转向微服务架构以应对快速迭代和大规模并发的需求。在微服务系统中，服务与服务之间会形成复杂的调用链路，微服务间的网络请求协议非常复杂，这里面包括了各种诸如服务发现，安全加密、流量控制、故障处理，以及请求路由，调用链追踪。。太多太多的服务治理需求，随着服务规模的增大，这些问题的复杂性将显著增加。</p>
+<h3 id="服务治理的三种形态">服务治理的三种形态</h3>
+<p><strong>在应用程序中包含治理逻辑</strong></p>
+<p>在微服务化的过程中，将服务拆分后会发现一堆麻烦事儿，连基本的业务连通都成了问题。<br>
+在处理一些治理逻辑，比如怎么找到对端的服务实例，怎么选择一个对端实例发出请求等时，都需要自己写代码来实现。这种方式简单，对外部依赖少，但会导致存在大量的重复代码。所以，微服务越多，重复的代码越多，维护越难;而且，业务代码和治理逻辑耦合，不管是对治理逻辑的全局升级，还是对业务的升级，都要改同一段代码，这种方式导致了治理逻辑和业务逻辑的严重耦合，代码复杂度提高，并且维护起来成本太高，甚至不可维护。</p>
+<p><strong>独立的SDK包</strong></p>
+<p>相比如上面提到的方案，一种常见的解决方法是将公共的治理逻辑抽象化，并将其包含在一个通用库中，也就是我们熟知的软件开发包。这样，所有的微服务都可以使用这个通用库。当这些治理能力嵌入开发框架中后，使用该开发框架进行编程的所有代码便具有这种能力。这就是SDK（Software Development Kit）模式。</p>
+<p>虽然SDK模式在编码层面将业务逻辑与治理逻辑解耦，但业务代码与SDK依然需要一同编译，并运行在同一进程中。这导致了以下几个问题：首先，业务代码必须与SDK使用相同的编程语言，也就是说，编程语言被限制了，在更新治理逻辑时，需要全面升级自身的服务，即使业务逻辑并未发生变化，这无疑给用户带来了不便。虽然将治理逻辑独立出来了，但是对业务代码本身还是有一定的侵入性。</p>
+<p><strong>独立的治理进程</strong></p>
+<p>把治理逻辑彻底从用户的业务代码中剥离出来，作为一个独立的进程存在，作为网络的代理存在，在这种形态下，用户的业务代码和治理逻辑都以独立的进程存在，两者的代码和运行都无耦合，这样可以做到与开发语言无关，升级也相互独立。在对已存在的系统进行微服务治理时，只需搭配 Sidecar 即可，对原服务无须做任何修改，并且可以对老系统渐进式升级改造，先对部分服务进行微服务化。</p>
+<p>“软件的复杂性没有不是可以通过分层和抽象解决不了的，如果一层不够那么多分一层”。<br>
+同样独立进程治理的方式也符合这种思维，可以类比把应用所需要的网络功能，分层抽象到了网络层。同样独立进程的方式把服务治理的逻辑也抽象到了更下一层，应用层只需无感知的依赖就好了。当然抽象和分层的代价还是有的，就是会增加效率的损耗，大多数情况下通过增加一点损耗，来解决软件的复杂性是值得的。</p>
+<p>而这第三种方式就是我们需要介绍的服务网格，为什么叫这个名字，我想没有比这个图更为直观的。</p>
+<h3 id="服务网格所需要满足的特性">服务网格所需要满足的特性</h3>
+<p>现在，让我们了解服务网格可以为我们提供的一些功能。请注意，实际功能列表取决于服务网格的实现。但是，总的来说，我们应该在所有实现中都期望其中大多数功能。</p>
+<p>我们可以将这些功能大致分为三类：流量管理，安全性和可观察性。</p>
+<p><strong>流量管理</strong></p>
+<p>服务网格的基本特征之一是流量管理。这包括动态服务发现和路由。尤其影子流量和流量拆分功能，这些对于实现金丝雀发布和A/B测试非常有用。</p>
+<p>由于所有服务之间的通信都是由服务网格处理的，因此它还启用了一些可靠性功能。例如，服务网格可以提供重试，超时，速率限制和断路器。这些现成的故障恢复功能使通信更加可靠。</p>
+<p><strong>安全性</strong></p>
+<p>服务网格通常还处理服务到服务通信的安全性方面。这包括通过双向TLS（mTLS）强制进行流量加密，通过证书验证提供身份验证以及通过访问策略确保授权。</p>
+<p>服务网格中还可能存在一些有趣的安全用例。例如，我们可以实现网络分段，从而允许某些服务进行通信而禁止其他服务。而且，服务网格可以为审核需求提供精确的历史信息。</p>
+<p><strong>可观察性</strong></p>
+<p>强大的可观察性是处理分布式系统复杂性的基本要求。由于服务网格可以处理所有通信，因此正确放置了它可以提供可观察性的功能。例如，它可以提供有关分布式追踪的信息。</p>
+<p>服务网格可以生成许多指标，例如延迟，流量，错误和饱和度。此外，服务网格还可以生成访问日志，为每个请求提供完整记录。这些对于理解单个服务以及整个系统的行为非常有用。</p>
+<p>——————————————————————————————————————————</p>
+<h2 id="istio">Istio</h2>
+<h3 id="istio-简介">Istio 简介</h3>
+<p>Istio是最初由IBM，Google和Lyft开发的服务网格的开源实现。它可以透明地分层到分布式应用程序上，并提供服务网格的所有优点，例如流量管理，安全性和可观察性。</p>
+<p>它旨在与各种部署配合使用，例如本地部署，云托管，Kubernetes容器以及虚拟机上运行的服务程序。尽管Istio与平台无关，但它经常与Kubernetes平台上部署的微服务一起使用。</p>
+<p>从根本上讲，Istio的工作原理是以Sidcar的形式将Envoy的扩展版本作为代理布署到每个微服务中，该代理网络构成了Istio架构的数据平面。这些代理的配置和管理是从控制平面完成的。<br>
+控制平面基本上是服务网格的大脑。它为数据平面中的Envoy代理提供发现，配置和证书管理。<br>
+<img src="https://nomagic.cc/post-images/1706879594787.svg" alt="" loading="lazy"><br>
+当然，只有在拥有大量相互通信的微服务时，我们才能体现Istio的优势。在这里，sidecar代理在专用的基础架构层中形成一个复杂的服务网格：</p>
+<blockquote>
+<p>使用Istio之前<br>
+<img src="https://nomagic.cc/post-images/1706879690927.svg" alt="" loading="lazy"><br>
+使用Istio之后<br>
+<img src="https://nomagic.cc/post-images/1706879724493.svg" alt="" loading="lazy"></p>
+</blockquote>
+<p>Istio在与外部库和平台集成方面非常灵活。例如，我们可以将Istio与外部日志记录平台，遥测或策略系统集成。</p>
+<h3 id="istio的核心组件">Istio的核心组件</h3>
+<blockquote>
+<p>Istio 架构图<br>
+<img src="https://nomagic.cc/post-images/1706879805482.svg" alt="" loading="lazy"></p>
+</blockquote>
+<p>Istio由一些核心组件构成，这些组件共同提供了广泛的服务网格功能：</p>
+<p><strong>1.Envoy</strong>(Proxy): 环绕服务网格中的每个服务，Istio使用了一个被称为“边车”的代理模式，这个代理就是由Envoy实现的。Envoy负责与服务网格中所有服务的所有通信的拦截和路由。</p>
+<p><strong>2.Pilot</strong>： Pilot负责管理和配置所有Envoy代理实例。它提供路由规则，以便在服务间进行流量分发。</p>
+<p><strong>3.Mixer</strong>: Mixer提供了一种模块化的方式来实现访问控制和使用策略。它还负责收集遥测数据。</p>
+<p><strong>4.Citadel</strong>: Citadel负责提供服务间通信的安全认证和授权。</p>
+<p><strong>5.Galley</strong>: Galley负责验证、摄取、解析和派发服务网格的配置。</p>
+<p>这些组件协同工作，构成了Istio服务网格，提供了负载均衡，服务到服务的认证，监控等等一系列功能。此外，他们还可以通过 Kubernetes 等容器编排平台进行扩展和管理。</p>
+<h2 id="istio的工作原理">Istio的工作原理</h2>
+<p>Istio的工作机制和架构，分为控制面和数据面两部分。可以看到，控制面主要包括 Pilot、Mixer、Citadel等服务组件;数据面由伴随每个应用程序部署的代理程序Envoy组成，执行针对应用 程序的治理逻辑。</p>
+<h3 id="自动注入">自动注入:</h3>
+<p>指在创建应用程序时自动注入 Sidecar代理。在 Kubernetes场景下创建 Pod时，Kube-apiserver调用管理面组件的 Sidecar-Injector服务，自动修改应用程序的描述信息并注入Sidecar。在真正创建Pod时，在创建业务容器的同时在Pod中创建Sidecar容器。</p>
+<p>在Istio中，Envoy代理的注入到每个Pod中去主要依赖于Kubernetes的Webhook自动注入机制。这个过程主要是通过Istio的Sidecar-Injector组件完成的。下面是具体的步骤：</p>
+<p>当你创建一个名为&quot;foo&quot;的命名空间，并为它打上istio-injection=enabled标签时，其实你是在告诉Kubernetes，你希望在这个命名空间下创建的每个Pod都会触发Istio的自动注入机制。</p>
+<p>例如，你可以通过以下命令来实现这一步：</p>
+<pre><code>   kubectl create namespace foo
+   kubectl label namespace/foo istio-injection=enabled
+</code></pre>
+<p>当我们在foo命名空间下创建一个新的Deployment（比如运行一个简单的httpbin服务）时，Kubernetes的API Server会将这个Deployment的PodSpec发送给注册的Injector Webhook（在这个例子中就是Istio的Sidecar-Injector）。</p>
+<p>在收到PodSpec后，Istio Sidecar-Injector会查看是否有标签istio-injection=enabled。如果有，Sidecar-Injector就会在PodSpec中添加一个新的容器（就是Envoy代理）和一些必要的环境配置，然后再将修改过的PodSpec返回给API Server。<br>
+API Server收到修改后的PodSpec，接下来就会按照这个新的PodSpec创建Pod, 这样每个Pod就会自动运行一个Envoy代理。</p>
+<p>这样，Istio就可以自动地将Envoy Sidecar代理注入到每一个Pod中，而无需我们在每个服务或者每个Pod的配置中手动添加</p>
+<h3 id="流量拦截">流量拦截:</h3>
+<p>当我们在Kubernetes集群中部署Istio并对某个namespace启用自动注入后，Sidecar Injector将会在每个Pod的初始化过程中注入一个Init Container。</p>
+<p>这个Init Container会运行一个脚本，这个脚本会设置iptables规则来将所有的入站和出站流量都转发到Sidecar（即Envoy Proxy）中。这样就可以确保所有的网络流量都会经过Envoy处理，这包括服务间通信和服务与外部世界的通信。</p>
+<h3 id="服务发现">服务发现:</h3>
+<p>Istio服务发现的功能主要由其组件Pilot实现。Pilot负责收集和连接到服务网格各服务的信息，并生成适合的Envoy配置信息。下面是Pilot服务发现的基本工作原理：</p>
+<ol>
+<li>
+<p>Pilot首先从Kubernetes API服务器收集集群的服务信息。这些信息包括服务名、运行的Pod、端口等等。注意Pilot不仅仅支持Kubernetes，它还可以与其他类型的服务注册方式集成，比如Consul或者Eureka。在Kubernetes这里是利用的Kubernetes本地配置，或者Informer系统。</p>
+</li>
+<li>
+<p>收集到这些服务信息后，Pilot便可以理解服务网格中有哪些服务、这些服务运行在哪里以及如何访问它们。</p>
+</li>
+<li>
+<p>当新的服务添加进来或者现有服务有所改变时，Pilot将更新这些信息并生成新的Envoy配置。</p>
+</li>
+<li>
+<p>Pilot将这些更新的配置通过xDS API推送给网格中的每个Envoy实例。这样，每个Envoy都能理解哪个后端服务的请求应该发往哪台主机。</p>
+</li>
+<li>
+<p>因此，当服务的消费者尝试访问服务时，其相关的Envoy代理便已经知道如何路由请求到正确的目的地服务。</p>
+</li>
+</ol>
+<p>这样，Istio通过Pilot实现了服务发现以及为Envoy提供动态配置的功能，使服务网格内的微服务可以彼此发现并与每个其它进行通信</p>
+<h3 id="负载均衡">负载均衡:</h3>
+<p>Istio的负载均衡是通过Envoy代理来实现的，从上面所说的服务发现可知：<br>
+当服务A需要调用服务B时，它会首先发送请求到它的sidecar Envoy。这个Envoy知道所有服务B的实例以及它们的负载情况，Envoy使用这些信息，根据预配置的负载均衡策略（比如轮询、随机、最少请求等），选择一个服务B的实例，然后将请求转发到那里。</p>
+<p>Istio通过使用Pilot提供的服务发现信息和动态路由信息，结合Envoy自己的智能负载均衡能力，从而实现了强大的流量管理功能。这些功能包括请求路由、故障注入、重试、断路器等等，这都有助于增加服务网格中服务间通信的健壮性和灵活性。</p>
+<h3 id="流量治理">流量治理:</h3>
+<p>所有请求流量首先会被服务实例的sidecar Envoy代理拦截。<br>
+根据Istio配置的规则，Envoy将决定如何处理这些请求。比如</p>
+<ul>
+<li>负载均衡</li>
+<li>会话保持</li>
+<li>故障注入</li>
+<li>超时</li>
+<li>重试</li>
+<li>HTTP重定向</li>
+<li>HTTP重写</li>
+<li>熔断</li>
+<li>限流</li>
+<li>服务隔离</li>
+<li>灰度发布</li>
+</ul>
+<p>等治理规则</p>
+<h3 id="访问安全">访问安全:</h3>
+<p>Istio 通过一下几个方式保证访问的安全性：</p>
+<p><strong>1、双向TLS</strong>: 在Istio服务网格中，所有服务间的通信都会被自动升级为双向TLS连接，这意味着通信不仅被加密，同时服务间的身份也被验证。Istio使用Kubernetes的Service Account作为服务的身份，当服务的Envoy代理建立连接时，它会自动将Service Account的标志作为认证证书的一部分，从而实现服务的身份验证。</p>
+<p><strong>2、认证鉴权</strong>: Istio使用的是RBAC（Role-Based Access Control，基于角色的访问控制）模型进行认证鉴权。Istio的RBAC系统基于声明式政策，其中服务将被组织为一个或多个服务角色集。然后，可通过与这些服务角色相关的策略，允许或者拒绝这些服务进行特定的操作。</p>
+<p><strong>3、终端用户验证</strong>：Istio还支持端到端用户验证。这通常通过使用JSON Web Token (JWT)在服务之间身份传递和验证来完成。<br>
+<strong>4、审计日志</strong>: Istio还可以提供一套丰富的审计日志系统，记录谁访问了哪些服务、何时访问以及访问内容等详细信息，这对于安全审计非常有帮助。</p>
+<h3 id="服务遥测">服务遥测:</h3>
+<p>Istio的服务遥测原理主要是通过Envoy代理收集数据，然后再通过Istio的Mixer组件进行处理和分析，最后通过各类工具进行跟踪和可视化。</p>
+<p><strong>1、数据收集</strong>: Istio服务网格中的每一个服务实例都有一个Envoy代理（Sidecar模式），这个Envoy代理负责拦截和转发所有进出服务实例的网络入口和出口。在这个过程中，Envoy会自动收集关于请求和响应的详细数据，例如请求的大小、持续时间、响应的状态码等等。</p>
+<p><strong>2、处理和导出数据</strong>: 这些收集到的数据会被打包成统一格式的报告，然后由Envoy发送给Istio的遥测组件（Mixer）进行处理。Mixer可以对这些报告进行聚合和分析，还可以以插件的方式集成不同的后端系统，用于存储和可视化这些数据。</p>
+<p><strong>3、跟踪和可视化</strong>: Istio支持分布式追踪，可以集成OpenTracing API兼容的追踪系统，如Jaeger、Zipkin等。对于度量指标，Istio还可以集成Prometheus和其他指标系统，从而允许开发者和运维人员通过Grafana等可视化工具对服务性能进行详细的跟踪和监控。</p>
+<h3 id="策略执行">策略执行:</h3>
+<p>Istio的策略执行主要依赖于Mixer组件来完成。以下是其实现原理的步骤：</p>
+<p><strong>1、收集信息</strong> : 当服务间发生通信时，Envoy sidecar代理会拦截这些请求，从中收集如服务公理、源和目标服务、请求路径等信息。</p>
+<p><strong>2、检查策略</strong> ：Envoy代理将这些信息发送给Mixer组件。Mixer组件会基于这些信息，检查对应的策略（Policies）。这些策略可以包含各种规则，如速率限制、访问控制、配额管理等。</p>
+<p><strong>3、策略决策</strong>：Mixer在检查策略后，根据检查的结果做出决策。如果请求符合策略，它会给Envoy一个成功的返回值，允许请求通过。如果请求不符合策略，它会返回错误，告诉Envoy拒绝请求。</p>
+<p><strong>4、执行决策</strong>：在收到Mixer的决策后，Envoy代理执行对应的操作，如放行或拒绝请求。</p>
+<p>此外，Mixer还可以使用各种适配器（Adapters）与外部服务进行集成，这些外部服务可以提供权限认证、监控、日志等功能。通过灵活配置适配器和策略，Istio的Mixer组件能够支持为服务网格提供丰富、灵活的策略执行能力。</p>
+<h3 id="外部访问">外部访问:</h3>
+<p>Istio支持微服务架构的外部访问主要通过Ingress Gateway和Egress Gateway两种方式实现。</p>
+<p><strong>Ingress Gateway</strong>: Ingress Gateway处理进入服务网格的流量。Istio通过配置Ingress Gateway来控制和路由进入集群的流量。这是通过Istio的路由规则来实现的，可以基于URI、headers等请求信息进行复杂的路由和重定向。这个功能为我们提供了一个集中化的流量入口点，同时能帮助我们更好地处理如TLS终止、跨域策略等复杂的入口流量需求。<br>
+<strong>Egress Gateway</strong>: Egress Gateway处理出站流量，即服务网格内部的服务向外部网络发送的请求。Istio允许通过定义ServiceEntry资源来开启对指定外部服务的访问， 我们还可以配置Egress Gateway来作为所有出站流量的集中出口点，并通过配置流量策略来控制和观察出站流量。</p>
+<p>基于上面这两种Gateway，Istio提供了强大的流量管理能力，使得我们能够对服务网格中的流量入口和出口进行精细的控制和观察，进而满足各种复杂的流量策略需求和安全需求。</p>
+<p>—————————————————————————————————————————————</p>
+<blockquote>
+<p>这里总结在以上过程中涉及的动作和动作主体，可以将其中的每个过程都抽象成一句话:服务调用双方的Envoy代理拦截流量，并根据管理面的相关配置执行相应的治理动作，这也是Istio的数据面和控制面的配合方式。</p>
+</blockquote>
+<h2 id="istio-应用实例">Istio 应用实例</h2>
+<h3 id="环境搭建">环境搭建</h3>
+<p>保证在k8s环境已经安装好了Istio,如果未安装请参考<a href="https://istio.io/latest/zh/docs/setup/">Istio setup</a> 进行安装<br>
+1 <strong>创建命名空间</strong></p>
+<pre><code>kubectl  create ns istio-demo
+</code></pre>
+<p>2 <strong>命名空间打标签，允许Istio进行Pod注入</strong></p>
+<pre><code>kubectl label namespace default istio-injection=enabled
+</code></pre>
+<p>3 <strong>部署实验demo</strong></p>
+<pre><code>kubectl apply -f manifest/foreend_all.yaml
+kubectl apply -f manifest/backend_all.yaml
+</code></pre>
+<p>确保所部署Pod/Service/DestinationRule/VirtualService/Gateway 运行成功</p>
+<pre><code>
+kubectl get all -n istio-demo
+&gt;
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/backend-v1-65fd86dcdd-ltcjj   2/2     Running   0          3m43s
+pod/backend-v1-65fd86dcdd-nq648   2/2     Running   0          3m55s
+pod/backend-v2-59c77fb946-m8sm5   2/2     Running   0          3m47s
+pod/foreend-857d6fddcc-vs6cx      2/2     Running   0          8m35s
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+service/backend-service   ClusterIP   10.100.178.64   &lt;none&gt;        80/TCP    15m
+service/foreend-service   ClusterIP   10.102.94.224   &lt;none&gt;        80/TCP    15m
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/backend-v1   2/2     2            2           15m
+deployment.apps/backend-v2   1/1     1            1           15m
+deployment.apps/foreend      1/1     1            1           15m
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/backend-v1-65fd86dcdd   2         2         2       3m55s
+replicaset.apps/backend-v1-8458cff47    0         0         0       15m
+replicaset.apps/backend-v2-59c77fb946   1         1         1       3m47s
+replicaset.apps/backend-v2-69d465559f   0         0         0       15m
+replicaset.apps/foreend-6cc87765f9      0         0         0       15m
+replicaset.apps/foreend-857d6fddcc      1         1         1       8m35s
+replicaset.apps/foreend-9bb648dcf       0         0         0       9m47s
+
+</code></pre>
+<p>4 <strong>开启外网访问</strong><br>
+部署gateway资源</p>
+<pre><code>kubectl apply -f manifest/gateway.yaml
+</code></pre>
+<p>查看gateway 端口映射</p>
+<pre><code>kubectl  get svc -n istio-system
+&gt;&gt;
+
+NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                                                                      AGE
+grafana                ClusterIP      10.103.120.4     &lt;none&gt;        3000/TCP                                                                     5d18h
+istio-egressgateway    ClusterIP      10.107.71.254    &lt;none&gt;        80/TCP,443/TCP                                                               5d18h
+istio-ingressgateway   LoadBalancer   10.106.234.50    &lt;pending&gt;     15021:31299/TCP,80:31510/TCP,443:30119/TCP,31400:30718/TCP,15443:31501/TCP   5d18h
+istiod                 ClusterIP      10.96.76.135     &lt;none&gt;        15010/TCP,15012/TCP,443/TCP,15014/TCP                                        5d18h
+jaeger-collector       ClusterIP      10.104.113.121   &lt;none&gt;        14268/TCP,14250/TCP,9411/TCP,4317/TCP,4318/TCP                               5d18h
+kiali                  ClusterIP      10.103.75.77     &lt;none&gt;        20001/TCP,9090/TCP                                                           5d18h
+loki-headless          ClusterIP      None             &lt;none&gt;        3100/TCP                                                                     5d18h
+prometheus             ClusterIP      10.109.227.217   &lt;none&gt;        9090/TCP                                                                     5d18h
+tracing                ClusterIP      10.96.28.55      &lt;none&gt;        80/TCP,16685/TCP                                                             5d18h
+zipkin                 ClusterIP      10.111.47.170    &lt;none&gt;        9411/TCP                                                                     5d18h
+root@incleelinux:~/eshop#
+</code></pre>
+<p>我们看到istio-ingressgateway的80端口nodeport 被映射到宿主机31510端口</p>
+<p>配置Nginx代理到集群内部</p>
+<pre><code>upstream gateway-router{
+  server 192.168.1.5:31510;
+}
+server {
+    listen 80;
+    server_name istio-demo.com;
+    location /{
+        proxy_set_header Host $host;
+        proxy_set_header User-Agent $http_user_agent;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://gateway-router;
+    }
+}
+</code></pre>
+<p>配置完hosts 就可以访问到k8s部署的istio-demo服务了</p>
+<pre><code>curl -v http:istio-demo
+&gt;&gt;
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-8768b489-kjp5d&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+</code></pre>
+<h3 id="实例">实例</h3>
+<h4 id="负载均衡-2">负载均衡</h4>
+<p>参考backend-all.ymal的DestinationRule配置：</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  host: backend-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN # 轮训负载均衡
+      # simple: RANDOM # 随机负载均衡  
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN       
+  - name: v2
+    labels:
+      version: v2
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      interval: 1s #每隔1秒发现一次异常
+      consecutive5xxErrors: 2 #连续两次出错就会被认为是异常
+      baseEjectionTime: 5m #发现为异常的实例将在30s内被排除
+      maxEjectionPercent: 50 #安全策略，保证即使某些实例被识别为异常，仍有50%的实例可用，避免全部实例都被熔断
+---
+</code></pre>
+<p>在sepc.trafficPolicy.loadBalancer中更改配置算法，然后请求看对应的响应效果。</p>
+<blockquote>
+<p>subset 内部配置的trafficPolicy 会覆盖掉DestinationRule.spec中的trafficPolicy</p>
+</blockquote>
+<h4 id="灰度发布">灰度发布</h4>
+<h5 id="基于比例的灰度">基于比例的灰度</h5>
+<p>参考backend-all.yaml的VirtualService配置：</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - route:
+    - destination:
+        host: backend-service
+        subset: v1
+      weight: 20
+    - destination:
+        host: backend-service
+        subset: v2
+      weight: 80
+</code></pre>
+<p>更改对应的流量比例（weight），观察流量分发结果。</p>
+<h5 id="基于内容的灰度">基于内容的灰度</h5>
+<pre><code>#根据匹配内容继续流量分发
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - match:
+    - headers:
+        User-Agent:
+          regex: .*(Chrome/([\d.]+)).*  
+    route:
+      - destination:
+          host: backend-service
+          subset: v1
+  - route:
+    - destination:
+        host: backend-service
+        subset: v2
+</code></pre>
+<p>执行的结果为：</p>
+<pre><code>~ $  for i in `seq 100`; do curl -H 'User-Agent: Chrome/12.2' http://backend-service/backend;  echo ''; sleep 1;  done;
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+</code></pre>
+<blockquote>
+<p>灰度发布和负载均衡之间会相互影响吗？<br>
+在 Istio 的流量管理体系中，灰度发布的比例设置和负载均衡算法是相互独立的。他们各自独立控制不同层次的流量控制和路由。<br>
+灰度发布的比例控制是通过 <code>VirtualService</code> 配置实现的，它主要决定了流量应该被发送到哪些服务的哪些版本(subset)。例如，你可以设置80%的流量发送到<code>v1</code>版本，20%的流量发送到<code>v2</code>。</p>
+</blockquote>
+<blockquote>
+<p>而关于如何在具体的版本(subset)之间，也就是在同一个版本的多个 Pod 之间分配流量，这是由 <code>DestinationRule</code> 中的<code>loadBalancer</code> 字段控制的。你可以在这里指定具体的负载均衡策略，例如 ROUND ROBIN（轮询）、LEAST CONN（最小连接）或者 RANDOM(随机）等。</p>
+</blockquote>
+<blockquote>
+<p>所以，在一个典型的 Istio 配置中，<code>VirtualService</code> 会决定流量向哪个 Service 的哪个版本（subset）流动，而 <code>DestinationRule</code> 则决定这个流量<strong>如何在这个版本的多个 Pod 之间进行分配</strong>。这两部分配置可以独立进行，灰度发布与负载均衡算法相互不影响。</p>
+</blockquote>
+<h4 id="超时">超时</h4>
+<p>我们在backend的VirtualService为subset:v2 路由增加5ms的测试</p>
+<pre><code>#根据匹配内容继续流量分发
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - match:
+    - headers:
+        User-Agent:
+          regex: .*(Chrome/([\d.]+)).*  
+    route:
+      - destination:
+          host: backend-service
+          subset: v1
+  - route:
+    - destination:
+        host: backend-service
+        subset: v2
+    timeout: 5ms
+</code></pre>
+<p>开启测试结果：</p>
+<pre><code> for i in `seq 100`; do curl  http://backend-service/backend;  echo ''; sleep 1;  done;
+upstream request timeout
+upstream request timeout
+upstream request timeout
+upstream request timeout
+</code></pre>
+<h4 id="http-重定向">HTTP 重定向</h4>
+<p>参考foreend的VirtualService</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: foreend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - &quot;istio-demo.com&quot;
+  gateways:
+  - istio-system/istio-demo-gateway
+  http:
+  - match: # 重定向
+    - uri:
+        prefix: /notexist
+    redirect:
+      uri: /default
+      authority: istio-demo.com
+  - match: # 重写
+    - uri:
+        prefix: /rewrite 
+    rewrite:
+      uri: /?panic=1
+    retries:  # 重试
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: 5xx
+    route:
+    - destination:
+        host: foreend-service
+        subset: v1
+  - match: # 故障注入超时 curl -m 1 -v http://istio-demo.com/delay
+    - uri:
+        prefix: /delay
+    fault:
+      delay:  
+        fixedDelay: 3s
+        percent: 100
+    route:
+    - destination:
+        host: foreend-service
+        subset: v1
+  - match: # 故障注入中断 curl -m 1 -v http://istio-demo.com/abort
+    - uri:
+        prefix: /abort
+    fault:
+      abort:
+        httpStatus: 500
+        percentage: 
+          value: 100
+    route:
+    - destination:
+        host: foreend-service
+        subset: v1
+# 默认路由
+  - route:
+    - destination:
+        host: foreend-service
+        subset: v1
+        #timeout: 500ms
+
+</code></pre>
+<p>我们把/notexist从定向到/default</p>
+<h4 id="http-重写">HTTP 重写</h4>
+<p>参考foreend的VirtualService，我们把/rewrite重写到同一个服务的/?panic=1 路径</p>
+<blockquote>
+<p>关于HTTP重定向和重写<br>
+HTTP重定向和HTTP重写是网络中常见的两种技术，它们有相同的目标——改变用户请求的URL，但它们的工作原理和用途是有所不同的。</p>
+</blockquote>
+<blockquote>
+<p>HTTP重定向（Redirect）的工作原理是，当服务器收到用户请求后，会返回一个特别的响应，响应的状态码通常是301（永久重定向）或302（临时重定向），并在响应头中包含一个新的位置（Location），通知客户端重新发送请求到新的位置。重定向通常被用在网站迁移、合并网页、更改URL结构等场景。</p>
+</blockquote>
+<blockquote>
+<p>HTTP重写（Rewrite）则是在服务器内部完成的，当服务器收到用户请求时，会根据预设的规则改变请求的URL，然后再对改变后的URL进行处理。用户一般是看不到这个过程的，URL在地址栏上显示的还是原来的URL。重写通常被用在美化URL、隐藏真实的文件路径、使URL更符合SEO等场景。</p>
+</blockquote>
+<h4 id="重试">重试</h4>
+<p>根据上面的重写，我们把我们把/rewrite重写到同一个服务的/?panic=1 路径，这个路径的请求会返回500错误，这是Envoy代理会开启重试<br>
+我们可以看到foreend 服务端处理日志：</p>
+<pre><code>2024-02-05T21:48:24.190656694+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+
+2024-02-05T21:48:24.237931694+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+
+2024-02-05T21:48:24.288567648+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+
+2024-02-05T21:48:24.315263829+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+</code></pre>
+<p>第一条是从写返回的500，后面重试了3次，对应的配置：</p>
+<pre><code>    retries:  # 重试
+        attempts: 3 
+        perTryTimeout: 2s #
+        retryOn: 5xx
+</code></pre>
+<h4 id="熔断">熔断</h4>
+<p>参考配置：</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  host: backend-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN # 轮训负载均衡
+      # simple: RANDOM # 随机负载均衡
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      interval: 1s #每隔1秒检测一次异常情况
+      consecutive5xxErrors: 2 #连续两次出错就会被驱逐
+      baseEjectionTime: 5m #实例被重新加入可服务endpoint的间隔
+      maxEjectionPercent: 100 #驱逐百分比，100表示所有pod都可驱逐
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+#根据比例进行流量分发
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - route:
+    - destination:
+        host: backend-service
+        subset: v1
+      weight: 50
+    - destination:
+        host: backend-service
+        subset: v2
+      weight: 50
+</code></pre>
+<p>测试请求：</p>
+<pre><code>for i in `seq 100`; do curl  http://backend-service/circlebreak;  echo ''; sleep 1;  done;
+&lt;!doctype html&gt;
+&lt;html lang=en&gt;
+&lt;title&gt;500 Internal Server Error&lt;/title&gt;
+&lt;h1&gt;Internal Server Error&lt;/h1&gt;
+&lt;p&gt;The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.&lt;/p&gt;
+
+{&quot;message&quot;:&quot;ok&quot;}
+
+{&quot;message&quot;:&quot;ok&quot;}
+
+{&quot;message&quot;:&quot;ok&quot;}
+
+&lt;!doctype html&gt;
+&lt;html lang=en&gt;
+&lt;title&gt;500 Internal Server Error&lt;/title&gt;
+&lt;h1&gt;Internal Server Error&lt;/h1&gt;
+&lt;p&gt;The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.&lt;/p&gt;
+
+no healthy upstream
+{&quot;message&quot;:&quot;ok&quot;}
+
+no healthy upstream
+no healthy upstream
+</code></pre>
+<p>v2的circlebreak接口会返回500错误，我们看到返回两次后，v2pod会被认为异常，我们100%把v2的pod驱逐以后，后面到v2的请求返回了<code>no healthy upstream </code></p>
+<h4 id="限流">限流</h4>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[kubelet源码解析]]></title>
+        <id>https://nomagic.cc/post/kubelet-yuan-ma-jie-xi/</id>
+        <link href="https://nomagic.cc/post/kubelet-yuan-ma-jie-xi/">
+        </link>
+        <updated>2023-03-25T10:01:09.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="kubelet">kubelet</h1>
+<h2 id="kubelet-主要作用">kubelet 主要作用</h2>
+<ul>
+<li>
+<p>同步pod状态</p>
+<p>从数据源(本地文件，url接口，apiserver)获取Pod的期望状态，同步所管理的pod至期望状态</p>
+</li>
+<li>
+<p>Pod 状态同步至ApiServer</p>
+</li>
+<li>
+<p>容器的健康监测</p>
+<p>监测容器的健康状态，根据Pod设置的重启策略进行重启,</p>
+</li>
+<li>
+<p>节点资源监控</p>
+<p>监控节点资源使用状态，定期向Master节点进行报告</p>
+</li>
+</ul>
+<p>主要逻辑体现在Kubelet的Run 方法</p>
+<pre><code>// Run starts the kubelet reacting to config updates
+func (kl *Kubelet) Run(updates &lt;-chan kubetypes.PodUpdate) {
+	。。。
+	
+
+	// Start volume manager
+	go kl.volumeManager.Run(kl.sourcesReady, wait.NeverStop)
+
+	。。。
+	// 同步Pod 状态到ApiServer
+	kl.statusManager.Start()
+
+	// Start syncing RuntimeClasses if enabled.
+	if kl.runtimeClassManager != nil {
+		kl.runtimeClassManager.Start(wait.NeverStop)
+	}
+
+	// Pod生命周期事件
+	kl.pleg.Start()
+	///Pod 状态同步循环
+	kl.syncLoop(updates, kl)
+}
+</code></pre>
+<h3 id="pleg">pleg</h3>
+<p>PLEG（Pod Lifecycle Event Generator）<strong>确保pod状态和podspec保持一致</strong>。</p>
+<p>PLEG会一直调用container runtime获取本节点containers/sandboxes的信息，并与自身维护的pods cache信息进行对比，生成对应的PodLifecycleEvent，然后输出到eventChannel中，通过eventChannel发送到kubelet syncLoop进行消费。</p>
+<p>简单来说，PLEG的作用包括：</p>
+<ol>
+<li>周期性地从容器运行时获取最新的容器状态。</li>
+<li>生成Pod生命周期事件。</li>
+<li>通过事件通道将这些事件发送给kubelet的同步循环进行处理</li>
+</ol>
+<h2 id="pod-状态同步实现">Pod 状态同步实现</h2>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1695636249051.png" alt="" loading="lazy"></figure>
+<p>状态同步是指从数据源获取pod变更时间，同步到本地缓存同步到POD期望状态，并通过cri同步到container runtime</p>
+<h3 id="整体同步流程">整体同步流程</h3>
+<figure data-type="image" tabindex="2"><img src="https://nomagic.cc/post-images/1695636267029.png" alt="" loading="lazy"></figure>
+<h3 id="变更事件的获取">变更事件的获取</h3>
+<figure data-type="image" tabindex="3"><img src="https://nomagic.cc/post-images/1695636274841.png" alt="" loading="lazy"></figure>
+<h4 id="podconfig">PodConfig</h4>
+<p>PodConfig创建和管理 Kubernetes Pod 配置的对象。它提供了一种整合多个配置源的方式，将这些配置源规范化为一个流，进而更新为 Pod 配置，也就是说PodConfig是一个多路复用器，聚合来自本地文件，url请求和api server的事件</p>
+<pre><code>type PodConfig struct {
+	pods *podStorage //接收mux传递过来的PodUpdate，merge成pods缓存和有序的变更写入到updates channel
+	mux  *config.Mux //多路复用器
+
+	// the channel of denormalized changes passed to listeners
+	updates chan kubetypes.PodUpdate 
+
+	// contains the list of all configured sources
+	sourcesLock sync.Mutex
+	sources     sets.String
+}
+
+func NewPodConfig(mode PodConfigNotificationMode, recorder record.EventRecorder) *PodConfig {
+	updates := make(chan kubetypes.PodUpdate, 50)
+	storage := newPodStorage(updates, mode, recorder)
+	podConfig := &amp;PodConfig{
+		pods:    storage,
+		mux:     config.NewMux(storage), // mux 把变更传给 storage,storage 把变更merge到updates channel
+		updates: updates,
+		sources: sets.String{},
+	}
+	return podConfig
+}
+</code></pre>
+<h4 id="configmux">config.Mux</h4>
+<pre><code>type Mux struct {
+	merger Merger //这里对应的实现是podStorage
+	sourceLock sync.RWMutex
+	// Maps source names to channels
+	sources map[string]chan interface{}
+}
+
+func NewMux(merger Merger) *Mux {
+	mux := &amp;Mux{
+		sources: make(map[string]chan interface{}),
+		merger:  merger,
+	}
+	return mux
+}
+// 返回生成的channel，内部监听channel的可读时间，然后回调到merge
+func (m *Mux) ChannelWithContext(ctx context.Context, source string) chan interface{} {
+	if len(source) == 0 {
+		panic(&quot;Channel given an empty name&quot;)
+	}
+	m.sourceLock.Lock()
+	defer m.sourceLock.Unlock()
+	channel, exists := m.sources[source]
+	if exists {
+		return channel
+	}
+	newChannel := make(chan interface{})
+	m.sources[source] = newChannel
+
+	go wait.Until(func() { m.listen(source, newChannel) }, 0, ctx.Done())
+	return newChannel
+}
+
+func (m *Mux) listen(source string, listenChannel &lt;-chan interface{}) {
+	for update := range listenChannel {
+		m.merger.Merge(source, update)
+	}
+}
+</code></pre>
+<h5 id="监听注册">监听注册</h5>
+<p>在创建Kubelet的含函数中调用makePodSourceConfig方法创建PodConfig实例，并且注册了对本地文件，URL和API server的监听，通过监听channel写入podStorage.Merge</p>
+<pre><code>func makePodSourceConfig(kubeCfg *kubeletconfiginternal.KubeletConfiguration, kubeDeps *Dependencies, nodeName types.NodeName, nodeHasSynced func() bool) (*config.PodConfig, error) {
+	
+	// source of all configuration
+	cfg := config.NewPodConfig(config.PodConfigNotificationIncremental, kubeDeps.Recorder)
+	ctx := context.TODO()
+	if kubeCfg.StaticPodPath != &quot;&quot; {
+		config.NewSourceFile(kubeCfg.StaticPodPath, nodeName, kubeCfg.FileCheckFrequency.Duration, cfg.Channel(ctx, kubetypes.FileSource))
+	}
+
+	// define url config source
+	if kubeCfg.StaticPodURL != &quot;&quot; {
+		config.NewSourceURL(kubeCfg.StaticPodURL, manifestURLHeader, nodeName, kubeCfg.HTTPCheckFrequency.Duration, cfg.Channel(ctx, kubetypes.HTTPSource))
+	}
+
+	if kubeDeps.KubeClient != nil {
+		config.NewSourceApiserver(kubeDeps.KubeClient, nodeName, nodeHasSynced, cfg.Channel(ctx, kubetypes.ApiserverSource))
+	}
+	return cfg, nil
+}
+</code></pre>
+<h4 id="podstorage">podStorage</h4>
+<h5 id="merge">Merge</h5>
+<p>把多个数据源里的合并成一组有序的updates变更时间，写入到updates管道，并且管理缓存所维护的pods（这个在merge方法里实现）</p>
+<pre><code>func (s *podStorage) Merge(source string, change interface{}) error {
+	...
+	adds, updates, deletes, removes, reconciles := s.merge(source, change)
+	switch s.mode {
+	case PodConfigNotificationIncremental:
+			s.updates &lt;- *removes
+			s.updates &lt;- *adds
+			s.updates &lt;- *updates
+			s.updates &lt;- *deletes
+			s.updates &lt;- *adds
+			s.updates &lt;- *reconciles
+	...
+	return nil
+}
+</code></pre>
+<h3 id="pod事件分发">Pod事件分发</h3>
+<h4 id="syncloop">syncLoop</h4>
+<p>可以看到Kubelet.Run 开启了， 调用syncLoop同步loop</p>
+<p>syncLoop中处理了</p>
+<ul>
+<li><code>PodUpdate  pod变更事件</code></li>
+<li><code>pleg  生命呢周期事件</code></li>
+<li><code>syncCh 定时同步</code></li>
+<li><code>liveness 事件</code></li>
+<li><code>readiness 事件</code></li>
+</ul>
+<pre><code>func (kl *Kubelet) Run(updates &lt;-chan kubetypes.PodUpdate) {
+	...
+	// Start the cloud provider sync manager
+	if kl.cloudResourceSyncManager != nil {
+		go kl.cloudResourceSyncManager.Run(wait.NeverStop)
+	}
+	...
+	if err := kl.initializeModules(); err != nil {
+		kl.recorder.Eventf(kl.nodeRef, v1.EventTypeWarning, events.KubeletSetupFailed, err.Error())
+		klog.ErrorS(err, &quot;Failed to initialize internal modules&quot;)
+		os.Exit(1)
+	}
+
+	// Start volume manager
+	go kl.volumeManager.Run(kl.sourcesReady, wait.NeverStop)
+	...
+	go wait.Until(kl.updateRuntimeUp, 5*time.Second, wait.NeverStop)
+	...
+	// 同步POD状态到APIServer
+	kl.statusManager.Start()
+
+	if kl.runtimeClassManager != nil {
+		kl.runtimeClassManager.Start(wait.NeverStop)
+	}
+
+	// POD 生命事件处理
+	kl.pleg.Start()
+	kl.syncLoop(updates, kl)
+}
+
+func (kl *Kubelet) syncLoop(updates &lt;-chan kubetypes.PodUpdate, handler SyncHandler) {
+	...
+	for {
+	...
+		if !kl.syncLoopIteration(updates, handler, syncTicker.C, housekeepingTicker.C, plegCh) {
+			break
+		}
+	}
+}
+
+func (kl *Kubelet) syncLoopIteration(configCh &lt;-chan kubetypes.PodUpdate, handler SyncHandler,
+	syncCh &lt;-chan time.Time, housekeepingCh &lt;-chan time.Time, plegCh &lt;-chan *pleg.PodLifecycleEvent) bool {
+	select {
+	case u, open := &lt;-configCh:
+		switch u.Op {
+		case kubetypes.ADD:
+			handler.HandlePodAdditions(u.Pods)
+		case kubetypes.UPDATE:
+			handler.HandlePodUpdates(u.Pods)
+		case kubetypes.REMOVE:
+			handler.HandlePodRemoves(u.Pods)
+		case kubetypes.RECONCILE:
+			handler.HandlePodReconcile(u.Pods)
+		case kubetypes.DELETE:
+			handler.HandlePodUpdates(u.Pods)
+		case kubetypes.SET:
+		default:
+			klog.ErrorS(nil, &quot;Invalid operation type received&quot;, &quot;operation&quot;, u.Op)
+		}
+	case e := &lt;-plegCh:
+		if e.Type == pleg.ContainerStarted {
+			kl.lastContainerStartedTime.Add(e.ID, time.Now())
+		}
+		if isSyncPodWorthy(e) {
+			// PLEG event for a pod; sync it.
+			if pod, ok := kl.podManager.GetPodByUID(e.ID); ok {
+				klog.V(2).InfoS(&quot;SyncLoop (PLEG): event for pod&quot;, &quot;pod&quot;, klog.KObj(pod), &quot;event&quot;, e)
+				handler.HandlePodSyncs([]*v1.Pod{pod})
+			} else {
+				// If the pod no longer exists, ignore the event.
+				klog.V(4).InfoS(&quot;SyncLoop (PLEG): pod does not exist, ignore irrelevant event&quot;, &quot;event&quot;, e)
+			}
+		}
+
+		if e.Type == pleg.ContainerDied {
+			if containerID, ok := e.Data.(string); ok {
+				kl.cleanUpContainersInPod(e.ID, containerID)
+			}
+		}
+	case &lt;-syncCh:
+		podsToSync := kl.getPodsToSync()
+		handler.HandlePodSyncs(podsToSync)
+	case update := &lt;-kl.livenessManager.Updates():
+		if update.Result == proberesults.Failure {
+			handleProbeSync(kl, update, handler, &quot;liveness&quot;, &quot;unhealthy&quot;)
+		}
+	case update := &lt;-kl.readinessManager.Updates():
+		ready := update.Result == proberesults.Success
+		kl.statusManager.SetContainerReadiness(update.PodUID, update.ContainerID, ready)
+		status := &quot;&quot;
+		if ready {
+			status = &quot;ready&quot;
+		}
+		handleProbeSync(kl, update, handler, &quot;readiness&quot;, status)
+	case update := &lt;-kl.startupManager.Updates():
+		started := update.Result == proberesults.Success
+		kl.statusManager.SetContainerStartup(update.PodUID, update.ContainerID, started)
+
+		status := &quot;unhealthy&quot;
+		if started {
+			status = &quot;started&quot;
+		}
+		handleProbeSync(kl, update, handler, &quot;startup&quot;, status)
+	case &lt;-housekeepingCh:
+		if !kl.sourcesReady.AllReady() {
+			// If the sources aren't ready or volume manager has not yet synced the states,
+			// skip housekeeping, as we may accidentally delete pods from unready sources.
+			klog.V(4).InfoS(&quot;SyncLoop (housekeeping, skipped): sources aren't ready yet&quot;)
+		} else {
+			start := time.Now()
+			klog.V(4).InfoS(&quot;SyncLoop (housekeeping)&quot;)
+			if err := handler.HandlePodCleanups(); err != nil {
+				klog.ErrorS(err, &quot;Failed cleaning pods&quot;)
+			}
+			duration := time.Since(start)
+			if duration &gt; housekeepingWarningDuration {
+				klog.ErrorS(fmt.Errorf(&quot;housekeeping took too long&quot;), &quot;Housekeeping took longer than 15s&quot;, &quot;seconds&quot;, duration.Seconds())
+			}
+			klog.V(4).InfoS(&quot;SyncLoop (housekeeping) end&quot;)
+		}
+	}
+	return true
+}
+</code></pre>
+<h5 id="pod变更事件同步">pod变更事件同步</h5>
+<h6 id="处理流程">处理流程</h6>
+<figure data-type="image" tabindex="4"><img src="https://nomagic.cc/post-images/1695636302766.png" alt="" loading="lazy"></figure>
+<p>podupdate 事件统一通过 SyncHandler 的接口的handlerPod*方法投递到podWorkers.UpdatePod中，可以看到podWorkers 为每一个Pod 创建了一个单独的channel 和 managePodLoop 协程来处理这个Pod的变更事件，在managePodLoop协程中将处理Pod的TerminatedPodWork、TerminatingPodWork,其余update时间分别代理到kubelet 的syncPod/syncTerminatingPod/syncTerminatedPod 方法，并把PodId 写入到了podWokers.workQueue 队列</p>
+<p>syncPod/syncTerminatingPod/syncTerminatedPod</p>
+<p>分别调用ContainerRuntime(调用CRI接口)实现容器的创建和删除、状态上报ApiServer、挂载/卸载容器、创建/删除CGroup 和各种Manner的注册与清理操作</p>
+<h5 id="syncch-定时同步">syncCh 定时同步</h5>
+<p>参考Kubelet的syncLoop中处理syncCh的定时逻辑，这里的逻辑就是定期的从podWokers.workQueue中取出pod进行同步</p>
+<h5 id="pleg-生命周期事件同步">pleg 生命周期事件同步</h5>
+<p>PLEG，全称Pod Lifecycle Event Generator，通过周期性的获取Pod状态和本地缓存POD老状态进行对比，从而生成生命周期事件，写入到事件channel</p>
+<p>kubelet 在synLoop循环syncLoopIteration中读取Pod生命周期事件派发到dispatchwork进行状态同步</p>
+<h6 id="处理流程-2">处理流程</h6>
+<figure data-type="image" tabindex="5"><img src="https://nomagic.cc/post-images/1695636316607.png" alt="" loading="lazy"></figure>
+<h5 id="probe-事件处理livenessreadiness">Probe 事件处理（liveness/readiness）</h5>
+<h6 id="处理流程-3">处理流程</h6>
+<figure data-type="image" tabindex="6"><img src="https://nomagic.cc/post-images/1695636322706.png" alt="" loading="lazy"></figure>
+<p>Kubetlet在创建是创建了</p>
+<pre><code>klet.livenessManager = proberesults.NewManager()
+klet.readinessManager = proberesults.NewManager()
+klet.startupManager = proberesults.NewManager()
+</code></pre>
+<p>并且交于ProbeManager进行管理。</p>
+<p>在POD进行synd的过程中（syncPod方法）会通过ProbeManager.Add方法接入probe的管理，按照probe类别，分别生成创建对应.prober.Worker 跑在不同的协程中。每个worker中有一个定时循环定期的调用doProbe进行探测，把探测结果通过对应probeManner.Set写回updates管道。</p>
+<p>kubelet 会在syncLoopIteration循环中监听probe的updates更新，然后通过HandlePodSyncs提交同步任务到syncWorker,后面就是pod的sync流程了。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[微服务架构下的数据一致性方案]]></title>
+        <id>https://nomagic.cc/post/wei-fu-wu-jia-gou-xia-de-shu-ju-yi-zhi-xing-fang-an/</id>
+        <link href="https://nomagic.cc/post/wei-fu-wu-jia-gou-xia-de-shu-ju-yi-zhi-xing-fang-an/">
+        </link>
+        <updated>2022-11-10T08:58:59.000Z</updated>
+        <content type="html"><![CDATA[<p>我们知道微服务开发模式下，每个微服的存储也是独立隔离开的，每个服务都有自己单独的存储，这就引发了一个问题如何确保微服务架构下的数据一致性呢？更具体的是说如何实现原子性和隔离性的呢？</p>
+<blockquote>
+<p>原子性和隔离性在分布式下分别对应原子提交和并发控制，原子提交也就是说事务需要有回滚的能力，并发控制也就是通过加锁或者多版本来实现访问相同数据的并发事务实现隔离。</p>
+</blockquote>
+<p>首先需要明确的是微服务模式下有哪些数据一致性的挑战：</p>
+<ul>
+<li>分布式事务：多个服务协调工作来保证数据的一致性</li>
+<li>同步和复制：数据同步复制的一致性</li>
+<li>并发访问：多个服务并发访问资源</li>
+</ul>
+<h1 id="分布式事务管理器distributed-transaction-manager简称dtm两阶段三阶段提交">分布式事务管理器（Distributed Transaction Manager，简称DTM）两阶段/三阶段提交</h1>
+<h2 id="基本原理">基本原理</h2>
+<p>分布式事务管理器的工作原理可以简单概括为以下几个步骤：<br>
+事务的开始：分布式事务管理器接收到一个事务请求，并为该事务生成一个全局唯一的事务ID。<br>
+事务的协调：分布式事务管理器将该事务的操作分发给不同的节点进行执行，并记录每个节点的执行结果。<br>
+事务的提交或回滚：分布式事务管理器根据节点的执行结果，决定是提交还是回滚该事务。如果所有节点的操作都成功执行，则提交该事务；如果有任何一个节点的操作失败，则回滚该事务。</p>
+<h2 id="组成">组成</h2>
+<p>事务管理器（TM）：事务管理器是分布式事务管理器的核心组件，负责协调分布式事务的执行。<br>
+资源管理器（RM）：资源管理器负责管理具体的资源，如数据库、消息服务器等。<br>
+参与者：参与者是指执行分布式事务的应用程序。</p>
+<h2 id="实现方案">实现方案</h2>
+<p>分布式事务管理器的实现方式有很多种，常见的实现方式包括：<br>
+基于XA协议的实现：XA协议是一种工业标准的二阶段提交协议，可用于实现分布式事务。<br>
+基于消息队列的实现：消息队列可以用于实现分布式事务的最终一致性。<br>
+基于补偿机制的实现：补偿机制是一种可靠性保障机制，可用于实现分布式事务的回滚。</p>
+<h3 id="xa-协议">XA 协议</h3>
+<p>XA 协议是由 X/Open 公司于 1991 年发布的一套标准协议。XA 是 eXtended Architecture 的缩写，因此该协议旨在解决如何在异构系统中保证全局事务的原子性。</p>
+<p>基于XA协议的实现分布式事务管理器，需要以下几个组件：<br>
+事务管理器（TM)：负责协调分布式事务的执行。<br>
+资源管理器（RM）：负责管理具体的资源，如数据库、消息服务器等。<br>
+参与者（应用程序：AP）：参与者是指执行分布式事务的应用程序。</p>
+<h4 id="xa协议的执行流程如下">XA协议的执行流程如下：</h4>
+<p>参与者（应用程序）向事务管理器（TM）发起事务请求。<br>
+TM向各个RM发起准备（prepare）请求。<br>
+RM响应TM的准备请求，如果准备成功，则返回PREPARED；如果准备失败，则返回NOT_READY。<br>
+TM收到所有RM的准备响应后，如果所有响应都是PREPARED，则向各个RM发起提交（commit）请求；如果有一个响应不是PREPARED，则向各个RM发起回滚（rollback）请求。<br>
+RM响应TM的提交或回滚请求。</p>
+<h4 id="tm的实现">TM的实现</h4>
+<p>TM的实现需要提供以下功能：<br>
+创建事务：TM需要提供一个接口，用于创建事务。<br>
+加入事务：TM需要提供一个接口，用于加入事务。<br>
+提交事务：TM需要提供一个接口，用于提交事务。<br>
+回滚事务：TM需要提供一个接口，用于回滚事务。</p>
+<h4 id="rm的实现">RM的实现</h4>
+<p>RM的实现需要提供以下功能：<br>
+支持XA协议：RM需要实现XA协议的接口，用于响应TM的准备、提交和回滚请求。<br>
+执行业务操作：RM需要根据业务需求，执行具体的业务操作。</p>
+<h3 id="实现代码参考">实现代码参考</h3>
+<pre><code>type XAResource interface {
+    // 准备事务
+    Prepare(xid string) error
+    // 提交事务
+    Commit(xid string) error
+    // 回滚事务
+    Rollback(xid string) error
+}
+type MyXAResource struct {
+    // 资源 ID
+    resourceId string
+}
+
+func (m *MyXAResource) Prepare(xid string) error {
+    // 执行准备逻辑
+    return nil
+}
+
+func (m *MyXAResource) Commit(xid string) error {
+    // 执行提交逻辑
+    return nil
+}
+
+func (m *MyXAResource) Rollback(xid string) error {
+    // 执行回滚逻辑
+    return nil
+}
+type XATransactionManager struct {
+    // 资源管理器列表
+    resourceManagers []XAResource
+}
+
+func (m *XATransactionManager) Begin() (xid string, err error) {
+    // 生成事务 ID
+    xid = uuid.NewString()
+    // 向所有资源管理器发起准备请求
+    for _, resourceManager := range m.resourceManagers {
+        err = resourceManager.Prepare(xid)
+        if err != nil {
+            return &quot;&quot;, err
+        }
+    }
+    return xid, nil
+}
+
+func (m *XATransactionManager) Commit(xid string) error {
+    // 向所有资源管理器发起提交请求
+    for _, resourceManager := range m.resourceManagers {
+        err := resourceManager.Commit(xid)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (m *XATransactionManager) Rollback(xid string) error {
+    // 向所有资源管理器发起回滚请求
+    for _, resourceManager := range m.resourceManagers {
+        err := resourceManager.Rollback(xid)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+</code></pre>
+<p>使用例子：</p>
+<pre><code>// 创建 XA 事务管理器
+transactionManager := &amp;XATransactionManager{
+    resourceManagers: []XAResource{
+        &amp;MyXAResource{resourceId: &quot;resource1&quot;},
+        &amp;MyXAResource{resourceId: &quot;resource2&quot;},
+    },
+}
+
+// 开始事务
+xid, err := transactionManager.Begin()
+if err != nil {
+    // 处理错误
+}
+
+// 执行业务操作
+// ...
+
+// 提交事务
+err = transactionManager.Commit(xid)
+if err != nil {
+    // 处理错误
+}
+
+</code></pre>
+<h3 id="和两阶段提交的关系2pc">和两阶段提交的关系（2PC）</h3>
+<p>XA协议和两阶段提交（Two-Phase Commit，简称2PC）是分布式系统中实现事务一致性的两个关键概念。<br>
+XA协议：XA协议是一种由X/Open组织定义的分布式事务处理的标准协议。它定义了一组接口和规范，用于在分布式环境下协调事务的提交和回滚。XA协议的核心是将事务分为全局事务（Global Transaction）和本地事务（Local Transaction），并通过协调者（Coordinator）和参与者（Participant）之间的通信来实现事务的一致性。<br>
+两阶段提交（Two-Phase Commit）：两阶段提交是一种基于XA协议的分布式事务协调协议。它通过两个阶段的操作来保证所有参与者要么都提交事务，要么都回滚事务，从而实现分布式事务的一致性。首先，协调者向所有参与者发送事务准备请求，并等待参与者的响应。然后，在所有参与者都准备好提交事务的情况下，协调者向所有参与者发送提交请求；否则，协调者向所有参与者发送回滚请求。<br>
+因此，XA协议是一种通用的事务处理标准协议，而两阶段提交是基于XA协议的具体实现机制。XA协议定义了事务的分布式处理模型，而两阶段提交则是在此模型基础上进行具体操作的协议</p>
+<h3 id="三阶段提交">三阶段提交</h3>
+<p>两阶段提交存在的问题，如果在事务准备阶段过后，协调者出了状况，那么所有的参与者不知道接下来要怎么办，整个事务就卡住了无法进行。<br>
+三阶段提交增加了一个预提交阶段。<br>
+CanCommit<br>
+PreCommit<br>
+DoCommit<br>
+在第一个阶段后，协调者出现问题的时候，因为并没有真的锁定资源，所以这时候系统是没有被堵塞的。加入在第二个阶段协后调者出现问题，参与者超时后会自动提交事务，因为第一步的检查会使PreCommit执行成功的概率增大，也就是需要回滚的概率降低。但是由于网络原因某个参与者没有收到协调者的回滚信息，进行了超时提交的概率还是存在的。这种网络或者意外的原因无法很好的解决，比如在两阶段提交中，提交的时候，有一个参与者宕机了，又没能进行很快的恢复，这时其他事务就有可能读取到这个事务的不完整状态。<br>
+##分布式一致性算法（例如，Paxos和Raft）<br>
+算法通过选举和消息传递机制来实现分布式数据一致性。通过协商和达成共识来确保数据的一致性，并处理节点故障和网络分区等问题。这些算法提供了更强的容错性和可扩展性，但实现和理解上更为复杂，这里不展开叙述。</p>
+<h2 id="数据最终一致性">数据最终一致性</h2>
+<p>通过上面的叙述和CAP理论我们可以知道，在分布式的环境下，服务保持可用的情况下，做不到强一致性。<br>
+而当业务发生在多个服务中，我们追求最终一致性。那么怎么解决上面提到的问题，做到跨服务的最终一致性呢？</p>
+<h3 id="避免同时跨服务的写操作">避免同时跨服务的写操作</h3>
+<p>这是个业务问题，在微服务的架构下，每个服务都是独立的，如果有一个业务功能需要同时修改两个服务的数据，往往这个业务可以拆分成两个步骤，比如场景一种提到的订单和库存的例子，如果我们可以先锁定库存，然后再确认订单看上去这个问题就迎刃而解了。</p>
+<p>因此在业务中发现一个功能需要同时修改两个服务的数据，我们首先可以来讨论这个业务设计是否合理；如果业务上很多场景都要求两个服务的数据保持强一致，那可能我们需要看看微服务的划分是否合理。</p>
+<h3 id="最大努力通知-最大努力处理">最大努力通知 + 最大努力处理</h3>
+<p>为了解决场景二和场景三的不一致性问题，需要上游服务和下游服务的共同努力：</p>
+<p>上游服务需要尽可能将事件发送出去，比如：先同步发送，如果失败改为异步重试，重试多次仍然失败可以先持久化，通过定时任务来重发或者人工干预重发。</p>
+<p>下游服务也要尽可能的把事件处理掉，收到事件后可以考虑先将事件持久化，消费成功后标记事件，如果消费失败可以通过定时任务重试消费。</p>
+<h3 id="保证幂等性">保证幂等性</h3>
+<p>当我们提到重试，就不得不考虑幂等性的问题，这里的幂等性包括以下两个场景：</p>
+<p>上游服务接口的幂等性，保证下游系统的重试逻辑可以得到正确响应<br>
+下游服务消费事件保证幂等性，避免因上游多发事件或事件已消费成功后再次重试产生的问题<br>
+核心业务数据补偿机制<br>
+在分布式系统的执行链路上，每个节点都有可能失败，加上业务的复杂度，即便我们做了很多我们认为万全的准备，数据不一致的情景也很难彻底解决，而对于那些小概率发生但技术解决起来成本昂贵的问题，我们可以尝试通过对业务的深刻理解设计一些后台的维护功能，保证在核心业务数据异常时，可以在一定的规则内进行修复，从而保证业务的顺利进行。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[函数式编程]]></title>
+        <id>https://nomagic.cc/post/han-shu-shi-bian-cheng/</id>
+        <link href="https://nomagic.cc/post/han-shu-shi-bian-cheng/">
+        </link>
+        <updated>2022-10-07T06:46:39.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="函数式编程">函数式编程</h1>
+<h2 id="理论基础">理论基础：</h2>
+<p>真身：不是编程语言里的函数，而是数学里的函数概念。</p>
+<h3 id="λ演算">λ演算</h3>
+<p>一套用于研究函数定义、应用和递归的形式系统</p>
+<p>λ演算被称为最小的通用编程语言。可以用来清晰地定义什么是一个可计算函数。它包括一条变换规则（变量替换）和一条函数定义方式</p>
+<p><strong>语法规则</strong></p>
+<p>任何λ表达式都可以通过下述三条BNF范式描述：</p>
+<p>**范式1、**＜expr＞ ::= ＜identifier＞</p>
+<p>f(x) = x  =&gt; <strong>λ x.</strong></p>
+<p>**范式2、**＜expr＞ ::= (λ ＜identifier＞ . ＜expr＞)</p>
+<ol>
+<li><strong>f (x) = x + 2</strong> =&gt;<strong>λ x. x +2;</strong></li>
+<li>f(x,y)=x+y =&gt;<strong>（λ x. λ y. x + y）</strong></li>
+</ol>
+<p>**范式3、**＜expr＞ ::= (＜expr＞ ＜expr＞)</p>
+<ol>
+<li>f(y)=y+2; f(x)=1-x =&gt;（<strong>λ x.x+2)(λ x.1-x)  ==&gt; f(1-x) = 1-x+2</strong></li>
+</ol>
+<h2 id="无状态和无副作用"><strong>无状态和无副作用</strong>：</h2>
+<h3 id="关于状态">关于状态：</h3>
+<p>一段程序里如果有一个变量需要维护，程序的确定性会比较高，如果有10个变量，emmm想要维护确定性，或者想要知道在某个时刻程序处于什么状态是有难度的。</p>
+<p>那么怎么做？面向对象是把状态的变更封装起来。</p>
+<p><strong>与其建立种种机制来控制可变的状态，不如尽可能消灭可变的状态</strong></p>
+<p>函数式编程如何消灭状态？</p>
+<p>还是对应于数学中的函数的概念：定义域←→映射←→值域，函数除了进行映射之外，其他啥也不干。</p>
+<h3 id="无状态实现">无状态实现</h3>
+<p>每次计算都基于输入产生输出，本身无状态，也不依赖除参数外的任何状态</p>
+<pre><code>threshold =  5
+
+def check(score,threshold):
+    if score &gt; threshold:
+        return &quot;Good&quot;
+    else:
+        return &quot;Bad&quot;
+
+def checkUnSure(score):
+    if score &gt; threshold:
+        return &quot;Good&quot;
+    else:
+        return &quot;Bad&quot;
+        
+assert(check(6,5) == &quot;Good&quot;)
+assert(check(6,5) == &quot;Good&quot;)
+threshold = 7
+assert(checkUnSure(6) == &quot;Good&quot;) //  不确定checkUnSure(6)到底什么结果
+threshold = &quot;a string&quot;			 //  或者其他某个地方悄悄把threshold改掉。
+assert(checkUnSure(6) == &quot;Good&quot;)
+</code></pre>
+<h3 id="无副作用">无副作用</h3>
+<p>除了输出参数外，不会对其他任何东西产生影响</p>
+<pre><code>def checkUnSure(score):
+    if score &gt; threshold:
+    	threshold = &quot;&quot;
+        return &quot;Good&quot;
+    else:
+        return &quot;Bad&quot;
+</code></pre>
+<p><strong>纯函数：没有副作用，仅依赖于输入参数的函数。</strong></p>
+<p><strong>不可变性：将数据视为不可更改的，避免直接修改原始数据。</strong></p>
+<p>还是映射数学中函数的概念：函数没办法修改参数，参数只是求值时的一个定义域元素的拷贝</p>
+<h2 id="核心工具与数据结构"><strong>核心工具与数据结构</strong>：</h2>
+<blockquote>
+<p>用高阶抽象取代基本的控制结构,更接近于自然语言，更容易理解</p>
+</blockquote>
+<h3 id="总得逻辑">总得逻辑</h3>
+<ul>
+<li>做什么而不是怎么做，按照做什么大概分为3类：
+<ul>
+<li>筛选</li>
+<li>映射</li>
+<li>规约</li>
+</ul>
+</li>
+</ul>
+<h3 id="实现的工具">实现的工具</h3>
+<ul>
+<li><strong>filter,map,reduce,every,some,sort,step,concat,slice,split,join,if else than --→ 如果按照是什么，而不是怎么做 那么这种工具会构造出更多</strong></li>
+</ul>
+<h3 id="例子"><strong>例子</strong></h3>
+<pre><code>
+//两端代码比较
+animal = []
+dogs = filter(animal,a.type == &quot;dog&quot;) 
+
+dogs = []   
+for a in animal{    
+    if a.type == &quot;dog&quot;{
+        dogs.append(a)
+    }
+}
+</code></pre>
+<p><strong>分页</strong></p>
+<p><strong>普通实现</strong></p>
+<pre><code>分页
+size = 1000
+pages = []
+list = [...]
+idx = 0
+page = []
+for _,item := range list{
+	if idx == size{
+	 	pages.append(page)
+	 	page = [] 
+	}
+	page = append(item)
+	size ++
+}
+if !page.Empty(){
+	pages.append(page)
+}
+</code></pre>
+<p><strong>Step实现</strong></p>
+<pre><code>//step --&gt;是每多少个元素为一不，而不是如何把元素按个数分割
+func step(count,size,fn func(_s,_e int)){
+	s,e = 0
+	for e &lt; count{
+		fn(s,min(count,e+size))
+		e+=size
+	}
+}
+//用step 实现
+step(len(list),size,func(s,e){ pages.append(list[s:e])})
+//如果想要方面理解，可以在多一层抽象
+
+typedef split step
+
+split(len(list),size,func(s,e){ pages.append(list[s:e])}) //按个数分割
+</code></pre>
+<p>go 错误处理</p>
+<p><strong>普通实现</strong></p>
+<pre><code>
+mtx, err := lock.Mutex(cc, lock.Key(&quot;lock:&quot;+unique), lock.TTL(ttl), retry)
+if err != nil {
+	return err
+}
+if err = mtx.Lock(); err != nil {
+	return err
+}
+defer func(){
+	err = erros.append(mtx.Unlock)
+}()
+if err = dowork();err != nil{
+	return err 
+}
+。。。。 
+if err = fun1();err != nil {
+	return err
+}
+// 无止尽的错误处理代码
+</code></pre>
+<p><strong>if-else-then</strong></p>
+<pre><code>
+type IfThen struct {
+	err error
+}
+
+func If(err error) *IfThen {
+	return &amp;IfThen{err: err}
+}
+func (it *IfThen) If(err error) {
+	it.err = err
+}
+func (it *IfThen) Else(fn func()) *IfThen {
+	if it.err != nil {
+		fn()
+	}
+	return it
+}
+func (it *IfThen) Than(fn func() error) *IfThen {
+	if it.err == nil {
+		it.err = fn()
+	}
+	return it
+}
+func (it *IfThen) Final(fn func()) *IfThen {
+	it.err = errors.append(fn())
+	return it
+}
+func (it IfThen) Error() error {
+	return it.err
+}
+</code></pre>
+<pre><code>var mtx lock.Locker
+	err = If(func() error { mtx, err = lock.Mutex(lx.ctx, lx.opts...); return err }()).
+		Than(func() error { return mtx.Lock() }).
+		Than(func() error { return dowork()}).
+		Final(func() error { return mtx.Unlock() }).
+		Error()
+
+// 如果Go支持λ表达式---&gt;可惜它不支持，随它去吧。
+var mtx lock.Locker
+	err = If({mtx, err = lock.Mutex(lx.ctx, lx.opts...); return err }).
+		Than({mtx.Lock}).
+		Than({dowork}).
+		Final({mtx.UnLock}).
+		Error()
+		
+</code></pre>
+<h2 id="函数组合代码组合和抽象方式"><strong>函数组合</strong>：（代码组合和抽象方式）</h2>
+<blockquote>
+<p>通过将小型纯粹功能组合形成更大型复杂功能来构建程序逻辑。</p>
+</blockquote>
+<p>还是对应的数学中函数的概念-→复合函数</p>
+<h3 id="高阶函数"><strong>高阶函数</strong>：</h3>
+<ul>
+<li>接受一个或多个其他函数作为参数，并/或返回一个新的以其他功能组合而成的功能。</li>
+</ul>
+<p>f(g(c(x)))</p>
+<p>f()(gx)</p>
+<h3 id="柯里化">柯里化</h3>
+<p>减少元的过程</p>
+<pre><code>def logplain(level,model,msg):
+    print(level,model,msg)
+
+def log(level):
+    def mlog(model):
+        def output(msg):
+            print(level,model,msg)
+        return output
+    return mlog 
+
+info = log(&quot;info::&quot;)(&quot;db=&gt;&quot;)
+info(&quot;select id from t_user where name = 'aaa'&quot;)
+info(&quot;很方便&quot;)
+
+logplain(&quot;info&quot;,&quot;db=&gt;&quot;,&quot;msg&quot;)
+logplain(&quot;info&quot;,&quot;db=&gt;&quot;,&quot;msg&quot;)
+logplain(&quot;info&quot;,&quot;db=&gt;&quot;,&quot;msg&quot;)
+
+&quot;info&quot;,&quot;db=&gt;&quot; //很多重复输入
+</code></pre>
+<h3 id="惰性求值"><strong>惰性求值</strong>：</h3>
+<ul>
+<li>只在需要时才进行计算，延迟执行操作可以提高效率并节省资源消耗。</li>
+</ul>
+<h2 id="并行化与异步编程"><strong>并行化与异步编程</strong>：</h2>
+<ul>
+<li>函数式编程对并行化和异步编程提供了天然的支持，因为纯函数不依赖于共享状态。</li>
+</ul>
+<pre><code>class Student:
+    def __init__(self):
+        self.examd  = False
+        self.score = 0
+
+    def setScore(self,score):
+        self.examd = True
+        self.score = score
+
+def dispatch(student):
+    ret = &quot;等待成绩&quot;
+    if student.examd:
+        if student.score &lt; 60:
+            ret = &quot;去打螺丝&quot;
+        else:
+            ret = &quot;继续深造&quot;
+    ret
+
+if __name__ == &quot;__main__&quot;:
+    a = Student()
+    b = Student()
+
+    a.setScore(60)
+    b.setScore(100) ### 虽然考了一百分，不加锁 有可能会跑去打螺丝
+
+    thread1 = Thread(target=dispatch, args=(copy(a),))
+    thread2 = Thread(target=dispatch, args=(b,))
+</code></pre>
+<p>通过复制来减少共享状态，保证了逻辑一致性。</p>
+<ul>
+<li>更容易写出安全代码</li>
+</ul>
+<pre><code>func = aysnc (){}
+funb = aysnc (){}
+result = await funa() * funb()
+#funa,funb 是两个异步独立执行的程序，如果之间相互依赖或者依赖于外部环境，那么这个结果就是无法确定的。
+</code></pre>
+<ul>
+<li>数据并行处理</li>
+</ul>
+<pre><code>MapReduce 的大数据处理中的应用
+通过用户定义的map函数将输入分割成key/value对，然后处理该数据，最终通过Reduce函数将处理完成的记过合并。
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1695279673167.png" alt="" loading="lazy"></figure>
+<h2 id="模块化和可测试性"><strong>模块化和可测试性</strong>：</h2>
+<ul>
+<li>函数式程序易于模块化，代码更容易被拆分成独立、可重用的组件。</li>
+<li>纯函数易于测试，可以通过输入输出验证其正确性。</li>
+</ul>
+<h2 id="总结">总结</h2>
+<ul>
+<li>用高阶抽象取代基本的控制结构，提高语法的表现能力</li>
+<li>减少不确定性因素
+<ul>
+<li>一个操作的行为应该是确定的</li>
+<li>用机制而不是用变量去控制</li>
+</ul>
+</li>
+<li>要做什么，而不是怎么去做。</li>
+<li>各种编程范式之间不是绝对隔离的，而是相互融合，没有极端的状态</li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[boltdb 架构解读]]></title>
+        <id>https://nomagic.cc/post/boltdb-jia-gou-jie-du/</id>
+        <link href="https://nomagic.cc/post/boltdb-jia-gou-jie-du/">
+        </link>
+        <updated>2022-09-05T09:38:31.000Z</updated>
+        <content type="html"><![CDATA[<p>boltdb 是受LMDB项目的启发，使用的go语言实现的一个本地kv存储引擎。可嵌入到自己的项目中实现kv数据的本地存储，知名的项目etcd,consul,openvpn等使用了boltdb进行数据存储</p>
+<h1 id="逻辑结构">逻辑结构</h1>
+<p>使用单个文件来存储kv数据，通过mmap文件内存映射把文件的磁盘地址映射成逻辑地址。<br>
+在数据组织上，boltdb是一颗大的btree,按照bucket分组数据,相当于表的概念，每一个bucket是一个子b-tree，数据以innode结构存储在b-tree的叶子节点。Cursor 作为b-tree的遍历器。进行节点的查找。</p>
+<h1 id="物理结构">物理结构</h1>
+<p>存储上，通过mmap文件内存映射把文件映射到进程的逻辑地址，通过指针读取的方式读取到文件的内容。文件的开头存储DB的元数据。后面按照页面划分成存储块。每一个b-tree.Node对应一个页面的pid，将整个b-tree的树形结构映射成内存地址的线性结构。</p>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1696844422625.png" alt="" loading="lazy"></figure>
+<h1 id="数据组织">数据组织</h1>
+<p>boltdb 把文件映射到虚拟地址空间，db.data指针指向这个地址，在物理空间上映射的地址空间按照Page进行管理，比如读取一个Page</p>
+<pre><code>type page struct {
+	id       pgid
+	flags    uint16
+	count    uint16
+	overflow uint32
+	ptr      uintptr
+}
+
+func (db *DB) page(id pgid) *page {
+	pos := id * pgid(db.pageSize)
+	return (*page)(unsafe.Pointer(&amp;db.data[pos]))
+}
+</code></pre>
+<p>逻辑上，整个boltdb的数据组织成一颗b-tree，b-tree的一个节点是一个Page，根据节点类型的不同，Page中存储的数据不同，分别存储分支节点数据或叶子节点数据，树的遍历过程中根据BranchPage存储递归到对应的Page</p>
+<pre><code>type branchPageElement struct {
+	pos   uint32
+	ksize uint32
+	pgid  pgid
+}
+type leafPageElement struct {
+	flags uint32 //标识是普通数据，还是嵌套bucket，如果是bucket,value 存储bucket信息
+	pos   uint32
+	ksize uint32
+	vsize uint32
+}
+pos 是数据距离element数组结束处的距离。这样处理方便根据element对象读取数据，参考下面的leafPageElement的key/value读取操作
+
+</code></pre>
+<p>页面数据的物理组织如下图<br>
+<img src="https://nomagic.cc/post-images/1696844505301.png" alt="" loading="lazy"></p>
+<p>page.ptr的地址就是page页面开始存储数据地方，写入的前一部分存储元素（element的元数据），后面是需要存储的kv数据，根据pos+ksize/vsize 对kv进行读写</p>
+<pre><code>//写入
+func (n *node) write(p *page) {
+	if n.isLeaf {
+		p.flags |= leafPageFlag
+	} else {
+		p.flags |= branchPageFlag
+	}
+    //b刚开始指向elements数组结束的地址，也就是第一个数据开始写入的地方。随着数据的写入，b往后移动写入数据的大小。
+	b := (*[maxAllocSize]byte)(unsafe.Pointer(&amp;p.ptr))[n.pageElementSize()*len(n.inodes):]
+	for i, item := range n.inodes {
+		if n.isLeaf {
+			elem := p.leafPageElement(uint16(i))
+			elem.pos = uint32(uintptr(unsafe.Pointer(&amp;b[0])) - uintptr(unsafe.Pointer(elem)))
+			elem.flags = item.flags
+			elem.ksize = uint32(len(item.key))
+			elem.vsize = uint32(len(item.value))
+		} else {
+			elem := p.branchPageElement(uint16(i))
+			elem.pos = uint32(uintptr(unsafe.Pointer(&amp;b[0])) - uintptr(unsafe.Pointer(elem)))
+			elem.ksize = uint32(len(item.key))
+			elem.pgid = item.pgid
+			_assert(elem.pgid != p.id, &quot;write: circular dependency occurred&quot;)
+		}
+
+		klen, vlen := len(item.key), len(item.value)
+		if len(b) &lt; klen+vlen {
+			b = (*[maxAllocSize]byte)(unsafe.Pointer(&amp;b[0]))[:]
+		}
+
+		copy(b[0:], item.key)
+		b = b[klen:]
+		copy(b[0:], item.value)
+		b = b[vlen:]
+	}
+}
+
+//读取
+func (n *leafPageElement) key() []byte {
+	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	return (*[maxAllocSize]byte)(unsafe.Pointer(&amp;buf[n.pos]))[:n.ksize:n.ksize]
+}
+
+// value returns a byte slice of the node value.
+func (n *leafPageElement) value() []byte {
+	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	return (*[maxAllocSize]byte)(unsafe.Pointer(&amp;buf[n.pos+n.ksize]))[:n.vsize:n.vsize]
+}
+</code></pre>
+<p>整体btree 存储结构如下：<br>
+<img src="https://nomagic.cc/post-images/1696844456649.png" alt="" loading="lazy"></p>
+<p>节点Page数据的读取：</p>
+<pre><code>func (p *page) leafPageElement(index uint16) *leafPageElement {
+	n := &amp;((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&amp;p.ptr)))[index]
+	return n
+}
+
+// leafPageElements retrieves a list of leaf nodes.
+func (p *page) leafPageElements() []leafPageElement {
+	if p.count == 0 {
+		return nil
+	}
+	return ((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&amp;p.ptr)))[:]
+}
+
+// branchPageElement retrieves the branch node by index
+func (p *page) branchPageElement(index uint16) *branchPageElement {
+	return &amp;((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&amp;p.ptr)))[index]
+}
+
+// branchPageElements retrieves a list of branch nodes.
+func (p *page) branchPageElements() []branchPageElement {
+	if p.count == 0 {
+		return nil
+	}
+	return ((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&amp;p.ptr)))[:]
+}
+
+
+
+</code></pre>
+<ul>
+<li>0x7FFFFFF:  magic-number<br>
+amd64的使用的是4-bytes的相对地址。所以一个程序不能申请超过2GB(0x7FFFFFFF)的静态数据,又因为sizeOf(branchPageElement) =16 ,这里的大小就是0x7FFFFFF，当然也可以使用其他的值，只是这里需要一个常量，把地址转换成数组指针，然后再转换成slice（slice内部使用是这个数组地址）<br>
+通过index索引就可以直接拿到对应的branchPageElement或者leafPageElement对象。</li>
+</ul>
+<p>数据查询是b-tree搜索的过程，使用Cursor结构作为b-tree的遍历器，<br>
+数据更改是使用cursor.seek搜索到对应的节点，cursor.node中调用bucket.node方法，才把Page加载成为node结构。这样在事务执行的过程中，只有node的数据有变更，需要回写磁盘。</p>
+<pre><code>把Page读为node
+func (n *node) read(p *page) {
+	n.pgid = p.id
+	n.isLeaf = ((p.flags &amp; leafPageFlag) != 0)
+	n.inodes = make(inodes, int(p.count))
+
+	for i := 0; i &lt; int(p.count); i++ {
+		inode := &amp;n.inodes[i]
+		if n.isLeaf {
+			elem := p.leafPageElement(uint16(i))
+			inode.flags = elem.flags
+			inode.key = elem.key()
+			inode.value = elem.value()
+		} else {
+			elem := p.branchPageElement(uint16(i))
+			inode.pgid = elem.pgid
+			inode.key = elem.key()
+		}
+		_assert(len(inode.key) &gt; 0, &quot;read: zero-length inode key&quot;)
+	}
+
+	// Save first key so we can find the node in the parent when we spill.
+	if len(n.inodes) &gt; 0 {
+		n.key = n.inodes[0].key
+		_assert(len(n.key) &gt; 0, &quot;read: zero-length node key&quot;)
+	} else {
+		n.key = nil
+	}
+}
+</code></pre>
+<p>在逻辑上node和page是一一对应关系，只是在事务提交写盘的时候，需要把node映射成新的页面（不覆盖原有页面，用来实现mvcc）,这些新的页面也就是代码中所说的dirty page。</p>
+<h1 id="freelist">freelist</h1>
+<pre><code>type freelist struct {
+	ids     []pgid          // all free and available free page ids.
+	pending map[txid][]pgid // mapping of soon-to-be free page ids by tx.
+	cache   map[pgid]bool   // fast lookup of all free and pending page ids.
+}
+</code></pre>
+<p>在写事物执行的过程中，数据的更改需要申请新的页面，把原来旧的页面缓存到pending,用于更小txid的读取以实现mvcc。<br>
+ids 所有已经不在使用的空闲页面<br>
+cache 为了快速校验一个page是否在freelist</p>
+<p>需要注意的是freelist进行alloc或者事务提交写入page进行pids合并时算法复杂度为n,freelist比较大时有可能会有影响，</p>
+<h1 id="事务的实现">事务的实现</h1>
+<p>事务分为读写事务和只读事务,在b-tree的查找过程中会建立一个查找路径上节点的内存映射。在事务提交时，把对应的内存会写到磁盘，事务回滚时直接丢弃修改。</p>
+<h2 id="原子性实现">原子性实现</h2>
+<p>事务在提交行会把事物执行期间所有变更的node，刷新到新申请的页面（dirty page)，然后write到文件，依赖于meta的保存状态，meta保存只有两种状态：成功或者失败，映射到了事务的原子性概念。</p>
+<h2 id="一致性实现">一致性实现</h2>
+<p>事务的变更数据不会覆盖旧的页面。整个DB的内存映像依赖meta进行构建，原子性的实现依赖于meta信息的正确保存，当前meta数据正确落盘以后，整个事务才算提交成功。如果当前写入meta失败了，由于有两个meta存在，没有在操作meta的映像可以确保在正确的状态，使得整个数据库处于一致性状态。</p>
+<h2 id="隔离实现">隔离实现</h2>
+<p>隔离的实现同样是依赖于MMVC策略，<br>
+事务在建立的过程中，使用磁盘内容建立的各自的内存快照，每个事务内存快照相互独立，在进行修改是也只是修改的自己内存状态，是事务提交时不会覆盖旧的页面，所以其他事物可以完整的读取到自己建立时的内存状态。（快照读的概念）</p>
+<h2 id="持久性实现">持久性实现</h2>
+<p>参照上面的磁盘刷盘</p>
+<ul>
+<li>事务的提交</li>
+</ul>
+<pre><code>func (tx *Tx) Commit() error {
+    ....
+    ///b-tree的再平衡，b-tree node的节点过少，就把node 和兄弟节点合并。
+	var startTime = time.Now()
+	tx.root.rebalance()
+	if tx.stats.Rebalance &gt; 0 {
+		tx.stats.RebalanceTime += time.Since(startTime)
+	}
+
+	///把对应的node 写入page
+    把原来node的page放入free-list,申请新的页面，进行写入。
+    
+	if err := tx.root.spill(); err != nil {
+		tx.rollback()
+		return err
+	}
+	tx.stats.SpillTime += time.Since(startTime)
+	tx.meta.root.root = tx.root.root
+
+    //freelist 重写
+	tx.db.freelist.free(tx.meta.txid, tx.db.page(tx.meta.freelist))
+	p, err := tx.allocate((tx.db.freelist.size() / tx.db.pageSize) + 1)
+	if err != nil {
+		tx.rollback()
+		return err
+	}
+	if err := tx.db.freelist.write(p); err != nil {
+		tx.rollback()
+		return err
+	}
+	tx.meta.freelist = p.id
+
+	//文件大小增长
+	if tx.meta.pgid &gt; opgid {
+		if err := tx.db.grow(int(tx.meta.pgid+1) * tx.db.pageSize); err != nil {
+			tx.rollback()
+			return err
+		}
+	}
+
+	//把tx的脏页面，写入db文件。
+	if err := tx.write(); err != nil {
+		tx.rollback()
+		return err
+	}
+
+	//写元数据信息
+	if err := tx.writeMeta(); err != nil {
+		tx.rollback()
+		return err
+	}
+	tx.stats.WriteTime += time.Since(startTime)
+
+	// Finalize the transaction.
+	tx.close()
+
+	// Execute commit handlers now that the locks have been removed.
+	for _, fn := range tx.commitHandlers {
+		fn()
+	}
+
+	return nil
+}
+</code></pre>
+<ul>
+<li>事务的回滚</li>
+</ul>
+<pre><code>func (tx *Tx) rollback() {
+	if tx.db == nil {
+		return
+	}
+	if tx.writable {
+		tx.db.freelist.rollback(tx.meta.txid)
+		tx.db.freelist.reload(tx.db.page(tx.db.meta().freelist))
+	}
+	tx.close()
+}
+</code></pre>
+<p>如果是写事务，freelist.rollback回滚掉freelist.pending<br>
+freelist.reload 重新加载旧的freelist页面。</p>
+<h1 id="并发">并发</h1>
+<p>因为data的文件加了文件锁，同时只会有一个进程读写db文件，同一个进程内，只允许有一个写事务在执行，这就保证了事务提交时不会有并发的情况。<br>
+所以boltDB 更适用于读多写少的场景，同样需要注意的是，长的事务没有提交前会使freelist中的页面不会释放，导致db文件的快速增长。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[kube-proxy设计及实现]]></title>
+        <id>https://nomagic.cc/post/kube-proxy/</id>
+        <link href="https://nomagic.cc/post/kube-proxy/">
+        </link>
+        <updated>2022-06-07T14:00:41.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="不确定的-pod-ip">不确定的 pod ip</h2>
+<p>我们知道在k8s中，应用是以pod模式部署运行的，deployment通过replicset控制pod满足应用的预期状态，在整个协调的过程中，pod是会动态的销毁或者重建，在整个过程中代表每个POD的网路地址及pod ip 是会不断在变动，这就带来了一个问题：如果某组 Pod（称为“后端”）为集群内的其他 Pod（称为“前端”） 集合提供功能，前端要如何发现并跟踪要连接的 IP 地址，以便其使用负载的后端组件呢？于是k8s引用了service抽象来解决这个问题。</p>
+<h2 id="service-api-对象">service api 对象</h2>
+<p>service api 对象是如何解决上面的问题的呢？</p>
+<h2 id="endpoints">endpoints</h2>
+<h2 id="kube-proxy-代理模式">kube-proxy 代理模式</h2>
+<h3 id="ipvs">ipvs</h3>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Containerd 源码解析]]></title>
+        <id>https://nomagic.cc/post/containerd-yuan-ma-jie-xi/</id>
+        <link href="https://nomagic.cc/post/containerd-yuan-ma-jie-xi/">
+        </link>
+        <updated>2022-03-16T02:53:30.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="containerd-介绍">containerd 介绍</h2>
+<p><img src="https://nomagic.cc/post-images/1695710966864.png#pic_left" alt="" width="500" height="500" loading="lazy"><br>
+（图片来源：https://blog.csdn.net/chengyinwu/article/details/121842772）<br>
+Containerd 是一个工业级标准的容器运行时，它强调简单性、健壮性和可移植性。在宿主机中以daemon的方式运行，管理当前主机上完整的容器生命周期，包括容器镜像的传输和存储、容器的执行和管理、存储和网络等。具体来说，Containerd 负责以下任务：<br>
+管理容器的生命周期（从创建容器到销毁容器）。<br>
+拉取/推送容器镜像。<br>
+存储管理（管理镜像及容器数据的存储）。<br>
+调用 runC 运行容器（与 runC 等容器运行时交互）。<br>
+管理容器网络接口及网络。<br>
+Containerd 被设计成嵌入到一个更大的系统中，而不是直接由开发人员或终端用户使用。</p>
+<h2 id="containerd-发展历史">containerd 发展历史</h2>
+<p>参考：https://www.cnblogs.com/tencent-cloud-native/p/14134164.html?spm=wolai.workspace.0.0.f21d6a18xgG3Ac</p>
+<h2 id="containerd-架构图">Containerd 架构图</h2>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1695710683898.png#pic_right" alt="" width="500" height="500" loading="lazy"></figure>
+<h2 id="cri容器运行时接口">CRI（容器运行时接口）</h2>
+<p>https://github.com/kubernetes/cri-api<br>
+在早期 rkt 和 docker 争霸时，kubelet 中需要维护两坨代码分别来适配 docker 和 rkt ，这使得 kubelet 每次发布新功能都需要考虑对运行时组件的适配问题，严重拖慢了新版本发布速度。另外虚拟化已经是一个普遍的需求，如果出现了类型的运行时，SIG-Node 小组可能还需要把和新运行时适配的代码添加到 kubelet 中。这种做法并不是长久之计，于是在 2016 年，SIG-Node提出了容器操作接口 CRI（Container Runtime Interface）。 CRI 是对容器操作的一组抽象，只要每种容器运行时都实现这组接口，kubelet 就能通过这组接口来适配所有的运行时。<br>
+可以说CRI是接入k8s的容器运行时所需要时实现的接口，接口目前定义了两部分RuntimeService、ImageManagerService分别负责容器的管理和镜像的管理</p>
+<blockquote>
+<p>可参考<a href="https://github.com/kubernetes/cri-api/blob/master/pkg/apis/services.go">CRI接口定义</a></p>
+</blockquote>
+<p>从上面的架构图和描述可以看到containerd本身包含蛮多内容，咱们这边文章主要的侧重点是kubelet如何和containerd的cri插件交互，然后创建和管理pod和container的。</p>
+<h2 id="源码分析">源码分析</h2>
+<p>既然kubelet 通过containerd CRI 插件来管理容器，那我们把重点放在containerd的cri plugin上<br>
+对应的源码目录是pkg/cri,入口文件是cri.go</p>
+<h3 id="cri-grpc服务的启动">cri grpc服务的启动。</h3>
+<p>我们知道kubelet 是通过grpc协议的方式和cri 插件通信的，那么cri grpc service 是如何启动的呢？</p>
+<pre><code>func init() {
+	config := criconfig.DefaultConfig()
+	plugin.Register(&amp;plugin.Registration{
+		Type:   plugin.GRPCPlugin,
+		ID:     &quot;cri&quot;,
+		Config: &amp;config,
+		Requires: []plugin.Type{
+			plugin.EventPlugin,
+			plugin.ServicePlugin,
+			plugin.NRIApiPlugin,
+		},
+		InitFn: initCRIService,
+	})
+}
+
+func initCRIService(ic *plugin.InitContext) (interface{}, error) {
+	ready := ic.RegisterReadiness()
+	ic.Meta.Platforms = []imagespec.Platform{platforms.DefaultSpec()}
+	ic.Meta.Exports = map[string]string{&quot;CRIVersion&quot;: constants.CRIVersion}
+	ctx := ic.Context
+	pluginConfig := ic.Config.(*criconfig.PluginConfig)
+	if err := criconfig.ValidatePluginConfig(ctx, pluginConfig); err != nil {
+		return nil, fmt.Errorf(&quot;invalid plugin config: %w&quot;, err)
+	}
+
+	c := criconfig.Config{
+		PluginConfig:       *pluginConfig,
+		ContainerdRootDir:  filepath.Dir(ic.Root),
+		ContainerdEndpoint: ic.Address,
+		RootDir:            ic.Root,
+		StateDir:           ic.State,
+	}
+	log.G(ctx).Infof(&quot;Start cri plugin with config %+v&quot;, c)
+
+	if err := setGLogLevel(); err != nil {
+		return nil, fmt.Errorf(&quot;failed to set glog level: %w&quot;, err)
+	}
+
+	log.G(ctx).Info(&quot;Connect containerd service&quot;)
+	client, err := containerd.New(
+		&quot;&quot;,
+		containerd.WithDefaultNamespace(constants.K8sContainerdNamespace),
+		containerd.WithDefaultPlatform(platforms.Default()),
+		containerd.WithInMemoryServices(ic),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(&quot;failed to create containerd client: %w&quot;, err)
+	}
+
+	var s server.CRIService
+	if os.Getenv(&quot;DISABLE_CRI_SANDBOXES&quot;) == &quot;&quot; {
+		log.G(ctx).Info(&quot;using CRI Sandbox server - use DISABLE_CRI_SANDBOXES=1 to fallback to legacy CRI&quot;)
+		s, err = sbserver.NewCRIService(c, client, getNRIAPI(ic))
+	} else {
+		log.G(ctx).Info(&quot;using legacy CRI server&quot;)
+		s, err = server.NewCRIService(c, client, getNRIAPI(ic))
+	}
+	if err != nil {
+		return nil, fmt.Errorf(&quot;failed to create CRI service: %w&quot;, err)
+	}
+
+	go func() {
+		if err := s.Run(ready); err != nil {
+			log.G(ctx).WithError(err).Fatal(&quot;Failed to run CRI service&quot;)
+		}
+		// TODO(random-liu): Whether and how we can stop containerd.
+	}()
+
+	return s, nil
+}
+....
+</code></pre>
+<p>我们看到包的init方法，把cri插件注册到插件系统，初始化方法是initCRIService。<br>
+在应用入口函数command/main.go.App()的方法中创建了Server实例，Server的构造方法中会加载注册了插件，并调用对应的初始化函数，对插件进行初始化。</p>
+<pre><code>github.com/containerd/containerd/pkg/cri.initCRIService (/home/parallels/Documents/src/containerd/pkg/cri/cri.go:57)
+github.com/containerd/containerd/plugin.(*Registration).Init (/home/parallels/Documents/src/containerd/plugin/plugin.go:121)
+github.com/containerd/containerd/services/server.New (/home/parallels/Documents/src/containerd/services/server/server.go:227)
+github.com/containerd/containerd/cmd/containerd/command.App.func1.1 (/home/parallels/Documents/src/containerd/cmd/containerd/command/main.go:194)
+runtime.goexit (/snap/go/10351/src/runtime/asm_arm64.s:1197)
+</code></pre>
+<p>cri插件的grcp服务端在这里已经正常起到起来了。</p>
+<h3 id="kubelet-和cri-插件的交互">kubelet 和cri 插件的交互</h3>
+<p>在kubelet对Pod进行同步的时候，会调用func (m *kubeGenericRuntimeManager) SyncPod方法，同步POD的期望状态到容器运行时，流程如下图：<br>
+<img src="https://nomagic.cc/post-images/1695709311019.png" alt="" loading="lazy"></p>
+<h4 id="sandbox创建">sandbox创建</h4>
+<p>我们看到创建SandBox的处理函数是：</p>
+<pre><code>func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (_ *runtime.RunPodSandboxResponse, retErr error)
+</code></pre>
+<p>这个函数做了一下几件事情把pod sandbox 创建起来<br>
+① 拉取sandbox的镜像，在containerd中配置<br>
+② 获取创建pod要使用的runtime，可以在创建pod的yaml中指定，如果没指定使用containerd中默认的<br>
+③ 如果pod不是hostNetwork那么添加创建新net namespace，并使用cni插件设置网络<br>
+④ 调用containerd客户端创建一个container<br>
+⑤ 在rootDir/io.containerd.grpc.v1.cri/sandboxes下为当前pod以pod Id为名创建一个目录<br>
+（pkg/cri/cri.go）<br>
+⑥ 根据选择的runtime为sandbox容器创建task<br>
+⑦ 启动sandbox容器的task，将sandbox添加到数据库中<br>
+调用堆栈如下：</p>
+<pre><code>github.com/containerd/containerd/api/runtime/task/v2.(*taskClient).Create (/home/parallels/Documents/src/containerd/api/runtime/task/v2/shim_ttrpc.pb.go:177)
+github.com/containerd/containerd/runtime/v2.(*shimTask).Create (/home/parallels/Documents/src/containerd/runtime/v2/shim.go:523)
+github.com/containerd/containerd/runtime/v2.(*TaskManager).Create (/home/parallels/Documents/src/containerd/runtime/v2/manager.go:420)
+github.com/containerd/containerd/services/tasks.(*local).Create (/home/parallels/Documents/src/containerd/services/tasks/local.go:218)
+github.com/containerd/containerd.(*container).NewTask (/home/parallels/Documents/src/containerd/container.go:303)
+github.com/containerd/containerd/pkg/cri/sbserver/podsandbox.(*Controller).Start (/home/parallels/Documents/src/containerd/pkg/cri/sbserver/podsandbox/sandbox_run.go:227)
+github.com/containerd/containerd/pkg/cri/sbserver.(*criService).RunPodSandbox (/home/parallels/Documents/src/containerd/pkg/cri/sbserver/sandbox_run.go:255)
+</code></pre>
+<p>这里说一下主要的抽象：</p>
+<pre><code>type Container interface {
+	// ID identifies the container
+	ID() string
+	// Info returns the underlying container record type
+	Info(context.Context, ...InfoOpts) (containers.Container, error)
+	// Delete removes the container
+	Delete(context.Context, ...DeleteOpts) error
+	// NewTask creates a new task based on the container metadata
+	NewTask(context.Context, cio.Creator, ...NewTaskOpts) (Task, error)
+	// Spec returns the OCI runtime specification
+	Spec(context.Context) (*oci.Spec, error)
+	// Task returns the current task for the container
+	// the output from the task's fifos
+	Task(context.Context, cio.Attach) (Task, error)
+	// Image returns the image that the container is based on
+	Image(context.Context) (Image, error)
+	// Labels returns the labels set on the container
+	Labels(context.Context) (map[string]string, error)
+	// SetLabels sets the provided labels for the container and returns the final label set
+	SetLabels(context.Context, map[string]string) (map[string]string, error)
+	// Extensions returns the extensions set on the container
+	Extensions(context.Context) (map[string]typeurl.Any, error)
+	// Update a container
+	Update(context.Context, ...UpdateContainerOpts) error
+	// Checkpoint creates a checkpoint image of the current container
+	Checkpoint(context.Context, string, ...CheckpointOpts) (Image, error)
+}
+
+type Task interface {
+	Process
+	// Pause suspends the execution of the task
+	Pause(context.Context) error
+	// Resume the execution of the task
+	Resume(context.Context) error
+	// Exec creates a new process inside the task
+	Exec(context.Context, string, *specs.Process, cio.Creator) (Process, error)
+	// Pids returns a list of system specific process ids inside the task
+	Pids(context.Context) ([]ProcessInfo, error)
+	// Checkpoint serializes the runtime and memory information of a task into an
+	// OCI Index that can be pushed and pulled from a remote resource.
+	//
+	// Additional software like CRIU maybe required to checkpoint and restore tasks
+	// NOTE: Checkpoint supports to dump task information to a directory, in this way,
+	// an empty OCI Index will be returned.
+	Checkpoint(context.Context, ...CheckpointTaskOpts) (Image, error)
+	// Update modifies executing tasks with updated settings
+	Update(context.Context, ...UpdateTaskOpts) error
+	// LoadProcess loads a previously created exec'd process
+	LoadProcess(context.Context, string, cio.Attach) (Process, error)
+	// Metrics returns task metrics for runtime specific metrics
+	// The metric types are generic to containerd and change depending on the runtime
+	// For the built in Linux runtime, github.com/containerd/cgroups.Metrics
+	// are returned in protobuf format
+	Metrics(context.Context) (*types.Metric, error)
+	// Spec returns the current OCI specification for the task
+	Spec(context.Context) (*oci.Spec, error)
+}
+// PlatformRuntime is responsible for the creation and management of
+// tasks and processes for a platform.
+type PlatformRuntime interface {
+	// ID of the runtime
+	ID() string
+	// Create creates a task with the provided id and options.
+	Create(ctx context.Context, taskID string, opts CreateOpts) (Task, error)
+	// Get returns a task.
+	Get(ctx context.Context, taskID string) (Task, error)
+	// Tasks returns all the current tasks for the runtime.
+	// Any container runs at most one task at a time.
+	Tasks(ctx context.Context, all bool) ([]Task, error)
+	// Delete remove a task.
+	Delete(ctx context.Context, taskID string) (*Exit, error)
+}
+
+</code></pre>
+<p>Task 是容器的运行时对象，表示一个应用程序在容器中的运行时实例，所以可以看到在Container.Start的方法中会创建对应的Task,具体创建是调用实例了PlatformRuntime 的TaskManager来执行，PlatformRuntime是管理任务和进程的一个抽象，TaskManager.Create 调用ShimManager创建containerd-shim-runc-v2进程，把创建container的任务提交给containerd-shim-runc-v2。<br>
+containerd-shim-runc-v2以start子命令启动，创建另外一个shim子进程，然后返回这个子进程的ttrpc的监听地址，这样以start启动的进程退出后，containerd和shim进程也就脱离的关系，双方通过ttrpc相互通信，进程的状态不会互相影响。</p>
+<p>TaskManager.Create创建好shim进程并且获取shim监听链接后，会创建shimTask，shimTask利用上面获取的shim链接，发送对应的task创建请求给shim的 task grpc服务</p>
+<pre><code>func (m *TaskManager) Create(ctx context.Context, taskID string, opts runtime.CreateOpts) (runtime.Task, error) {
+	shim, err := m.manager.Start(ctx, taskID, opts)
+	if err != nil {
+		return nil, fmt.Errorf(&quot;failed to start shim: %w&quot;, err)
+	}
+	// Cast to shim task and call task service to create a new container task instance.
+	// This will not be required once shim service / client implemented.
+	shimTask, err := newShimTask(shim)
+	if err != nil {
+		return nil, err
+	}
+	t, err := shimTask.Create(ctx, opts)
+	if err != nil {
+		// NOTE: ctx contains required namespace information.
+		m.manager.shims.Delete(ctx, taskID)
+
+		dctx, cancel := timeout.WithContext(cleanup.Background(ctx), cleanupTimeout)
+		defer cancel()
+
+		sandboxed := opts.SandboxID != &quot;&quot;
+		_, errShim := shimTask.delete(dctx, sandboxed, func(context.Context, string) {})
+		if errShim != nil {
+			if errdefs.IsDeadlineExceeded(errShim) {
+				dctx, cancel = timeout.WithContext(cleanup.Background(ctx), cleanupTimeout)
+				defer cancel()
+			}
+
+			shimTask.Shutdown(dctx)
+			shimTask.Close()
+		}
+
+		return nil, fmt.Errorf(&quot;failed to create shim task: %w&quot;, err)
+	}
+	return t, nil
+}
+</code></pre>
+<p>对应的TaskServer实现在：runtime/v2/runc/task/service.go</p>
+<pre><code>func (s *service) Create(ctx context.Context, r *taskAPI.CreateTaskRequest) (_ *taskAPI.CreateTaskResponse, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	handleStarted, cleanup := s.preStart(nil)
+	defer cleanup()
+
+	container, err := runc.NewContainer(ctx, s.platform, r)
+	if err != nil {
+		return nil, err
+	}
+
+	s.containers[r.ID] = container
+
+	s.send(&amp;eventstypes.TaskCreate{
+		ContainerID: r.ID,
+		Bundle:      r.Bundle,
+		Rootfs:      r.Rootfs,
+		IO: &amp;eventstypes.TaskIO{
+			Stdin:    r.Stdin,
+			Stdout:   r.Stdout,
+			Stderr:   r.Stderr,
+			Terminal: r.Terminal,
+		},
+		Checkpoint: r.Checkpoint,
+		Pid:        uint32(container.Pid()),
+	})
+
+	// The following line cannot return an error as the only state in which that
+	// could happen would also cause the container.Pid() call above to
+	// nil-deference panic.
+	proc, _ := container.Process(&quot;&quot;)
+	handleStarted(container, proc)
+
+	return &amp;taskAPI.CreateTaskResponse{
+		Pid: uint32(container.Pid()),
+	}, nil
+}
+</code></pre>
+<p>调用OCI(runtime)去创建container，这样sandpox对应的容器就被创建起来了。</p>
+<h4 id="container的创建和运行">container的创建和运行</h4>
+<p>可以看到kubelet创建container调用的是</p>
+<pre><code>func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateContainerRequest) (_ *runtime.CreateContainerResponse, retErr error) 
+</code></pre>
+<p>接口，可以看到这里根据传进来的sandbox ID，查询到对一个的sandBox信息，根据穿建立的其他参数信息构造出container的原信息，存储到containerStore service，这里并没有创建和运行task任务<br>
+container的运行是在kubelet调用</p>
+<pre><code>func (c *criService) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (retRes *runtime.StartContainerResponse, retErr error)
+</code></pre>
+<p>StartContainer 根据传进来的container id 获取到对应的container 元信息，和对应的sandbox 信息，然后创建task任务并start,实质性的运行container的任务，这里和上面创建sandbox container 大致类似了。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[容器底层原理]]></title>
+        <id>https://nomagic.cc/post/rong-qi-di-ceng-yuan-li/</id>
+        <link href="https://nomagic.cc/post/rong-qi-di-ceng-yuan-li/">
+        </link>
+        <updated>2021-10-18T01:09:45.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="容器技术的背景">容器技术的背景</h2>
+<p>虚拟机（硬件虚拟化）在满足大规模服务部署的要求方面存在一些限制，资源占用，维护配置成本，快速扩缩容。<br>
+需要一种更轻量的虚拟化技术（操作系统虚拟化），由操作系统创建虚拟的系统环境，使应用感知不到其他应用的存在，仿佛在独自占有全部的系统资源，从而实现应用隔离的目的。</p>
+<ul>
+<li>2000年，FreeBSD 4.0推出了Jail。Jail加强和改进了用于文件系统隔离的chroot环境。</li>
+<li>2004年，Sun公司发布了Solaris 10的Containers，包括Zones和Resource management两部分。Zones实现了命名空间隔离和安全访问控制，Resource management实现了资源分配控制。</li>
+<li>2007年，Control Groups(简称cgroups)进入Linux内核，可以限定和隔离一组进程所使用的资源(包括CPU、内存、I/O和网络等)。<br>
+2013年，Docker公司发布Docker开源项目，提供了一系列简便的工具链来使用容器，这个时候容器技术开始大爆发。<br>
+##容器技术的实质是什么？<br>
+容器技术是一种沙盒机制（虚拟机同样也属于一种沙盒机制），通过把应用装入一个隔离的环境中，使沙盒内的应用和外界隔离起来，达到互补影响的地步。</li>
+</ul>
+<blockquote>
+<p>这里的沙盒可以形象的看做一个集装箱，把应用很多完全隔离开的集装箱内，联想Docker的图标<br>
+<img src="https://nomagic.cc/post-images/1697680736129.png" alt="" loading="lazy"></p>
+</blockquote>
+<h2 id="docker是如何创建这种隔离环境的">docker是如何创建这种隔离环境的</h2>
+<p>从上面的历史我们也可以看到，docker在容器执行这块，是对Linux提供的隔离机制进行了封装，提供出了更简单的使用工具。那这些工具封装的底层机制又是什么的，从namespace，cgroup,rootfs说开去。</p>
+<h3 id="namesapce">namesapce</h3>
+<p>在 Linux 中，每个进程都拥有自己的命名空间，这些命名空间将进程及其相关的资源（如文件系统、网络等）隔离开来，使得不同进程可以运行在不同的环境中，互不影响。<br>
+分类	系统调用参数	相关内核版本</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>标识符</th>
+<th>系统版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mount namespaces</td>
+<td>CLONE_NEWNS</td>
+<td>Linux 2.4.19</td>
+</tr>
+<tr>
+<td>UTS namespaces</td>
+<td>CLONE_NEWUTS</td>
+<td>Linux 2.6.19</td>
+</tr>
+<tr>
+<td>IPC namespaces</td>
+<td>CLONE_NEWIPC</td>
+<td>Linux 2.6.19</td>
+</tr>
+<tr>
+<td>PID namespaces</td>
+<td>CLONE_NEWPID</td>
+<td>Linux 2.6.24</td>
+</tr>
+<tr>
+<td>Network namespaces</td>
+<td>CLONE_NEWNET</td>
+<td>始于Linux 2.6.24 完成于 Linux 2.6.29</td>
+</tr>
+<tr>
+<td>User namespaces</td>
+<td>CLONE_NEWUSER</td>
+<td>始于 Linux 2.6.23 完成于 Linux 3.8)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="隔离例子">隔离例子：</h4>
+<pre><code>#define _GNU_SOURCE
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;sys/mount.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sched.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+#define STACK_SIZE (1024 * 1024)
+static char container_stack[STACK_SIZE];
+char* const container_args[] = {
+    &quot;/bin/bash&quot;,
+    NULL
+};
+int container_main(void* arg)
+{
+    char name[50];
+    sprintf(name,&quot;container_%d_&gt;&gt;&gt;&quot;,getpid());
+    printf(&quot;%s - inside the container !\n&quot;,name);
+    printf(&quot;%s - set hostname(%d) to container !\n&quot;,name,sethostname(&quot;container&quot;,10));
+
+    ## mount(&quot;none&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, &quot;&quot;);
+    ## mount(&quot;none&quot;, &quot;/tmp&quot;, &quot;tmpfs&quot;, 0, &quot;&quot;);
+    execv(container_args[0], container_args);
+    printf(&quot;Something's wrong!\n&quot;);
+    return 0;
+}
+int main()
+{
+    printf(&quot;Host - start a container!\n&quot;);
+    int container_pid = clone(container_main, container_stack+STACK_SIZE, SIGCHLD|CLONE_NEWUTS|CLONE_NEWPID|CLONE_NEWNS, NULL);
+    if (container_pid == -1 ) {
+        perror(&quot;start a container failed\n&quot;);
+        return 1;
+    }
+    printf(&quot;child pid:%d\n&quot;,container_pid);
+    int status;
+    waitpid(container_pid,&amp;status, 0);
+    printf(&quot;Host - container stopped! %d\n&quot;,status);
+    return 0;
+}
+</code></pre>
+<p>编译完，执行可以看到输</p>
+<pre><code>Host - start a container!
+child pid:76
+container_1_&gt;&gt;&gt; - inside the container !
+container_1_&gt;&gt;&gt; - set hostname(0) to container !
+</code></pre>
+<p>可以看到输出的pid 已经是1。我们知道Linux的1号进程是init进程，和我们这里看到的完全不同，所以我们的进程已经处于一个沙盒环境<br>
+这个时候我们查看/tmp目录下文件，查看到的还是父进程环境下的目录，我们把   ## mount(&quot;none&quot;, &quot;/tmp&quot;, &quot;tmpfs&quot;, 0, &quot;&quot;); 的注释去掉，编译重新执行，这是/tmp目录已经是空的，可以看到/tmp 路径已经在重新挂载。</p>
+<blockquote>
+<p>mount(&quot;none&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, &quot;&quot;); 需要挂载这个目录是因为 top 命令还有系统的一些其他命令读取的/proc文件，如果不重新挂载读取到的还是父进程共享来的。</p>
+</blockquote>
+<h3 id="pid-namespace-的实现原理">pid namespace 的实现原理</h3>
+<h2 id="总结">总结</h2>
+<p>通过namespace机制，我们可以看到进程所有看到世界，被完全隔离开了。相当于整个系统中只有自己一个进程.</p>
+<h2 id="cgroup">cgroup</h2>
+<p>cgroup 完成了进程对硬件资源的使用隔离。<br>
+通过cgroup，可以限制特定进程组对CPU、内存、磁盘I/O等资源的访问。这可以帮助确保各个进程组之间不会相互干扰，同时也可以对各个进程组的资源使用进行精细控制。<br>
+cgroup的子系统可以分为以下几类：</p>
+<ul>
+<li>块设备输入/输出限制（blkio）：这个子系统为块设备设定输入/输出限制，比如物理设备（磁盘，固态硬盘，USB等等）。</li>
+<li>CPU时间（cpu）：这个子系统用于限制进程组使用的CPU时间。它不仅可以限制进程组使用的总CPU时间，还可以限制特定CPU核的使用时间。</li>
+<li>内存（memory）：这个子系统用于管理进程组的内存使用。例如，可以限制进程组使用的总内存量，或者限制某个进程组在特定时间段的内存使用量。</li>
+<li>网络（net）：这个子系统用于管理进程组的网络使用。例如，可以限制进程组发送和接收的网络流量。</li>
+<li>进程组（cpuset）：这个子系统用于管理进程组的CPU和内存分配。它可以确保特定进程组不会干扰其他进程组的资源使用，也可以分配特定CPU和内存给特定的进程组。<br>
+cgroup 目前的控制端在虚拟文件系统 /sys/fs/cgroup/<br>
+创建控制组的方式就是创建对应的文件夹就好。</li>
+</ul>
+<pre><code># mkdir mycontainer  //删除时使用（ rmdir mycontainer）
+# cd mycontainer/
+# ls
+cgroup.controllers  cgroup.kill             cgroup.procs            cgroup.threads  cpu.stat        memory.events        memory.low  memory.numa_stat  memory.stat          memory.swap.high  pids.events
+cgroup.events       cgroup.max.depth        cgroup.stat             cgroup.type     io.pressure     memory.events.local  memory.max  memory.oom.group  memory.swap.current  memory.swap.max   pids.max
+cgroup.freeze       cgroup.max.descendants  cgroup.subtree_control  cpu.pressure    memory.current  memory.high          memory.min  memory.pressure   memory.swap.events   pids.current
+</code></pre>
+<p>可以看到目录下已经生成很多文件，只要把控制的数据写入对应的文件，然后把进程ID写入分组任务文件，就可以限制进程的资源使用。<br>
+我们这里关注CPU的使用限制，主要是三个方面：</p>
+<ul>
+<li>cpu.cfs_period_us:<br>
+用来设置一个CFS调度时间周期长度，默认值是100000us(100ms)，一般cpu.cfs_period_us作为系统默认值我们不会去修改它。</li>
+<li>cpu.cfs_quota_us:<br>
+用来设置在一个CFS调度时间周期(cfs_period_us)内，允许此控制组执行的时间。默认值为-1表示限制时间。</li>
+<li>cpu.shares:<br>
+用来设置cpu cgroup子系统对于控制组之间的cpu分配比例。默认值是1000。</li>
+</ul>
+<blockquote>
+<p>使用cfs_quota_us/cfs_period_us，例如20000us/100000us=0.2，表示允许这个控制组使用的CPU最大是0.2个CPU，即限制使用20%CPU。 如果cfs_quota_us/cfs_period_us=2，就表示允许控制组使用的CPU资源配置是2个。</p>
+</blockquote>
+<p>对于cpu分配比例的使用，例如有两个cpu控制组foo和bar，foo的cpu.shares是1024，bar的cpu.shares是3072，它们的比例就是1:3。 在一台8个CPU的主机上，如果foo和bar设置的都是需要4个CPU的话(cfs_quota_us/cfs_period_us=4)，根据它们的CPU分配比例，控制组foo得到的是2个，而bar控制组得到的是6个。需要注意cpu.shares是在多个cpu控制组之间的分配比例，且只有到整个主机的所有CPU都打满时才会起作用。</p>
+<p>也就是说cpu.cfs_quota_us/cpu.cfs_period_us决定cpu控制组中所有进程所能使用CPU资源的最大值，而cpu.shares决定了cpu控制组间可用CPU的相对比例，这个比例只有当主机上的CPU完全被打满时才会起作用。</p>
+<p>用下面的例子来测试CPU的限制：</p>
+<pre><code>int main(){
+
+        int i=0;
+        for(;;){
+            i++;
+            if (i&gt;1000000000000) break;
+        }
+        return 0;
+}
+</code></pre>
+<p>如果不做限制，那么这个程序会把cpu跑满，我们在/sys/fs/cgroup/ 下建立自己的控制组，<br>
+那么我们把这个程序的cpu限制在0.2，只要把进程ID写入task文件，cfs_quota_us =20000 cfs_period_us = 100000 就好。</p>
+<h4 id="cgroup-v2版本的控制">cgroup v2版本的控制</h4>
+<p><a href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/8/html/managing_monitoring_and_updating_the_kernel/preparing-the-cgroup-for-distribution-of-cpu-time_using-cgroups-v2-to-control-distribution-of-cpu-time-for-applications">参考</a></p>
+<pre><code>echo &quot;+cpu&quot; &gt;&gt; /sys/fs/cgroup/cgroup.subtree_control
+echo &quot;+cpuset&quot; &gt;&gt; /sys/fs/cgroup/cgroup.subtree_control
+echo &quot;+cpu&quot; &gt;&gt; /sys/fs/cgroup/mycontainer/cgroup.subtree_control
+echo &quot;+cpuset&quot; &gt;&gt; /sys/fs/cgroup/mycontainer/cgroup.subtree_control
+mkdir tasks
+cd tasks/
+echo &quot;1&quot; &gt; /sys/fs/cgroup/mycontainer/tasks/cpuset.cpus
+echo &quot;20000 100000&quot; &gt; /sys/fs/cgroup/mycontainer/tasks/cpu.max
+echo $pid &gt;&gt; /sys/fs/cgroup/mycontainer/tasks/cgroup.procs
+</code></pre>
+<p>可以看到cpu的使用量被限制到了20%</p>
+<p>docker 解决了容器打包问题<br>
+kubernets 解决了容器编排和调度的问题<br>
+容器本身没有价值，有价值的是“容器编排”</p>
+<h4 id="总结-2">总结</h4>
+<p>通过 cgroup 限制了容器资源使用。不同的容器进程的资源限额起到了隔离作用。</p>
+<h2 id="rootfs">rootfs</h2>
+<p>我们知道进程的执行，还依赖于他存在的本地环境，也就是进程所依赖的文件系统中的所有文件。<br>
+从上面的namespace介绍来看，我们只要把容器进程的根目录/重新挂载，那么容器所依赖的文件系统也和其他进程完全隔离起来，相当于沙盒这个集装箱的底部也被封装起来。这个根目录所挂载的文件系统就是rootfs，它包含了操作系统所需的基本文件和目录结构，如/bin、/usr、/etc等。<br>
+（注意文件系统和内核的区别）</p>
+<p>这个被挂载到/目录的rootfs就说我们所说的“容器镜像”，这个容器镜像就保证了容器进程所依赖的文件系统的一致性，可以使这个容器集装箱，随意的在不同的机器上搬来搬去（调度）</p>
+<p>那么容器镜像的维护还有一个问题，比如我创建了一个ubuntu的系统镜像，如果被人修改了这个ubuntu镜像。 那么这两个镜像就没有任何关系了。加入A、B、C。。。。也修改了镜像，那么即使这些镜像有99%的一致性，也是不同的镜像，这就导致整个镜像系统难以维护。<br>
+比如我下载了一个nginx镜像和一个Mongo镜像，即使他们底层依赖的系统镜像是一个，但是这个系统是下载和存储两个镜像，显然不是一种好的做法，</p>
+<p>Docker在实现镜像的时候，选择了一种Union File System的文件系统，也叫UnionFS，这个文件系统功能是将多个不同位置的目录联合挂载（union mount）到同一个目录下，可以使镜像的维护变成一个增量的过程。</p>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1697771785333.png" alt="" loading="lazy"></figure>
+<p>整个过程由fork 变成了reference,这个增量的部分就是docker 镜像中的层。</p>
+<h3 id="aufs">aufs</h3>
+<p>AUFS（Advanced Multi-Layered Unification File System）可以把多个文件联合挂载到一个路径，常被用于Linux系统的容器（container）中。</p>
+<pre><code>#!/bin/bash
+
+create(){
+   mkdir -p work/a work/b work/c root
+   touch  work/a/a.txt work/b/b.txt work/c/c.txt
+   sudo mount -t aufs -o dirs=./work/a=rw:./work/b=ro:./work/c=ro none ./root
+   echo a &gt;&gt; work/a/a.txt
+   echo b &gt;&gt; root/b.txt
+   # touch work/a/.wh.c.txt
+}
+
+delete(){
+ umount root
+ rm -rf work
+ rm -rf root
+}
+
+case $1 in
+    create)
+        create ;;
+    delete)
+        delete ;;
+esac
+
+</code></pre>
+<p>AUFS的读写层是AUFS文件系统中的一部分，可读可写，位于最上层。在AUFS中，所有对文件的读写操作都在读写层完成。当一个文件被访问时，AUFS会根据文件路径从最上层开始逐层查找，直到找到该文件。如果文件位于最上层，则直接打开并进行读写操作；如果文件位于下层，则AUFS会先复制到最上层，然后再打开进行读写操作。这种复制操作也被称为“写复制”（CoW），它是AUFS的默认支持的技术。<br>
+AUFS的另一个重要特点是它支持“whiteout”（写隐藏）。当删除一个低层branch文件时，AUFS不会直接删除该文件，而是在顶层branch对该文件创建一个whiteout文件（.wh.&lt;origin_file_name&gt;），将该文件隐藏起来。这种方式实际上只是将文件的访问权限删除，而不会真正地删除文件数据，实现了对文件的软删除。</p>
+<pre><code> touch work/a/.wh.c.txt
+</code></pre>
+<p>总结：<br>
+通过联合文件系统（目前Docker使用是overlay文件系统）构建成容器镜像，给容器的文件系统提供了一致性，使容器的打包和调度更加简单。</p>
+<p>参考：<br>
+[DOCKER基础技术]https://coolshell.cn/articles/17010<br>
+深入剖析 Kubernetes(张磊)</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Kubernetes的一些优秀的设计理念]]></title>
+        <id>https://nomagic.cc/post/kubernetes-de-yi-xie-you-xiu-de-she-ji-li-nian/</id>
+        <link href="https://nomagic.cc/post/kubernetes-de-yi-xie-you-xiu-de-she-ji-li-nian/">
+        </link>
+        <updated>2021-10-02T10:27:06.000Z</updated>
+        <content type="html"><![CDATA[<ul>
+<li>
+<p>声明式API：<br>
+Kubernetes的API是声明式的，这意味着用户只需通过API对象来描述他们希望得到的服务或应用，而不需要关注实现细节。这种设计使得Kubernetes具有更高的可编程性和可定制性，方便用户使用和扩展。<br>
+这个概念也可以参考<a href="https://inclee.github.io/post/han-shu-shi-bian-cheng/">函数式编程</a></p>
+</li>
+<li>
+<p>面向对象的设计：<br>
+API对象是彼此互补且可组合的，这使得API对象能够实现面向对象设计时的要求，即“高内聚、松耦合”。这种设计可以提高代码的可重用性和可维护性。<br>
+另外 Kubernetes 资源注册表实现，内核资源对象和外部资源对象，不同对象版本之间的转换 也很有参考价值</p>
+</li>
+<li>
+<p>高层API与低层API的分离：<br>
+API设计分为高层API和低层API两个层次。高层API以操作意图为基础设计，主要关注业务逻辑；而低层API则根据高层API的控制需求进行设计，主要关注技术实现。这种分离的设计可以降低系统的复杂性和耦合性，提高系统的可扩展性和可维护性。</p>
+</li>
+<li>
+<p>分布式代理服务器：<br>
+Kubernetes集群中的每个节点都运行一个分布式代理服务器，这种设计可以提高系统的伸缩性和可用性。例如，当需要访问服务的节点增多时，提供负载均衡能力的Kube-proxy也会相应增多，从而增加高可用节点的数量。</p>
+</li>
+<li>
+<p>自我修复和自我扩展：<br>
+Kubernetes具有自我修复和自我扩展的能力，这使得它可以自动化处理节点故障、应用崩溃等问题。同时，Kubernetes还支持自动扩展集群，使得用户可以根据需要自动增加或减少节点，以满足业务需求。</p>
+</li>
+<li>
+<p>模块化设计：<br>
+Kubernetes的组件和核心功能都被设计成模块化的，这使得Kubernetes具有很高的灵活性和可定制性。用户可以根据自己的需求选择和定制不同的模块，以满足特定的应用场景需求。</p>
+</li>
+<li>
+<p>可观察性：<br>
+Kubernetes重视可观察性设计，它通过内置的日志记录和监控工具，帮助用户实时了解集群中运行的应用状态和健康状况。这种设计可以提高系统的可靠性和稳定性。几乎每一个模块都有状态和健康监控的接口。</p>
+</li>
+<li>
+<p>扩展性设计：<br>
+Kubernetes的控制机制保证了分布式系统下容器运行的稳定性和高可靠性，同时Kubernetes平台开放了容器运行时接口（CRI）、容器网络接口（CNI）和容器存储接口（CSI），可以方便地进行二次开发和定制。<br>
+也是的每个模块更好的独立发展，Kubernetes 项目本身更加容易维护，CRI/CNI/CSI 可以各自独立迭代（这也是微服务思想的一种实践吧）</p>
+</li>
+<li>
+<p>微服务架构：<br>
+Kubernetes与微服务架构的设计理念相结合，方便微服务架构的落地，和Istio这类服务网格结合，进一步把微服务的架构从业务逻辑中抽离出来，是微服务架构成为基础设施。</p>
+</li>
+</ul>
+]]></content>
+    </entry>
+</feed>

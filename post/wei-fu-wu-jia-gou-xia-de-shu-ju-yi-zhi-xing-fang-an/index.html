@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>微服务架构下的数据一致性方案 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="微服务架构下的数据一致性方案 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="微服务架构下的数据一致性方案" />
+  <meta property="og:url" content="https://nomagic.cc/post/wei-fu-wu-jia-gou-xia-de-shu-ju-yi-zhi-xing-fang-an/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/V4vnSrl0y/" class="tag">微服务</a>
+                
+                <a href="https://nomagic.cc/tag/koIKj_rC2u/" class="tag">分布式</a>
+                
+                <a href="https://nomagic.cc/tag/ivZiHU4PH9/" class="tag">数据一致性</a>
+                
+                <a href="https://nomagic.cc/tag/7OsqSvtpRi/" class="tag">事务</a>
+                
+              </span>
+              <h1>微服务架构下的数据一致性方案</h1>
+              <span class="meta">
+                Posted on
+                2022-11-10，11 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>我们知道微服务开发模式下，每个微服的存储也是独立隔离开的，每个服务都有自己单独的存储，这就引发了一个问题如何确保微服务架构下的数据一致性呢？更具体的是说如何实现原子性和隔离性的呢？</p>
+<blockquote>
+<p>原子性和隔离性在分布式下分别对应原子提交和并发控制，原子提交也就是说事务需要有回滚的能力，并发控制也就是通过加锁或者多版本来实现访问相同数据的并发事务实现隔离。</p>
+</blockquote>
+<p>首先需要明确的是微服务模式下有哪些数据一致性的挑战：</p>
+<ul>
+<li>分布式事务：多个服务协调工作来保证数据的一致性</li>
+<li>同步和复制：数据同步复制的一致性</li>
+<li>并发访问：多个服务并发访问资源</li>
+</ul>
+<h1 id="分布式事务管理器distributed-transaction-manager简称dtm两阶段三阶段提交">分布式事务管理器（Distributed Transaction Manager，简称DTM）两阶段/三阶段提交</h1>
+<h2 id="基本原理">基本原理</h2>
+<p>分布式事务管理器的工作原理可以简单概括为以下几个步骤：<br>
+事务的开始：分布式事务管理器接收到一个事务请求，并为该事务生成一个全局唯一的事务ID。<br>
+事务的协调：分布式事务管理器将该事务的操作分发给不同的节点进行执行，并记录每个节点的执行结果。<br>
+事务的提交或回滚：分布式事务管理器根据节点的执行结果，决定是提交还是回滚该事务。如果所有节点的操作都成功执行，则提交该事务；如果有任何一个节点的操作失败，则回滚该事务。</p>
+<h2 id="组成">组成</h2>
+<p>事务管理器（TM）：事务管理器是分布式事务管理器的核心组件，负责协调分布式事务的执行。<br>
+资源管理器（RM）：资源管理器负责管理具体的资源，如数据库、消息服务器等。<br>
+参与者：参与者是指执行分布式事务的应用程序。</p>
+<h2 id="实现方案">实现方案</h2>
+<p>分布式事务管理器的实现方式有很多种，常见的实现方式包括：<br>
+基于XA协议的实现：XA协议是一种工业标准的二阶段提交协议，可用于实现分布式事务。<br>
+基于消息队列的实现：消息队列可以用于实现分布式事务的最终一致性。<br>
+基于补偿机制的实现：补偿机制是一种可靠性保障机制，可用于实现分布式事务的回滚。</p>
+<h3 id="xa-协议">XA 协议</h3>
+<p>XA 协议是由 X/Open 公司于 1991 年发布的一套标准协议。XA 是 eXtended Architecture 的缩写，因此该协议旨在解决如何在异构系统中保证全局事务的原子性。</p>
+<p>基于XA协议的实现分布式事务管理器，需要以下几个组件：<br>
+事务管理器（TM)：负责协调分布式事务的执行。<br>
+资源管理器（RM）：负责管理具体的资源，如数据库、消息服务器等。<br>
+参与者（应用程序：AP）：参与者是指执行分布式事务的应用程序。</p>
+<h4 id="xa协议的执行流程如下">XA协议的执行流程如下：</h4>
+<p>参与者（应用程序）向事务管理器（TM）发起事务请求。<br>
+TM向各个RM发起准备（prepare）请求。<br>
+RM响应TM的准备请求，如果准备成功，则返回PREPARED；如果准备失败，则返回NOT_READY。<br>
+TM收到所有RM的准备响应后，如果所有响应都是PREPARED，则向各个RM发起提交（commit）请求；如果有一个响应不是PREPARED，则向各个RM发起回滚（rollback）请求。<br>
+RM响应TM的提交或回滚请求。</p>
+<h4 id="tm的实现">TM的实现</h4>
+<p>TM的实现需要提供以下功能：<br>
+创建事务：TM需要提供一个接口，用于创建事务。<br>
+加入事务：TM需要提供一个接口，用于加入事务。<br>
+提交事务：TM需要提供一个接口，用于提交事务。<br>
+回滚事务：TM需要提供一个接口，用于回滚事务。</p>
+<h4 id="rm的实现">RM的实现</h4>
+<p>RM的实现需要提供以下功能：<br>
+支持XA协议：RM需要实现XA协议的接口，用于响应TM的准备、提交和回滚请求。<br>
+执行业务操作：RM需要根据业务需求，执行具体的业务操作。</p>
+<h3 id="实现代码参考">实现代码参考</h3>
+<pre><code>type XAResource interface {
+    // 准备事务
+    Prepare(xid string) error
+    // 提交事务
+    Commit(xid string) error
+    // 回滚事务
+    Rollback(xid string) error
+}
+type MyXAResource struct {
+    // 资源 ID
+    resourceId string
+}
+
+func (m *MyXAResource) Prepare(xid string) error {
+    // 执行准备逻辑
+    return nil
+}
+
+func (m *MyXAResource) Commit(xid string) error {
+    // 执行提交逻辑
+    return nil
+}
+
+func (m *MyXAResource) Rollback(xid string) error {
+    // 执行回滚逻辑
+    return nil
+}
+type XATransactionManager struct {
+    // 资源管理器列表
+    resourceManagers []XAResource
+}
+
+func (m *XATransactionManager) Begin() (xid string, err error) {
+    // 生成事务 ID
+    xid = uuid.NewString()
+    // 向所有资源管理器发起准备请求
+    for _, resourceManager := range m.resourceManagers {
+        err = resourceManager.Prepare(xid)
+        if err != nil {
+            return &quot;&quot;, err
+        }
+    }
+    return xid, nil
+}
+
+func (m *XATransactionManager) Commit(xid string) error {
+    // 向所有资源管理器发起提交请求
+    for _, resourceManager := range m.resourceManagers {
+        err := resourceManager.Commit(xid)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (m *XATransactionManager) Rollback(xid string) error {
+    // 向所有资源管理器发起回滚请求
+    for _, resourceManager := range m.resourceManagers {
+        err := resourceManager.Rollback(xid)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+</code></pre>
+<p>使用例子：</p>
+<pre><code>// 创建 XA 事务管理器
+transactionManager := &amp;XATransactionManager{
+    resourceManagers: []XAResource{
+        &amp;MyXAResource{resourceId: &quot;resource1&quot;},
+        &amp;MyXAResource{resourceId: &quot;resource2&quot;},
+    },
+}
+
+// 开始事务
+xid, err := transactionManager.Begin()
+if err != nil {
+    // 处理错误
+}
+
+// 执行业务操作
+// ...
+
+// 提交事务
+err = transactionManager.Commit(xid)
+if err != nil {
+    // 处理错误
+}
+
+</code></pre>
+<h3 id="和两阶段提交的关系2pc">和两阶段提交的关系（2PC）</h3>
+<p>XA协议和两阶段提交（Two-Phase Commit，简称2PC）是分布式系统中实现事务一致性的两个关键概念。<br>
+XA协议：XA协议是一种由X/Open组织定义的分布式事务处理的标准协议。它定义了一组接口和规范，用于在分布式环境下协调事务的提交和回滚。XA协议的核心是将事务分为全局事务（Global Transaction）和本地事务（Local Transaction），并通过协调者（Coordinator）和参与者（Participant）之间的通信来实现事务的一致性。<br>
+两阶段提交（Two-Phase Commit）：两阶段提交是一种基于XA协议的分布式事务协调协议。它通过两个阶段的操作来保证所有参与者要么都提交事务，要么都回滚事务，从而实现分布式事务的一致性。首先，协调者向所有参与者发送事务准备请求，并等待参与者的响应。然后，在所有参与者都准备好提交事务的情况下，协调者向所有参与者发送提交请求；否则，协调者向所有参与者发送回滚请求。<br>
+因此，XA协议是一种通用的事务处理标准协议，而两阶段提交是基于XA协议的具体实现机制。XA协议定义了事务的分布式处理模型，而两阶段提交则是在此模型基础上进行具体操作的协议</p>
+<h3 id="三阶段提交">三阶段提交</h3>
+<p>两阶段提交存在的问题，如果在事务准备阶段过后，协调者出了状况，那么所有的参与者不知道接下来要怎么办，整个事务就卡住了无法进行。<br>
+三阶段提交增加了一个预提交阶段。<br>
+CanCommit<br>
+PreCommit<br>
+DoCommit<br>
+在第一个阶段后，协调者出现问题的时候，因为并没有真的锁定资源，所以这时候系统是没有被堵塞的。加入在第二个阶段协后调者出现问题，参与者超时后会自动提交事务，因为第一步的检查会使PreCommit执行成功的概率增大，也就是需要回滚的概率降低。但是由于网络原因某个参与者没有收到协调者的回滚信息，进行了超时提交的概率还是存在的。这种网络或者意外的原因无法很好的解决，比如在两阶段提交中，提交的时候，有一个参与者宕机了，又没能进行很快的恢复，这时其他事务就有可能读取到这个事务的不完整状态。<br>
+##分布式一致性算法（例如，Paxos和Raft）<br>
+算法通过选举和消息传递机制来实现分布式数据一致性。通过协商和达成共识来确保数据的一致性，并处理节点故障和网络分区等问题。这些算法提供了更强的容错性和可扩展性，但实现和理解上更为复杂，这里不展开叙述。</p>
+<h2 id="数据最终一致性">数据最终一致性</h2>
+<p>通过上面的叙述和CAP理论我们可以知道，在分布式的环境下，服务保持可用的情况下，做不到强一致性。<br>
+而当业务发生在多个服务中，我们追求最终一致性。那么怎么解决上面提到的问题，做到跨服务的最终一致性呢？</p>
+<h3 id="避免同时跨服务的写操作">避免同时跨服务的写操作</h3>
+<p>这是个业务问题，在微服务的架构下，每个服务都是独立的，如果有一个业务功能需要同时修改两个服务的数据，往往这个业务可以拆分成两个步骤，比如场景一种提到的订单和库存的例子，如果我们可以先锁定库存，然后再确认订单看上去这个问题就迎刃而解了。</p>
+<p>因此在业务中发现一个功能需要同时修改两个服务的数据，我们首先可以来讨论这个业务设计是否合理；如果业务上很多场景都要求两个服务的数据保持强一致，那可能我们需要看看微服务的划分是否合理。</p>
+<h3 id="最大努力通知-最大努力处理">最大努力通知 + 最大努力处理</h3>
+<p>为了解决场景二和场景三的不一致性问题，需要上游服务和下游服务的共同努力：</p>
+<p>上游服务需要尽可能将事件发送出去，比如：先同步发送，如果失败改为异步重试，重试多次仍然失败可以先持久化，通过定时任务来重发或者人工干预重发。</p>
+<p>下游服务也要尽可能的把事件处理掉，收到事件后可以考虑先将事件持久化，消费成功后标记事件，如果消费失败可以通过定时任务重试消费。</p>
+<h3 id="保证幂等性">保证幂等性</h3>
+<p>当我们提到重试，就不得不考虑幂等性的问题，这里的幂等性包括以下两个场景：</p>
+<p>上游服务接口的幂等性，保证下游系统的重试逻辑可以得到正确响应<br>
+下游服务消费事件保证幂等性，避免因上游多发事件或事件已消费成功后再次重试产生的问题<br>
+核心业务数据补偿机制<br>
+在分布式系统的执行链路上，每个节点都有可能失败，加上业务的复杂度，即便我们做了很多我们认为万全的准备，数据不一致的情景也很难彻底解决，而对于那些小概率发生但技术解决起来成本昂贵的问题，我们可以尝试通过对业务的深刻理解设计一些后台的维护功能，保证在核心业务数据异常时，可以在一定的规则内进行修复，从而保证业务的顺利进行。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8distributed-transaction-manager%E7%AE%80%E7%A7%B0dtm%E4%B8%A4%E9%98%B6%E6%AE%B5%E4%B8%89%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4">分布式事务管理器（Distributed Transaction Manager，简称DTM）两阶段/三阶段提交</a>
+<ul>
+<li><a href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86">基本原理</a></li>
+<li><a href="#%E7%BB%84%E6%88%90">组成</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88">实现方案</a>
+<ul>
+<li><a href="#xa-%E5%8D%8F%E8%AE%AE">XA 协议</a>
+<ul>
+<li><a href="#xa%E5%8D%8F%E8%AE%AE%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E5%A6%82%E4%B8%8B">XA协议的执行流程如下：</a></li>
+<li><a href="#tm%E7%9A%84%E5%AE%9E%E7%8E%B0">TM的实现</a></li>
+<li><a href="#rm%E7%9A%84%E5%AE%9E%E7%8E%B0">RM的实现</a></li>
+</ul>
+</li>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E4%BB%A3%E7%A0%81%E5%8F%82%E8%80%83">实现代码参考</a></li>
+<li><a href="#%E5%92%8C%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4%E7%9A%84%E5%85%B3%E7%B3%BB2pc">和两阶段提交的关系（2PC）</a></li>
+<li><a href="#%E4%B8%89%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4">三阶段提交</a></li>
+</ul>
+</li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E6%9C%80%E7%BB%88%E4%B8%80%E8%87%B4%E6%80%A7">数据最终一致性</a>
+<ul>
+<li><a href="#%E9%81%BF%E5%85%8D%E5%90%8C%E6%97%B6%E8%B7%A8%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%86%99%E6%93%8D%E4%BD%9C">避免同时跨服务的写操作</a></li>
+<li><a href="#%E6%9C%80%E5%A4%A7%E5%8A%AA%E5%8A%9B%E9%80%9A%E7%9F%A5-%E6%9C%80%E5%A4%A7%E5%8A%AA%E5%8A%9B%E5%A4%84%E7%90%86">最大努力通知 + 最大努力处理</a></li>
+<li><a href="#%E4%BF%9D%E8%AF%81%E5%B9%82%E7%AD%89%E6%80%A7">保证幂等性</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/han-shu-shi-bian-cheng/">
+              <span class="post-title">
+                函数式编程&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

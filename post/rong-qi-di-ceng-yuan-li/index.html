@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>容器底层原理 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="容器底层原理 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="容器底层原理" />
+  <meta property="og:url" content="https://nomagic.cc/post/rong-qi-di-ceng-yuan-li/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/KqPYTEiCx/" class="tag">云原生</a>
+                
+                <a href="https://nomagic.cc/tag/ktZOV2JFga/" class="tag">Kubernetes</a>
+                
+                <a href="https://nomagic.cc/tag/0eVBqVXix/" class="tag">container</a>
+                
+              </span>
+              <h1>容器底层原理</h1>
+              <span class="meta">
+                Posted on
+                2021-10-18，14 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h2 id="容器技术的背景">容器技术的背景</h2>
+<p>虚拟机（硬件虚拟化）在满足大规模服务部署的要求方面存在一些限制，资源占用，维护配置成本，快速扩缩容。<br>
+需要一种更轻量的虚拟化技术（操作系统虚拟化），由操作系统创建虚拟的系统环境，使应用感知不到其他应用的存在，仿佛在独自占有全部的系统资源，从而实现应用隔离的目的。</p>
+<ul>
+<li>2000年，FreeBSD 4.0推出了Jail。Jail加强和改进了用于文件系统隔离的chroot环境。</li>
+<li>2004年，Sun公司发布了Solaris 10的Containers，包括Zones和Resource management两部分。Zones实现了命名空间隔离和安全访问控制，Resource management实现了资源分配控制。</li>
+<li>2007年，Control Groups(简称cgroups)进入Linux内核，可以限定和隔离一组进程所使用的资源(包括CPU、内存、I/O和网络等)。<br>
+2013年，Docker公司发布Docker开源项目，提供了一系列简便的工具链来使用容器，这个时候容器技术开始大爆发。<br>
+##容器技术的实质是什么？<br>
+容器技术是一种沙盒机制（虚拟机同样也属于一种沙盒机制），通过把应用装入一个隔离的环境中，使沙盒内的应用和外界隔离起来，达到互补影响的地步。</li>
+</ul>
+<blockquote>
+<p>这里的沙盒可以形象的看做一个集装箱，把应用很多完全隔离开的集装箱内，联想Docker的图标<br>
+<img src="https://nomagic.cc/post-images/1697680736129.png" alt="" loading="lazy"></p>
+</blockquote>
+<h2 id="docker是如何创建这种隔离环境的">docker是如何创建这种隔离环境的</h2>
+<p>从上面的历史我们也可以看到，docker在容器执行这块，是对Linux提供的隔离机制进行了封装，提供出了更简单的使用工具。那这些工具封装的底层机制又是什么的，从namespace，cgroup,rootfs说开去。</p>
+<h3 id="namesapce">namesapce</h3>
+<p>在 Linux 中，每个进程都拥有自己的命名空间，这些命名空间将进程及其相关的资源（如文件系统、网络等）隔离开来，使得不同进程可以运行在不同的环境中，互不影响。<br>
+分类	系统调用参数	相关内核版本</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>标识符</th>
+<th>系统版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mount namespaces</td>
+<td>CLONE_NEWNS</td>
+<td>Linux 2.4.19</td>
+</tr>
+<tr>
+<td>UTS namespaces</td>
+<td>CLONE_NEWUTS</td>
+<td>Linux 2.6.19</td>
+</tr>
+<tr>
+<td>IPC namespaces</td>
+<td>CLONE_NEWIPC</td>
+<td>Linux 2.6.19</td>
+</tr>
+<tr>
+<td>PID namespaces</td>
+<td>CLONE_NEWPID</td>
+<td>Linux 2.6.24</td>
+</tr>
+<tr>
+<td>Network namespaces</td>
+<td>CLONE_NEWNET</td>
+<td>始于Linux 2.6.24 完成于 Linux 2.6.29</td>
+</tr>
+<tr>
+<td>User namespaces</td>
+<td>CLONE_NEWUSER</td>
+<td>始于 Linux 2.6.23 完成于 Linux 3.8)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="隔离例子">隔离例子：</h4>
+<pre><code>#define _GNU_SOURCE
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;sys/mount.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sched.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+#define STACK_SIZE (1024 * 1024)
+static char container_stack[STACK_SIZE];
+char* const container_args[] = {
+    &quot;/bin/bash&quot;,
+    NULL
+};
+int container_main(void* arg)
+{
+    char name[50];
+    sprintf(name,&quot;container_%d_&gt;&gt;&gt;&quot;,getpid());
+    printf(&quot;%s - inside the container !\n&quot;,name);
+    printf(&quot;%s - set hostname(%d) to container !\n&quot;,name,sethostname(&quot;container&quot;,10));
+
+    ## mount(&quot;none&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, &quot;&quot;);
+    ## mount(&quot;none&quot;, &quot;/tmp&quot;, &quot;tmpfs&quot;, 0, &quot;&quot;);
+    execv(container_args[0], container_args);
+    printf(&quot;Something's wrong!\n&quot;);
+    return 0;
+}
+int main()
+{
+    printf(&quot;Host - start a container!\n&quot;);
+    int container_pid = clone(container_main, container_stack+STACK_SIZE, SIGCHLD|CLONE_NEWUTS|CLONE_NEWPID|CLONE_NEWNS, NULL);
+    if (container_pid == -1 ) {
+        perror(&quot;start a container failed\n&quot;);
+        return 1;
+    }
+    printf(&quot;child pid:%d\n&quot;,container_pid);
+    int status;
+    waitpid(container_pid,&amp;status, 0);
+    printf(&quot;Host - container stopped! %d\n&quot;,status);
+    return 0;
+}
+</code></pre>
+<p>编译完，执行可以看到输</p>
+<pre><code>Host - start a container!
+child pid:76
+container_1_&gt;&gt;&gt; - inside the container !
+container_1_&gt;&gt;&gt; - set hostname(0) to container !
+</code></pre>
+<p>可以看到输出的pid 已经是1。我们知道Linux的1号进程是init进程，和我们这里看到的完全不同，所以我们的进程已经处于一个沙盒环境<br>
+这个时候我们查看/tmp目录下文件，查看到的还是父进程环境下的目录，我们把   ## mount(&quot;none&quot;, &quot;/tmp&quot;, &quot;tmpfs&quot;, 0, &quot;&quot;); 的注释去掉，编译重新执行，这是/tmp目录已经是空的，可以看到/tmp 路径已经在重新挂载。</p>
+<blockquote>
+<p>mount(&quot;none&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, &quot;&quot;); 需要挂载这个目录是因为 top 命令还有系统的一些其他命令读取的/proc文件，如果不重新挂载读取到的还是父进程共享来的。</p>
+</blockquote>
+<h3 id="pid-namespace-的实现原理">pid namespace 的实现原理</h3>
+<h2 id="总结">总结</h2>
+<p>通过namespace机制，我们可以看到进程所有看到世界，被完全隔离开了。相当于整个系统中只有自己一个进程.</p>
+<h2 id="cgroup">cgroup</h2>
+<p>cgroup 完成了进程对硬件资源的使用隔离。<br>
+通过cgroup，可以限制特定进程组对CPU、内存、磁盘I/O等资源的访问。这可以帮助确保各个进程组之间不会相互干扰，同时也可以对各个进程组的资源使用进行精细控制。<br>
+cgroup的子系统可以分为以下几类：</p>
+<ul>
+<li>块设备输入/输出限制（blkio）：这个子系统为块设备设定输入/输出限制，比如物理设备（磁盘，固态硬盘，USB等等）。</li>
+<li>CPU时间（cpu）：这个子系统用于限制进程组使用的CPU时间。它不仅可以限制进程组使用的总CPU时间，还可以限制特定CPU核的使用时间。</li>
+<li>内存（memory）：这个子系统用于管理进程组的内存使用。例如，可以限制进程组使用的总内存量，或者限制某个进程组在特定时间段的内存使用量。</li>
+<li>网络（net）：这个子系统用于管理进程组的网络使用。例如，可以限制进程组发送和接收的网络流量。</li>
+<li>进程组（cpuset）：这个子系统用于管理进程组的CPU和内存分配。它可以确保特定进程组不会干扰其他进程组的资源使用，也可以分配特定CPU和内存给特定的进程组。<br>
+cgroup 目前的控制端在虚拟文件系统 /sys/fs/cgroup/<br>
+创建控制组的方式就是创建对应的文件夹就好。</li>
+</ul>
+<pre><code># mkdir mycontainer  //删除时使用（ rmdir mycontainer）
+# cd mycontainer/
+# ls
+cgroup.controllers  cgroup.kill             cgroup.procs            cgroup.threads  cpu.stat        memory.events        memory.low  memory.numa_stat  memory.stat          memory.swap.high  pids.events
+cgroup.events       cgroup.max.depth        cgroup.stat             cgroup.type     io.pressure     memory.events.local  memory.max  memory.oom.group  memory.swap.current  memory.swap.max   pids.max
+cgroup.freeze       cgroup.max.descendants  cgroup.subtree_control  cpu.pressure    memory.current  memory.high          memory.min  memory.pressure   memory.swap.events   pids.current
+</code></pre>
+<p>可以看到目录下已经生成很多文件，只要把控制的数据写入对应的文件，然后把进程ID写入分组任务文件，就可以限制进程的资源使用。<br>
+我们这里关注CPU的使用限制，主要是三个方面：</p>
+<ul>
+<li>cpu.cfs_period_us:<br>
+用来设置一个CFS调度时间周期长度，默认值是100000us(100ms)，一般cpu.cfs_period_us作为系统默认值我们不会去修改它。</li>
+<li>cpu.cfs_quota_us:<br>
+用来设置在一个CFS调度时间周期(cfs_period_us)内，允许此控制组执行的时间。默认值为-1表示限制时间。</li>
+<li>cpu.shares:<br>
+用来设置cpu cgroup子系统对于控制组之间的cpu分配比例。默认值是1000。</li>
+</ul>
+<blockquote>
+<p>使用cfs_quota_us/cfs_period_us，例如20000us/100000us=0.2，表示允许这个控制组使用的CPU最大是0.2个CPU，即限制使用20%CPU。 如果cfs_quota_us/cfs_period_us=2，就表示允许控制组使用的CPU资源配置是2个。</p>
+</blockquote>
+<p>对于cpu分配比例的使用，例如有两个cpu控制组foo和bar，foo的cpu.shares是1024，bar的cpu.shares是3072，它们的比例就是1:3。 在一台8个CPU的主机上，如果foo和bar设置的都是需要4个CPU的话(cfs_quota_us/cfs_period_us=4)，根据它们的CPU分配比例，控制组foo得到的是2个，而bar控制组得到的是6个。需要注意cpu.shares是在多个cpu控制组之间的分配比例，且只有到整个主机的所有CPU都打满时才会起作用。</p>
+<p>也就是说cpu.cfs_quota_us/cpu.cfs_period_us决定cpu控制组中所有进程所能使用CPU资源的最大值，而cpu.shares决定了cpu控制组间可用CPU的相对比例，这个比例只有当主机上的CPU完全被打满时才会起作用。</p>
+<p>用下面的例子来测试CPU的限制：</p>
+<pre><code>int main(){
+
+        int i=0;
+        for(;;){
+            i++;
+            if (i&gt;1000000000000) break;
+        }
+        return 0;
+}
+</code></pre>
+<p>如果不做限制，那么这个程序会把cpu跑满，我们在/sys/fs/cgroup/ 下建立自己的控制组，<br>
+那么我们把这个程序的cpu限制在0.2，只要把进程ID写入task文件，cfs_quota_us =20000 cfs_period_us = 100000 就好。</p>
+<h4 id="cgroup-v2版本的控制">cgroup v2版本的控制</h4>
+<p><a href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/8/html/managing_monitoring_and_updating_the_kernel/preparing-the-cgroup-for-distribution-of-cpu-time_using-cgroups-v2-to-control-distribution-of-cpu-time-for-applications">参考</a></p>
+<pre><code>echo &quot;+cpu&quot; &gt;&gt; /sys/fs/cgroup/cgroup.subtree_control
+echo &quot;+cpuset&quot; &gt;&gt; /sys/fs/cgroup/cgroup.subtree_control
+echo &quot;+cpu&quot; &gt;&gt; /sys/fs/cgroup/mycontainer/cgroup.subtree_control
+echo &quot;+cpuset&quot; &gt;&gt; /sys/fs/cgroup/mycontainer/cgroup.subtree_control
+mkdir tasks
+cd tasks/
+echo &quot;1&quot; &gt; /sys/fs/cgroup/mycontainer/tasks/cpuset.cpus
+echo &quot;20000 100000&quot; &gt; /sys/fs/cgroup/mycontainer/tasks/cpu.max
+echo $pid &gt;&gt; /sys/fs/cgroup/mycontainer/tasks/cgroup.procs
+</code></pre>
+<p>可以看到cpu的使用量被限制到了20%</p>
+<p>docker 解决了容器打包问题<br>
+kubernets 解决了容器编排和调度的问题<br>
+容器本身没有价值，有价值的是“容器编排”</p>
+<h4 id="总结-2">总结</h4>
+<p>通过 cgroup 限制了容器资源使用。不同的容器进程的资源限额起到了隔离作用。</p>
+<h2 id="rootfs">rootfs</h2>
+<p>我们知道进程的执行，还依赖于他存在的本地环境，也就是进程所依赖的文件系统中的所有文件。<br>
+从上面的namespace介绍来看，我们只要把容器进程的根目录/重新挂载，那么容器所依赖的文件系统也和其他进程完全隔离起来，相当于沙盒这个集装箱的底部也被封装起来。这个根目录所挂载的文件系统就是rootfs，它包含了操作系统所需的基本文件和目录结构，如/bin、/usr、/etc等。<br>
+（注意文件系统和内核的区别）</p>
+<p>这个被挂载到/目录的rootfs就说我们所说的“容器镜像”，这个容器镜像就保证了容器进程所依赖的文件系统的一致性，可以使这个容器集装箱，随意的在不同的机器上搬来搬去（调度）</p>
+<p>那么容器镜像的维护还有一个问题，比如我创建了一个ubuntu的系统镜像，如果被人修改了这个ubuntu镜像。 那么这两个镜像就没有任何关系了。加入A、B、C。。。。也修改了镜像，那么即使这些镜像有99%的一致性，也是不同的镜像，这就导致整个镜像系统难以维护。<br>
+比如我下载了一个nginx镜像和一个Mongo镜像，即使他们底层依赖的系统镜像是一个，但是这个系统是下载和存储两个镜像，显然不是一种好的做法，</p>
+<p>Docker在实现镜像的时候，选择了一种Union File System的文件系统，也叫UnionFS，这个文件系统功能是将多个不同位置的目录联合挂载（union mount）到同一个目录下，可以使镜像的维护变成一个增量的过程。</p>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1697771785333.png" alt="" loading="lazy"></figure>
+<p>整个过程由fork 变成了reference,这个增量的部分就是docker 镜像中的层。</p>
+<h3 id="aufs">aufs</h3>
+<p>AUFS（Advanced Multi-Layered Unification File System）可以把多个文件联合挂载到一个路径，常被用于Linux系统的容器（container）中。</p>
+<pre><code>#!/bin/bash
+
+create(){
+   mkdir -p work/a work/b work/c root
+   touch  work/a/a.txt work/b/b.txt work/c/c.txt
+   sudo mount -t aufs -o dirs=./work/a=rw:./work/b=ro:./work/c=ro none ./root
+   echo a &gt;&gt; work/a/a.txt
+   echo b &gt;&gt; root/b.txt
+   # touch work/a/.wh.c.txt
+}
+
+delete(){
+ umount root
+ rm -rf work
+ rm -rf root
+}
+
+case $1 in
+    create)
+        create ;;
+    delete)
+        delete ;;
+esac
+
+</code></pre>
+<p>AUFS的读写层是AUFS文件系统中的一部分，可读可写，位于最上层。在AUFS中，所有对文件的读写操作都在读写层完成。当一个文件被访问时，AUFS会根据文件路径从最上层开始逐层查找，直到找到该文件。如果文件位于最上层，则直接打开并进行读写操作；如果文件位于下层，则AUFS会先复制到最上层，然后再打开进行读写操作。这种复制操作也被称为“写复制”（CoW），它是AUFS的默认支持的技术。<br>
+AUFS的另一个重要特点是它支持“whiteout”（写隐藏）。当删除一个低层branch文件时，AUFS不会直接删除该文件，而是在顶层branch对该文件创建一个whiteout文件（.wh.&lt;origin_file_name&gt;），将该文件隐藏起来。这种方式实际上只是将文件的访问权限删除，而不会真正地删除文件数据，实现了对文件的软删除。</p>
+<pre><code> touch work/a/.wh.c.txt
+</code></pre>
+<p>总结：<br>
+通过联合文件系统（目前Docker使用是overlay文件系统）构建成容器镜像，给容器的文件系统提供了一致性，使容器的打包和调度更加简单。</p>
+<p>参考：<br>
+[DOCKER基础技术]https://coolshell.cn/articles/17010<br>
+深入剖析 Kubernetes(张磊)</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%AE%B9%E5%99%A8%E6%8A%80%E6%9C%AF%E7%9A%84%E8%83%8C%E6%99%AF">容器技术的背景</a></li>
+<li><a href="#docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%9B%E5%BB%BA%E8%BF%99%E7%A7%8D%E9%9A%94%E7%A6%BB%E7%8E%AF%E5%A2%83%E7%9A%84">docker是如何创建这种隔离环境的</a>
+<ul>
+<li><a href="#namesapce">namesapce</a>
+<ul>
+<li><a href="#%E9%9A%94%E7%A6%BB%E4%BE%8B%E5%AD%90">隔离例子：</a></li>
+</ul>
+</li>
+<li><a href="#pid-namespace-%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86">pid namespace 的实现原理</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+<li><a href="#cgroup">cgroup</a><br>
+*
+<ul>
+<li><a href="#cgroup-v2%E7%89%88%E6%9C%AC%E7%9A%84%E6%8E%A7%E5%88%B6">cgroup v2版本的控制</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93-2">总结</a></li>
+</ul>
+</li>
+<li><a href="#rootfs">rootfs</a>
+<ul>
+<li><a href="#aufs">aufs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/kubernetes-de-yi-xie-you-xiu-de-she-ji-li-nian/">
+              <span class="post-title">
+                Kubernetes的一些优秀的设计理念&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

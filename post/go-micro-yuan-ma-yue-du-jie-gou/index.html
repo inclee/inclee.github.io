@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>Go micro 源码阅读-结构 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="Go micro 源码阅读-结构 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="Go micro 源码阅读-结构" />
+  <meta property="og:url" content="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-jie-gou/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/V4vnSrl0y/" class="tag">微服务</a>
+                
+              </span>
+              <h1>Go micro 源码阅读-结构</h1>
+              <span class="meta">
+                Posted on
+                2018-09-23，3 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="介绍">介绍</h1>
+<p>micro 是一个用来开发cloud native application的程序工具集，采用的是微服务架构，使用go语言编写。<a href="https://github.com/micro"></a><br>
+micro主要包括：</p>
+<ul>
+<li>toolkits
+<ol>
+<li>api - api 网关，服务的唯一入口点</li>
+<li>bot - Slack and hipchat bot. CLI and ChatOps via messaging.</li>
+<li>cli 命令行工具用于和整个系统交互</li>
+<li>new - 一个微服务代码模板生成工具<br>
+5  . web - web的控制面板，通过它可以和相应的service进行交互、查询</li>
+</ol>
+</li>
+<li>framework<br>
+即go-micro的部分，一个插件式的基于grpc的分布式开发框架</li>
+<li>plugin - micro的插件<br>
+几个部分。<br>
+本次的代码阅读主要研究micro的toolkits和framework部分</li>
+</ul>
+<h1 id="go-micro">go-micro</h1>
+<pre><code>go-micro
+​
+├── broker
+├── client       // service的对外接口
+├── cmd
+├── codec      //编解码器
+├── errors      //Error接口的实现，提供返回error信息
+├── function.go    // https://micro.mu/blog/2017/06/06/functions.html
+├── function_test.go
+├── go-micro.go         //go-micro 对外服务接口（service，和相关度 Pub/Sub接口）
+├── go-micro.png
+├── LICENSE
+├── metadata
+├── options.go  //service的配置Option实现
+├── publisher.go        //依赖注入Client
+├── README.md
+├── registry             //服务注册器
+├── selector      //服务选择器（服务发现的负载均衡）
+├── server                   //service 的内部server
+├── service.go            //封装service的实现
+├── service_test.go
+├── transport  //用于实现点对点通信
+├── wrapper.go
+└── wrapper_test.go
+</code></pre>
+<p>从上面可以看出go-micro 是一个编写微服务的框架，一个service包括接收请求的server和对外发送请求的client。通信的方式包括点对点的同步通信（transport）和异步通信（Broker）通过事件的pub/sub的方式提供。</p>
+<p>设计上把一个类要聚合的内容通过Options的方式替换出去，每一个聚合的对象都是一个Option，然后每个Option都是可以设置的，只要满足了特定的接口即可。<br>
+例如：Service 的Options定义</p>
+<pre><code>type Options struct {
+ Broker    broker.Broker
+ Cmd       cmd.Cmd
+ Client    client.Client
+ Server    server.Server
+ Registry  registry.Registry
+ Transport transport.Transport
+ ....
+}
+</code></pre>
+<p>具体的每一个项目都是一个Option例如Broker、Cmd、Client、而且每一个Option都是接口形式的定义，例如：</p>
+<pre><code>type Broker interface {
+ Options() Options
+ Address() string
+ Connect() error
+ Disconnect() error
+ Init(...Option) error
+ Publish(string, *Message, ...PublishOption) error
+ Subscribe(string, Handler, ...SubscribeOption) (Subscriber, error)
+ String() string
+}
+</code></pre>
+<p>这样就实现了每一个模块都是可以替换的实现。也就对应了<strong>go-micro’s pluggable</strong>的设计理念。通过面向接口编程的方式，搭建了整个库的骨架。</p>
+<h1 id="组件">组件</h1>
+<p>一个大概的micro图样。<br>
+<img src="https://upload-images.jianshu.io/upload_images/3762092-57ada53fc8470eee.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="go-micro-struct.png.png" loading="lazy"><br>
+一个Service 包括Server和Client。Server包括Register、Transport、Broker。Client包括Broker、Transport、Register、Selector。<br>
+Register：服务的注册于反注册<br>
+Transport ： 点对点的同步通信支持<br>
+Broker ： 异步通信支持（通过事件的 Publicate 和 Subscribe)<br>
+Selector : 发现服务 和 选取服务时的负载均衡。<br>
+靠这些组件的组合来对外提供Services.<br>
+<img src="https://upload-images.jianshu.io/upload_images/3762092-2b1c58203294fff6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="go-micro-level.png" loading="lazy"></p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E4%BB%8B%E7%BB%8D">介绍</a></li>
+<li><a href="#go-micro">go-micro</a></li>
+<li><a href="#%E7%BB%84%E4%BB%B6">组件</a></li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/li-jie-fen-bu-shi-xi-tong-de-8-ge-miu-wu/">
+              <span class="post-title">
+                理解分布式系统的 8 个谬误（译）&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

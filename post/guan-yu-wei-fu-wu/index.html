@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>关于微服务 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="关于微服务 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="关于微服务" />
+  <meta property="og:url" content="https://nomagic.cc/post/guan-yu-wei-fu-wu/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/OipL-4-Uu/" class="tag">架构</a>
+                
+                <a href="https://nomagic.cc/tag/V4vnSrl0y/" class="tag">微服务</a>
+                
+                <a href="https://nomagic.cc/tag/zy1lBI2aI/" class="tag">编程思想</a>
+                
+              </span>
+              <h1>关于微服务</h1>
+              <span class="meta">
+                Posted on
+                2020-06-11，12 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h2 id="为什么需要微服务架构和开发模式">为什么需要微服务架构和开发模式</h2>
+<p>其实本质上是一个解耦和治理的过程，我们知道现在的应用服务越来越复杂，代码量也越来越大，如果还是按照单体模式去构造应用就会带来很多问题比如：</p>
+<ul>
+<li>代码管理：所有代码都耦合在一起，一个应用的代码量惊人，没有人可以全面的了解代码的方方面面，给后期的维护变更带来比较大的困难。</li>
+<li>功能解耦，模块隔离：比如只修改了应用的一个方面，也要对应用进行整体的测试，持续部署更是不怎么可能，现在每天都要进行多次部署更新，单体应用的停止和启动时间都比较长，即使只修改了一个很小的方面，然后整个应用都要重启，这是不可接受的。</li>
+<li>稳定性、可用性和安全性隔离：隔离bug，不会因为单个模块的一个bug影响整个服务的稳定性和可用性，比如某块有内存泄露，或者crash不会使整个应用都不可用。</li>
+<li>工具选择，框架迭代：每个模块都有更适合自己使用的语言，工具或者是框架，假如是单体应用就做不到灵活的选择。</li>
+<li>数据解耦：从封装隔离和安全性的角度来说，每个模块不应该可以读取或者修改到整体的数据。
+<ul>
+<li>每个微服务需要有自己独立的数据库的原因主要有以下几点：
+<ul>
+<li>1 解耦性：微服务架构的一个核心原则是解耦，每个微服务都应该是独立的，不应该相互依赖。如果多个微服务共享一个数据库，那么这些微服务就会相互依赖，一个微服务的修改可能会影响其他微服务。</li>
+<li>2 可扩展性：每个微服务的数据量和访问量可能不同，如果多个微服务共享一个数据库，那么可能会导致数据库的性能瓶颈。如果每个微服务都有自己独立的数据库，那么就可以根据每个微服务的实际情况进行扩展。</li>
+<li>3 安全性：每个微服务的数据可能包含敏感信息，如果多个微服务共享一个数据库，那么可能会导致数据泄露的风险。如果每个微服务都有自己独立的数据库，那么就可以根据每个微服务的安全需求进行配置。</li>
+</ul>
+</li>
+<li>具体来说，以下是每个微服务独立数据库的优势：
+<ul>
+<li>1 提高数据库性能：每个微服务的数据量和访问量可能不同，如果多个微服务共享一个数据库，那么可能会导致数据库的性能瓶颈。如果每个微服务都有自己独立的数据库，那么就可以根据每个微服务的实际情况进行优化，提高数据库的性能。</li>
+<li>2 提高数据库可用性：如果多个微服务共享一个数据库，那么如果数据库发生故障，可能会影响多个微服务。如果每个微服务都有自己独立的数据库，那么即使一个数据库发生故障，也不会影响其他微服务。</li>
+<li>3 提高数据库安全性：每个微服务的数据可能包含敏感信息，如果多个微服务共享一个数据库，那么可能会导致数据泄露的风险。如果每个微服务都有自己独立的数据库，那么就可以根据每个微服务的安全需求进行配置，提高数据库的安全性。<br>
+当然，每个微服务独立数据库也有一定的缺点，比如需要增加数据库的管理成本。但是，总体而言，每个微服务独立数据库带来的优势要大于缺点。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>灵活部署：应用中每个模块的特性是不同的，有些是IO密集型，有些是CPU密集型，有些只要部署一个副本就可以提供服务，有些需要多个部分才行。把单体应用切割成微服务的形式可以更好的适应每个模块的资源要求。</li>
+</ul>
+<p>总体来说，微服务可以提高交付的灵活性和速度，这是当前软件研发环境所必须的能力，微服的过程本质上是一个解耦和治理的过程。</p>
+<h2 id="微服务的优点">微服务的优点：</h2>
+<ul>
+<li>把复杂问题分治成若干简单问题。及把庞大冗杂的单体应用划分成若干隔离的，可管理与治理的服务，每个服务都是奔着高内聚低耦合的方向去的。</li>
+<li>每个服务可以由单独的团队专注开发，使用最适合的技术，迭代更加迅速</li>
+<li>每个服务独立部署与治理，使得持续部署成为可能</li>
+</ul>
+<h2 id="微服务的缺点">微服务的缺点</h2>
+<ul>
+<li>分布式架构：使得整体架构更加复杂，由于分布式架构带来的复杂性 参考<a href="https://inclee.github.io/post/li-jie-fen-bu-shi-xi-tong-de-8-ge-miu-wu/">分布式服务的8大谬误</a></li>
+<li>数据库分：业务的事务无法使用本地事务，分布式事务和数据分区带来的数据一致性挑战</li>
+<li>测试和排错复杂：服务间的依赖A服务依赖B服务，B服务依赖C服务，C依赖于D。。。</li>
+<li>整个应用的服务部署复杂：每个微服务都要单独配置基础设置服务，和单独部署另外还要考虑不同服务的部署要求和服务间之间的依赖关系。</li>
+</ul>
+<h2 id="api网关">API网关</h2>
+<h3 id="为什么要使用api网关">为什么要使用API网关</h3>
+<p>1 单体应用端口很少，部署的方式是多副本和负载均衡提供服务， 微服务模式每个微服务都会暴露自己的更细力度的端口，调用方是无法协调那么多端口的<br>
+2 一个接口数据，调用方不可能调用所有服务然后自己聚合数据，这个通信量网络环境也是不允许的。<br>
+3 微服务不一定使用web友好的协议，需要通过协议转换的方式对外提供服务<br>
+4 客户端不应该与微服务通信，应该是隔离开的，微服务需要可以独立变更。<br>
+5 接口也许要治理与管理：“认证、监控、负载均衡、缓存和静态，响应统一处理，限流/熔断”</p>
+<h3 id="api网关的优点">API网关的优点</h3>
+<p>封装了应用的内部接口，客户端只需要和网关通信，通过接口聚合，客户端减少和和服务的通信次数<br>
+把一些通用的逻辑前置（认证、监控、负载均衡、缓存和静态，响应统一处理，限流/熔断），无需散落在应用的不同地方</p>
+<h3 id="api网关的缺点">API网关的缺点</h3>
+<ul>
+<li>必须高可用</li>
+<li>需要单独开发，部署和管理</li>
+<li>部署完服务后，需要单独更新网关才能对外暴露服务</li>
+</ul>
+<h2 id="服务发现">服务发现</h2>
+<h3 id="为什么使用服务发现">为什么使用服务发现</h3>
+<p>交互中需要知道一个服务的位置，然后现在基于云的微服务应用，服务实例都是动态分配的网络特性，由于自动伸缩，故障升级，服务的网络位置都会变更，所以需要提供一种服务发现机制</p>
+<h3 id="服务发现的种类">服务发现的种类</h3>
+<h4 id="客户端服务发现">客户端服务发现</h4>
+<p>客户端可以通过某种机制来获取服务的地址和端口。常见的动态服务发现机制包括：</p>
+<ul>
+<li>注册中心：注册中心是一个集中式的数据库，用于存储服务的信息。客户端可以通过注册中心来获取服务的信息。</li>
+<li>DNS：DNS可以用于解析域名，并返回域名的 IP 地址。客户端可以通过 DNS 来获取服务的信息。</li>
+<li>Zookeeper：Zookeeper 是一个分布式协调服务，可以用于存储服务的信息。客户端可以通过 Zookeeper 来获取服务的信息。<br>
+客户端服务发现具有以下优点：</li>
+<li>灵活性：客户端服务发现可以根据需要选择合适的机制。</li>
+<li>可扩展性：客户端服务发现可以随着服务的数量增加而扩展。<br>
+客户端服务发现也存在以下缺点：</li>
+<li>复杂性：动态服务发现的实现相对复杂,每个客户端都要内嵌相应实现，如果使用客户端使用的语言不通也需要多语言的去实现客户端发现机制</li>
+<li>性能：动态服务发现可能会影响客户端的性能。</li>
+</ul>
+<h4 id="服务端服务发现">服务端服务发现</h4>
+<p>一般服务端服务发现，是指反向代理的模式，客户端通过负载均衡器向服务发出请求。负载均衡器查询服务注册中心并将每个请求路由到可用的服务实例。与客户端发现一样，服务实例由服务注册中心注册与销毁，反向代理均衡器实现了服务端发现的机制</p>
+<h2 id="微服务的分布式数据管理">微服务的分布式数据管理</h2>
+<p>服务所拥有的数据对当前微服务来说是私有的，只能通过其提供的 API 进行访问。封装数据可确保微服务 松耦合，独立演进 。 如 果多个服务访问相同的数据， 模式（schema）更新需要对所有服务进行耗时、协调的更新。 更糟糕的是，不同的微服务经常使用不同类型的数据库。现代应用程序存储和处理着各种数据，而关系型数据库并不总是最佳选择。在某些场景，特定的 NoSQL 数据库可能具有更方便的数据模型，提供了更好的性能和可扩展性，这就使得数据的访问和变更变得异常复杂。</p>
+<p>分布式事务及两阶段提交在当前的服务环境下也是不可行的，根据CAP理论，我们只能选择服务的可用性，放弃数据的短期内的一致性，只能追求数据的最终一致性。</p>
+<h3 id="分布式事务">分布式事务</h3>
+<p><a href="https://inclee.github.io/post/wei-fu-wu-jia-gou-xia-de-shu-ju-yi-zhi-xing-fang-an/">微服务下的数据一致性方案</a></p>
+<h3 id="事件驱动架构">事件驱动架构</h3>
+<p>在可以异步处理的模式下，并且短期内可以容忍数据不一致的情况，可以使用数据驱动的模式。<br>
+在这种架构中，服务之间通过事件进行通信和协作，而不是直接调用彼此的API。<br>
+事件驱动架构基于发布-订阅模型，其中服务可以发布事件，而其他服务可以订阅并对这些事件做出响应。当一个服务发布一个事件时，其他服务可以选择性地接收并处理该事件。<br>
+以下是微服务事件驱动架构的一些关键概念和组件：</p>
+<ul>
+<li>事件：事件是系统中发生的重要事实或状态变化的表示。它可以是一个简单的数据结构，包含与该事件相关的信息。</li>
+<li>事件发布者：事件发布者是一个服务，负责发布事件。当某个重要事件发生时，它将事件发送到事件总线或消息队列，以便其他服务可以接收到。</li>
+<li>事件订阅者：事件订阅者是一个服务，它通过订阅特定类型的事件来表明它对该事件感兴趣。一旦订阅成功，当该类型的事件被发布时，订阅者将接收到该事件并进行相应的处理。</li>
+<li>事件总线/消息队列：事件总线或消息队列是服务之间传递事件的中间件。它负责接收发布者发送的事件，并将其传递给订阅者。<br>
+微服务事件驱动架构的优势包括：</li>
+<li>松耦合：服务之间通过事件进行通信，彼此之间解耦，因为发布者不需要知道哪些服务订阅了事件，订阅者也不需要知道事件来自哪个发布者。</li>
+<li>可扩展性：由于事件驱动的架构是异步的，它可以轻松地处理高负载和大规模的系统。</li>
+<li>弹性和松散耦合：当一个服务发生故障或不可用时，其他服务可以继续运行，并在服务恢复后重新处理事件。</li>
+<li>可组合性：通过将服务设计为可重用和可组合的事件处理单元，可以构建复杂的业务流程和工作流。<br>
+当设计和实现微服务架构时，事件驱动架构可以提供一种灵活、可伸缩和可扩展的方式来处理服务之间的通信和协作。</li>
+</ul>
+<h4 id="如何原子性的发送消息">如何原子性的发送消息：</h4>
+<p>建立一张event表，然后把这张表的事件插入纳入业务事务的范围，这样就可以保证消息的发送和业务数据变更是一个原子性的操作，通过另外的进程读取这张表发布到消息队列或者消息总线中。这样不止有消息的发送记录，还可以追踪业务数据的变更记录。</p>
+<h2 id="微服务的服务治理">微服务的服务治理</h2>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84%E5%92%8C%E5%BC%80%E5%8F%91%E6%A8%A1%E5%BC%8F">为什么需要微服务架构和开发模式</a></li>
+<li><a href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E4%BC%98%E7%82%B9">微服务的优点：</a></li>
+<li><a href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E7%BC%BA%E7%82%B9">微服务的缺点</a></li>
+<li><a href="#api%E7%BD%91%E5%85%B3">API网关</a>
+<ul>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8api%E7%BD%91%E5%85%B3">为什么要使用API网关</a></li>
+<li><a href="#api%E7%BD%91%E5%85%B3%E7%9A%84%E4%BC%98%E7%82%B9">API网关的优点</a></li>
+<li><a href="#api%E7%BD%91%E5%85%B3%E7%9A%84%E7%BC%BA%E7%82%B9">API网关的缺点</a></li>
+</ul>
+</li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">服务发现</a>
+<ul>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">为什么使用服务发现</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E7%9A%84%E7%A7%8D%E7%B1%BB">服务发现的种类</a>
+<ul>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">客户端服务发现</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">服务端服务发现</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E7%AE%A1%E7%90%86">微服务的分布式数据管理</a>
+<ul>
+<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1">分布式事务</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8%E6%9E%B6%E6%9E%84">事件驱动架构</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%8E%9F%E5%AD%90%E6%80%A7%E7%9A%84%E5%8F%91%E9%80%81%E6%B6%88%E6%81%AF">如何原子性的发送消息：</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86">微服务的服务治理</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/chou-xiang-he-chou-xiang-yuan-ze/">
+              <span class="post-title">
+                抽象和抽象原则&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

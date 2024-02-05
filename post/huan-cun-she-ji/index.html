@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>缓存设计 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="缓存设计 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="缓存设计" />
+  <meta property="og:url" content="https://nomagic.cc/post/huan-cun-she-ji/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/zy1lBI2aI/" class="tag">编程思想</a>
+                
+              </span>
+              <h1>缓存设计</h1>
+              <span class="meta">
+                Posted on
+                2019-04-11，16 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h2 id="为什么要使用缓存">为什么要使用缓存</h2>
+<p>在高并发场景下，需要通过缓存来减少数据库的压力，使得大量的访问进来能够命中缓存，只有少量的需要到数据库层。由于缓存基于内存，可支持的并发量远远大于基于硬盘的数据库。所以对于高并发设计，缓存的设计时必不可少的一环。</p>
+<h2 id="为什么db不可以">为什么DB不可以</h2>
+<ul>
+<li>DB 基于硬盘</li>
+</ul>
+<h3 id="总体来看缓存的问题">总体来看缓存的问题</h3>
+<ul>
+<li>穿透是怎么办</li>
+<li>如何有效的防止穿透</li>
+<li>穿透了之后如何防止大量大量请求压入数据库</li>
+<li>如何更新缓存</li>
+</ul>
+<h2 id="缓存在架构中的位置">缓存在架构中的位置</h2>
+<h3 id="接入层缓存">接入层缓存</h3>
+<h4 id="nginx">nginx</h4>
+<h3 id="应用层缓存">应用层缓存</h3>
+<h4 id="常见分布式缓存">常见分布式缓存</h4>
+<h5 id="memcached">Memcached</h5>
+<p>Memcached适合做简单的key-value存储，内存使用率比较高，而且由于是多核处理，对于比较大的数据，性能较好。<br>
+但是缺点也比较明显，Memcached严格来讲没有集群机制，横向扩展完全靠客户端来实现。另外Memcached无法持久化，一旦挂了数据就都丢失了，如果想实现高可用，也是需要客户端进行双写才可以。<br>
+所以可以看出Memcached真的是设计出来，简简单单为了做一个缓存的。</p>
+<h5 id="redis">Redis</h5>
+<p>Redis提供持久化的功能，包括RDB的全量持久化，或者AOF的增量持久化，从而使得Redis挂了，数据是有机会恢复的。<br>
+Redis提供成熟的主备同步，故障切换的功能，从而保证了高可用性。<br>
+所以很多地方管Redis称为内存数据库，因为他的一些特性已经有了数据库的影子。<br>
+这也是很多人愿意用Redis的原因，集合了缓存和数据库的优势，但是往往会滥用这些优势，从而忽略了架构层面的设计，使得Redis集群有很大的风险。<br>
+很多情况下，会将Redis当做数据库使用，开启持久化和主备同步机制，以为就可以高枕无忧了，然而Redis的持久化机制，全量持久化则往往需要额外较大的内存，而在高并发场景下，内存本来就很紧张，<code>如果造成swap【重点了解概念】</code>，就会影响性能。增量持久化也涉及到写磁盘和<code>fsync</code>，也是会拖慢处理的速度，在平时还好，如果高并发场景下，仍然会影响吞吐量。<br>
+所以在架构设计角度，缓存就是缓存，要意识到数据会随时丢失的，要意识到缓存的存着的目的是拦截到数据库的请求。如果为了保证缓存的数据不丢失，从而影响了缓存的吞吐量，甚至稳定性，让缓存响应不过来，甚至挂掉，所有的请求击穿到数据库，就是更加严重的事情了。<br>
+如果非常需要进行持久化，可以考虑使用levelDB此类的，对于随机写入性能较好的key-value持久化存储，这样只有部分的确需要持久化的数据，才进行持久化，而非无论什么数据，通通往Redis里面扔，同时统一开启了持久化。</p>
+<h5 id="两者的区分与选择">两者的区分与选择</h5>
+<ul>
+<li>为什么说Memcached 内存使用率高。<br>
+结构简单，key-value结构。</li>
+<li>Redis 对于多核的情况会真么样<br>
+Redis的数据结构就丰富的多了，单线程的处理所有的请求，对于比较大的数据，性能稍微差一点。</li>
+<li>为什么说Memcached 对于较大的数据性能会比较好<br>
+Redis 单线程的处理所有的请求，对于比较大的数据，性能稍微差一点。</li>
+<li>Memcached 没有集群机制，客户端如何实现横向扩展</li>
+<li>Memcached 的持久化替代方案。</li>
+</ul>
+<h3 id="缓存设计的方法">缓存设计的方法</h3>
+<h4 id="分层设计">分层设计</h4>
+<p>这样某一层的缓存挂了，还有另一层可以撑着，等待缓存的修复，例如分布式缓存因为某种原因挂了，因为持久化的原因，同步机制的原因，内存过大的原因等，修复需要一段时间，在这段时间内，至少本地缓存可以抗一阵，不至于一下子就击穿数据库。而且对于特别特别热的数据，热到导致集中式的缓存处理不过来，网卡也被打满的情况，由于本地缓存不需要远程调用，也是分布在应用层的，可以缓解这种问题。</p>
+<h5 id="如何进程分层设计">如何进程分层设计</h5>
+<h4 id="分场景设计">分场景设计</h4>
+<blockquote>
+<p>具体问题，具体分析</p>
+</blockquote>
+<p>到底要解决什么问题，可以选择不同的缓存。是要存储大的无格式的数据，还是要存储小的有格式的数据，还是要存储一定需要持久化的数据。具体的场景下一节详细谈。</p>
+<h4 id="分片设计">分片设计</h4>
+<p>使得每一个缓存实例都不大，但是实例数目比较多，这样一方面可以实现负载均衡，防止单个实例称为瓶颈或者热点，另一方面如果一个实例挂了，影响面会小很多，高可用性大大增强。分片的机制可以在客户端实现，可以使用中间件实现，也可以使用Redis的Cluster的方式，分片的算法往往都是哈希取模，或者一致性哈希。</p>
+<h3 id="特定场景下缓存的设计">特定场景下缓存的设计</h3>
+<h4 id="和数据库中的数据结构保持一致原样缓存">和数据库中的数据结构保持一致，原样缓存</h4>
+<p>这种场景是最常见的场景，也是很多架构使用缓存的适合，最先涉及到的场景。<br>
+基本就是数据库里面啥样，我缓存也啥样，数据库里面有商品信息，缓存里面也放商品信息，唯一不同的是，数据库里面是全量的商品信息，缓存里面是最热的商品信息。<br>
+每当应用要查询商品信息的时候，先查缓存，缓存没有就查数据库，查出来的结果放入缓存，从而下次就查到了。<br>
+这个是缓存最最经典的更新流程。这种方式简单，直观，很多缓存的库都默认支持这种方式。</p>
+<h4 id="列表排序分页场景的缓存">列表排序分页场景的缓存</h4>
+<p>有时候我们需要获得一些列表数据，并对这些数据进行排序和分页。<br>
+例如我们想获取点赞最多的评论，或者最新的评论，然后列出来，一页一页的翻下去。<br>
+在这种情况下，缓存里面的数据结构和数据库里面完全不一样。<br>
+如果完全使用数据库进行实现，则按照某种条件将所有的行查询出来，然后按照某个字段进行排序，然后进行分页，一页一页的展示。<br>
+但是当数据量比较大的时候，这种方式往往成为瓶颈，首先涉及的数据库行数比较多，而且排序也是个很慢的活，尽管可能有索引，分页也是翻页到最后，越是慢。<br>
+在缓存里面，就没必要每行一个key了，而是可以使用Redis的列表方式进行存储，当然列表的长短是有限制的，肯定放不下数据库里面这么多，但是大家会发现其实对于所有的列表，用户往往没有耐心看个十页八页的，例如百度上搜个东西，也是有排序和分页的，但是你每次都往后翻了吗，每页就十条，就算是十页，或者一百页，也就一千条数据，如果保持ID的话，完全放的下。<br>
+如果已经排好序，放在Redis里面，那取出列表，翻页就非常快了。<br>
+可以后台有一个线程，异步的初始化和刷新缓存，在缓存里面保存一个时间戳，当有更新的时候，刷新时间戳，异步任务发现时间戳改变了，就刷新缓存。</p>
+<h4 id="计数缓存">计数缓存</h4>
+<p>计数对于数据库来讲，是一个非常繁重的工作，需要查询大量的行，最后得出计数的结论，当数据改变的时候，需要重新刷一遍，非常影响性能。<br>
+因此可以有一个计数服务，后端是一个缓存，将计数作为结果放在缓存里面，当数据有改变的时候，调用计数服务增加或者减少计数，而非通过异步数据库count来更新缓存。<br>
+计数服务可以使用Redis进行单个计数，或者hash表进行批量计数</p>
+<h4 id="重构维度缓存">重构维度缓存</h4>
+<blockquote>
+<p>重构聚合的结果</p>
+</blockquote>
+<p>有时候数据库里面保持的数据的维度是为了写入方便，而非为了查询方便的，然而同时查询过程，也需要处理高并发，因而需要为了查询方便，将数据重新以另一个维度存储一遍，或者说将多给数据库的内容聚合一下，再存储一遍，<code>从而不用每次查询的时候都重新聚合，如果还是放在数据库，比较难维护，放在缓存就好一些。</code><br>
+例如一个商品的所有的帖子和帖子的用户，以及一个用户发表过的所有的帖子就是属于两个维度。<br>
+这需要写入一个维度的时候，同时异步通知，更新缓存中的另一个维度。<br>
+在这种场景下，数据量相对比较大，因而单纯用内存缓存Memcached或者redis难以支撑，往往会选择使用levelDB进行存储，如果levelDB的性能跟不上，可以考虑在levelDB之前，再来一层Memcached。</p>
+<h4 id="较大的详情内容数据缓存">较大的详情内容数据缓存</h4>
+<p>对于评论的详情，或者帖子的详细内容，属于非结构化的，而且内容比较大，因而使用Memcached比较好</p>
+<h3 id="缓存三大矛盾问题">缓存三大矛盾问题</h3>
+<h4 id="缓存实时性和一致性问题当有了写入后咋办">缓存实时性和一致性问题：当有了写入后咋办？</h4>
+<p>虽然使用了缓存，大家心里都有一个预期，就是实时性和一致性得不到完全的保证，毕竟数据保存了多份，数据库一份，缓存中一份，当数据库中因写入而产生了新的数据，往往缓存是不会和数据库操作放在一个事务里面的，如何将新的数据更新到缓存里面，什么时候更新到缓存里面，不同的策略不一样。<br>
+从用户体验角度，当然是越实时越好，用户体验越流畅，完全从这个角度出发，就应该有了写入，马上废弃缓存【当写入数据的时候，删除缓存里的内容】，触发一次数据库的读取，从而更新缓存。但是这和第三个问题，高并发就矛盾了，如果所有的都实时从数据库里面读取，高并发场景下，数据库往往受不了。</p>
+<h4 id="缓存的穿透问题当没有读到咋办">缓存的穿透问题：当没有读到咋办？</h4>
+<p>为什么会出现缓存读取不到的情况呢？<br>
+第一：可能读取的是冷数据，原来从来没有访问过，所以需要到数据库里面查询一下，然后放入缓存，再返回给客户。<br>
+第二：可能数据因为有了写入，被实时的从缓存中删除了，就如第一个问题中描述的那样，为了保证实时性，当数据库中的数据更新了之后，马上删除缓存中的数据，导致这个时候的读取读不到，需要到数据库里面查询后，放入缓存，再返回给客户。<br>
+第三：可能是缓存失效了，每个缓存数据都会有失效时间，过了一段时间没有被访问，就会失效，这个时候数据就访问不到了，需要访问数据库后，再放入缓存。<br>
+第四：数据被换出，由于缓存内存是有限的，当使用快满了的时候，就会使用类似LRU策略，将不经常使用的数据换出，所以也要访问数据库。<br>
+第五：<code>后端确实也没有，应用访问缓存没有，于是查询数据库，结果数据库里面也没有，只好返回客户为空，但是尴尬的是，每次出现这种情况的时候，都会面临着一次数据库的访问，纯属浪费资源，常用的方法是，讲这个key对应的结果为空的事实也进行缓存，这样缓存可以命中，但是命中后告诉客户端没有，减少了数据库的压力</code>。<br>
+无论哪种原因导致的读取缓存读不到的情况，该怎么办？是个策略问题。<br>
+一种是同步访问数据库后，放入缓存，再返回给客户，这样实时性最好，但是给数据库的压力也最大。<br>
+另一种方式就是异步的访问数据库，暂且返回客户一个fallback值，然后同时触发一个异步更新，这样下次就有了，这样数据库压力小很多，但是用户就访问不到实时的数据了。【防止请求压到数据库那里】</p>
+<h4 id="缓存对数据库高并发访问都来访问数据库咋办">缓存对数据库高并发访问：都来访问数据库咋办？</h4>
+<p>我们本来使用缓存，是来拦截直接访问数据库请求的，从而保证数据库大本营永远处于健康的状态。但是如果一遇到不命中，就访问数据库的话，平时没有什么问题，但是大促情况下，数据库是受不了的。<br>
+一种情况是多个客户端，并发状态下，都不命中了，于是并发的都来访问数据库，其实只需要访问一次就好，这种情况可以通过加锁，只有一个到后端来实现。<br>
+另外就是即便采取了上述的策略，依然并发量非常大，后端的数据库依然受不了，则需要通过降低实时性，将缓存拦在数据库前面，暂且撑住，来解决。</p>
+<h3 id="解决缓存三大矛盾的刷新策略">解决缓存三大矛盾的刷新策略</h3>
+<h4 id="实时策略">实时策略</h4>
+<blockquote>
+<p>为什么更新时，不是更新缓存，而是把缓存置为失效。</p>
+</blockquote>
+<p>所谓的实时策略，是平时缓存使用的最常用的策略，也是保持实时性最好的策略。<br>
+读取的过程，应用程序先从cache取数据，没有得到，则从数据库中取数据，成功后，放到缓存中。如果命中，应用程序从cache中取数据，取到后返回。<br>
+写入的过程，把数据存到数据库中，成功后，再让缓存失效，失效后下次读取的时候，会被写入缓存。那为什么不直接写缓存呢？【这个还是非常重要的】因为如果两个线程同时更新数据库，一个将数据库改为10，一个将数据库改为20，数据库有自己的事务机制，可以保证如果20是后提交的，数据库里面改为20，但是回过头来写入缓存的时候就没有事务了，如果改为20的线程先更新缓存，改为10的线程后更新缓存，于是就会长时间出现缓存中是10，但是数据库中是20的现象。<br>
+这种方式实时性好，用户体验好，是默认应该使用的策略。</p>
+<h4 id="异步策略">异步策略</h4>
+<p>所谓异步策略，就是当读取的时候读不到的时候，不直接访问数据库，而是返回一个fallback数据，然后往消息队列里面放入一个数据加载的事件，在背后有一个任务，收到事件后，会异步的读取数据库，由于有队列的作用，可以实现消峰，缓冲对数据库的访问，甚至可以将多个队列中的任务合并请求，合并更新缓存，提高了效率。<br>
+当更新的时候，异步策略总是先更新数据库和缓存中的一个，然后异步的更新另一个。<br>
+一是先更新数据库，然后异步更新缓存。当数据库更新后，同样生成一个异步消息，放入消息队列中，等待背后的任务通过消息进行缓存更新，同样可以实现消峰和任务合并。缺点就是实时性比较差，估计要过一段时间才能看到更新，好处是数据持久性可以得到保证。<br>
+一是先更新缓存，然后异步更新数据库。这种方式读取和写入都用缓存，将缓存完全挡在了数据库的前面，把缓存当成了数据库在用。所以一般会使用有持久化机制和主备的redis，但是仍然不能保证缓存不丢数据，所以这种情况适用于并发量大，但是数据没有那么关键的情况，好处是实时性好。<br>
+在实时策略扛不住大促的时候，可以根据场景，切换到上面的两种模式的一个，算是降级策略。</p>
+<h5 id="问题">问题</h5>
+<ul>
+<li>fallback 内容后面如何刷新</li>
+<li>实例</li>
+<li>如何进行任务合并</li>
+<li>异步更新如何保证数据的一致性<br>
+如果能保证队列的一致性，就可以。</li>
+</ul>
+<p>3、定时策略</p>
+<p>如果并发量实在太大，数据量也大的情况，异步都难以满足，可以降级为定时刷新的策略，这种情况下，应用只访问缓存，不访问数据库，更新频率也不高，而且用户要求也不高，例如详情，评论等。<br>
+这种情况下，由于数据量比较大，建议将一整块数据拆分成几部分进行缓存，而且区分更新频繁的和不频繁的，这样不用每次更新的时候，所有的都更新，只更新一部分。并且缓存的时候，可以进行数据的预整合，因为实时性不高，读取预整合的数据更快。<br>
+有关缓存就说到这里，下一节讲分布式事务。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E7%BC%93%E5%AD%98">为什么要使用缓存</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88db%E4%B8%8D%E5%8F%AF%E4%BB%A5">为什么DB不可以</a>
+<ul>
+<li><a href="#%E6%80%BB%E4%BD%93%E6%9D%A5%E7%9C%8B%E7%BC%93%E5%AD%98%E7%9A%84%E9%97%AE%E9%A2%98">总体来看缓存的问题</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BC%93%E5%AD%98%E5%9C%A8%E6%9E%B6%E6%9E%84%E4%B8%AD%E7%9A%84%E4%BD%8D%E7%BD%AE">缓存在架构中的位置</a>
+<ul>
+<li><a href="#%E6%8E%A5%E5%85%A5%E5%B1%82%E7%BC%93%E5%AD%98">接入层缓存</a>
+<ul>
+<li><a href="#nginx">nginx</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BA%94%E7%94%A8%E5%B1%82%E7%BC%93%E5%AD%98">应用层缓存</a>
+<ul>
+<li><a href="#%E5%B8%B8%E8%A7%81%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98">常见分布式缓存</a>
+<ul>
+<li><a href="#memcached">Memcached</a></li>
+<li><a href="#redis">Redis</a></li>
+<li><a href="#%E4%B8%A4%E8%80%85%E7%9A%84%E5%8C%BA%E5%88%86%E4%B8%8E%E9%80%89%E6%8B%A9">两者的区分与选择</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1%E7%9A%84%E6%96%B9%E6%B3%95">缓存设计的方法</a>
+<ul>
+<li><a href="#%E5%88%86%E5%B1%82%E8%AE%BE%E8%AE%A1">分层设计</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E8%BF%9B%E7%A8%8B%E5%88%86%E5%B1%82%E8%AE%BE%E8%AE%A1">如何进程分层设计</a></li>
+</ul>
+</li>
+<li><a href="#%E5%88%86%E5%9C%BA%E6%99%AF%E8%AE%BE%E8%AE%A1">分场景设计</a></li>
+<li><a href="#%E5%88%86%E7%89%87%E8%AE%BE%E8%AE%A1">分片设计</a></li>
+</ul>
+</li>
+<li><a href="#%E7%89%B9%E5%AE%9A%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%BC%93%E5%AD%98%E7%9A%84%E8%AE%BE%E8%AE%A1">特定场景下缓存的设计</a>
+<ul>
+<li><a href="#%E5%92%8C%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%BF%9D%E6%8C%81%E4%B8%80%E8%87%B4%E5%8E%9F%E6%A0%B7%E7%BC%93%E5%AD%98">和数据库中的数据结构保持一致，原样缓存</a></li>
+<li><a href="#%E5%88%97%E8%A1%A8%E6%8E%92%E5%BA%8F%E5%88%86%E9%A1%B5%E5%9C%BA%E6%99%AF%E7%9A%84%E7%BC%93%E5%AD%98">列表排序分页场景的缓存</a></li>
+<li><a href="#%E8%AE%A1%E6%95%B0%E7%BC%93%E5%AD%98">计数缓存</a></li>
+<li><a href="#%E9%87%8D%E6%9E%84%E7%BB%B4%E5%BA%A6%E7%BC%93%E5%AD%98">重构维度缓存</a></li>
+<li><a href="#%E8%BE%83%E5%A4%A7%E7%9A%84%E8%AF%A6%E6%83%85%E5%86%85%E5%AE%B9%E6%95%B0%E6%8D%AE%E7%BC%93%E5%AD%98">较大的详情内容数据缓存</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BC%93%E5%AD%98%E4%B8%89%E5%A4%A7%E7%9F%9B%E7%9B%BE%E9%97%AE%E9%A2%98">缓存三大矛盾问题</a>
+<ul>
+<li><a href="#%E7%BC%93%E5%AD%98%E5%AE%9E%E6%97%B6%E6%80%A7%E5%92%8C%E4%B8%80%E8%87%B4%E6%80%A7%E9%97%AE%E9%A2%98%E5%BD%93%E6%9C%89%E4%BA%86%E5%86%99%E5%85%A5%E5%90%8E%E5%92%8B%E5%8A%9E">缓存实时性和一致性问题：当有了写入后咋办？</a></li>
+<li><a href="#%E7%BC%93%E5%AD%98%E7%9A%84%E7%A9%BF%E9%80%8F%E9%97%AE%E9%A2%98%E5%BD%93%E6%B2%A1%E6%9C%89%E8%AF%BB%E5%88%B0%E5%92%8B%E5%8A%9E">缓存的穿透问题：当没有读到咋办？</a></li>
+<li><a href="#%E7%BC%93%E5%AD%98%E5%AF%B9%E6%95%B0%E6%8D%AE%E5%BA%93%E9%AB%98%E5%B9%B6%E5%8F%91%E8%AE%BF%E9%97%AE%E9%83%BD%E6%9D%A5%E8%AE%BF%E9%97%AE%E6%95%B0%E6%8D%AE%E5%BA%93%E5%92%8B%E5%8A%9E">缓存对数据库高并发访问：都来访问数据库咋办？</a></li>
+</ul>
+</li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E7%BC%93%E5%AD%98%E4%B8%89%E5%A4%A7%E7%9F%9B%E7%9B%BE%E7%9A%84%E5%88%B7%E6%96%B0%E7%AD%96%E7%95%A5">解决缓存三大矛盾的刷新策略</a>
+<ul>
+<li><a href="#%E5%AE%9E%E6%97%B6%E7%AD%96%E7%95%A5">实时策略</a></li>
+<li><a href="#%E5%BC%82%E6%AD%A5%E7%AD%96%E7%95%A5">异步策略</a>
+<ul>
+<li><a href="#%E9%97%AE%E9%A2%98">问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/python-zhuang-shi-qi/">
+              <span class="post-title">
+                python 装饰器&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

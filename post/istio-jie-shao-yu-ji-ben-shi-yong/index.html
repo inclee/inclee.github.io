@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>Istio 基本原理与使用实践 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="Istio 基本原理与使用实践 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="Istio 基本原理与使用实践" />
+  <meta property="og:url" content="https://nomagic.cc/post/istio-jie-shao-yu-ji-ben-shi-yong/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/9JziPul1H/" class="tag">Istio</a>
+                
+                <a href="https://nomagic.cc/tag/KqPYTEiCx/" class="tag">云原生</a>
+                
+              </span>
+              <h1>Istio 基本原理与使用实践</h1>
+              <span class="meta">
+                Posted on
+                2023-04-02，30 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <blockquote>
+<p>备注：实例代码参考：https://github.com/inclee/istio-demo.git</p>
+</blockquote>
+<h2 id="什么是服务网格它的技术背景是什么">什么是服务网格，它的技术背景是什么</h2>
+<p>随着业务发展，服务量持续增长，系统需要转向微服务架构以应对快速迭代和大规模并发的需求。在微服务系统中，服务与服务之间会形成复杂的调用链路，微服务间的网络请求协议非常复杂，这里面包括了各种诸如服务发现，安全加密、流量控制、故障处理，以及请求路由，调用链追踪。。太多太多的服务治理需求，随着服务规模的增大，这些问题的复杂性将显著增加。</p>
+<h3 id="服务治理的三种形态">服务治理的三种形态</h3>
+<p><strong>在应用程序中包含治理逻辑</strong></p>
+<p>在微服务化的过程中，将服务拆分后会发现一堆麻烦事儿，连基本的业务连通都成了问题。<br>
+在处理一些治理逻辑，比如怎么找到对端的服务实例，怎么选择一个对端实例发出请求等时，都需要自己写代码来实现。这种方式简单，对外部依赖少，但会导致存在大量的重复代码。所以，微服务越多，重复的代码越多，维护越难;而且，业务代码和治理逻辑耦合，不管是对治理逻辑的全局升级，还是对业务的升级，都要改同一段代码，这种方式导致了治理逻辑和业务逻辑的严重耦合，代码复杂度提高，并且维护起来成本太高，甚至不可维护。</p>
+<p><strong>独立的SDK包</strong></p>
+<p>相比如上面提到的方案，一种常见的解决方法是将公共的治理逻辑抽象化，并将其包含在一个通用库中，也就是我们熟知的软件开发包。这样，所有的微服务都可以使用这个通用库。当这些治理能力嵌入开发框架中后，使用该开发框架进行编程的所有代码便具有这种能力。这就是SDK（Software Development Kit）模式。</p>
+<p>虽然SDK模式在编码层面将业务逻辑与治理逻辑解耦，但业务代码与SDK依然需要一同编译，并运行在同一进程中。这导致了以下几个问题：首先，业务代码必须与SDK使用相同的编程语言，也就是说，编程语言被限制了，在更新治理逻辑时，需要全面升级自身的服务，即使业务逻辑并未发生变化，这无疑给用户带来了不便。虽然将治理逻辑独立出来了，但是对业务代码本身还是有一定的侵入性。</p>
+<p><strong>独立的治理进程</strong></p>
+<p>把治理逻辑彻底从用户的业务代码中剥离出来，作为一个独立的进程存在，作为网络的代理存在，在这种形态下，用户的业务代码和治理逻辑都以独立的进程存在，两者的代码和运行都无耦合，这样可以做到与开发语言无关，升级也相互独立。在对已存在的系统进行微服务治理时，只需搭配 Sidecar 即可，对原服务无须做任何修改，并且可以对老系统渐进式升级改造，先对部分服务进行微服务化。</p>
+<p>“软件的复杂性没有不是可以通过分层和抽象解决不了的，如果一层不够那么多分一层”。<br>
+同样独立进程治理的方式也符合这种思维，可以类比把应用所需要的网络功能，分层抽象到了网络层。同样独立进程的方式把服务治理的逻辑也抽象到了更下一层，应用层只需无感知的依赖就好了。当然抽象和分层的代价还是有的，就是会增加效率的损耗，大多数情况下通过增加一点损耗，来解决软件的复杂性是值得的。</p>
+<p>而这第三种方式就是我们需要介绍的服务网格，为什么叫这个名字，我想没有比这个图更为直观的。</p>
+<h3 id="服务网格所需要满足的特性">服务网格所需要满足的特性</h3>
+<p>现在，让我们了解服务网格可以为我们提供的一些功能。请注意，实际功能列表取决于服务网格的实现。但是，总的来说，我们应该在所有实现中都期望其中大多数功能。</p>
+<p>我们可以将这些功能大致分为三类：流量管理，安全性和可观察性。</p>
+<p><strong>流量管理</strong></p>
+<p>服务网格的基本特征之一是流量管理。这包括动态服务发现和路由。尤其影子流量和流量拆分功能，这些对于实现金丝雀发布和A/B测试非常有用。</p>
+<p>由于所有服务之间的通信都是由服务网格处理的，因此它还启用了一些可靠性功能。例如，服务网格可以提供重试，超时，速率限制和断路器。这些现成的故障恢复功能使通信更加可靠。</p>
+<p><strong>安全性</strong></p>
+<p>服务网格通常还处理服务到服务通信的安全性方面。这包括通过双向TLS（mTLS）强制进行流量加密，通过证书验证提供身份验证以及通过访问策略确保授权。</p>
+<p>服务网格中还可能存在一些有趣的安全用例。例如，我们可以实现网络分段，从而允许某些服务进行通信而禁止其他服务。而且，服务网格可以为审核需求提供精确的历史信息。</p>
+<p><strong>可观察性</strong></p>
+<p>强大的可观察性是处理分布式系统复杂性的基本要求。由于服务网格可以处理所有通信，因此正确放置了它可以提供可观察性的功能。例如，它可以提供有关分布式追踪的信息。</p>
+<p>服务网格可以生成许多指标，例如延迟，流量，错误和饱和度。此外，服务网格还可以生成访问日志，为每个请求提供完整记录。这些对于理解单个服务以及整个系统的行为非常有用。</p>
+<p>——————————————————————————————————————————</p>
+<h2 id="istio">Istio</h2>
+<h3 id="istio-简介">Istio 简介</h3>
+<p>Istio是最初由IBM，Google和Lyft开发的服务网格的开源实现。它可以透明地分层到分布式应用程序上，并提供服务网格的所有优点，例如流量管理，安全性和可观察性。</p>
+<p>它旨在与各种部署配合使用，例如本地部署，云托管，Kubernetes容器以及虚拟机上运行的服务程序。尽管Istio与平台无关，但它经常与Kubernetes平台上部署的微服务一起使用。</p>
+<p>从根本上讲，Istio的工作原理是以Sidcar的形式将Envoy的扩展版本作为代理布署到每个微服务中，该代理网络构成了Istio架构的数据平面。这些代理的配置和管理是从控制平面完成的。<br>
+控制平面基本上是服务网格的大脑。它为数据平面中的Envoy代理提供发现，配置和证书管理。<br>
+<img src="https://nomagic.cc/post-images/1706879594787.svg" alt="" loading="lazy"><br>
+当然，只有在拥有大量相互通信的微服务时，我们才能体现Istio的优势。在这里，sidecar代理在专用的基础架构层中形成一个复杂的服务网格：</p>
+<blockquote>
+<p>使用Istio之前<br>
+<img src="https://nomagic.cc/post-images/1706879690927.svg" alt="" loading="lazy"><br>
+使用Istio之后<br>
+<img src="https://nomagic.cc/post-images/1706879724493.svg" alt="" loading="lazy"></p>
+</blockquote>
+<p>Istio在与外部库和平台集成方面非常灵活。例如，我们可以将Istio与外部日志记录平台，遥测或策略系统集成。</p>
+<h3 id="istio的核心组件">Istio的核心组件</h3>
+<blockquote>
+<p>Istio 架构图<br>
+<img src="https://nomagic.cc/post-images/1706879805482.svg" alt="" loading="lazy"></p>
+</blockquote>
+<p>Istio由一些核心组件构成，这些组件共同提供了广泛的服务网格功能：</p>
+<p><strong>1.Envoy</strong>(Proxy): 环绕服务网格中的每个服务，Istio使用了一个被称为“边车”的代理模式，这个代理就是由Envoy实现的。Envoy负责与服务网格中所有服务的所有通信的拦截和路由。</p>
+<p><strong>2.Pilot</strong>： Pilot负责管理和配置所有Envoy代理实例。它提供路由规则，以便在服务间进行流量分发。</p>
+<p><strong>3.Mixer</strong>: Mixer提供了一种模块化的方式来实现访问控制和使用策略。它还负责收集遥测数据。</p>
+<p><strong>4.Citadel</strong>: Citadel负责提供服务间通信的安全认证和授权。</p>
+<p><strong>5.Galley</strong>: Galley负责验证、摄取、解析和派发服务网格的配置。</p>
+<p>这些组件协同工作，构成了Istio服务网格，提供了负载均衡，服务到服务的认证，监控等等一系列功能。此外，他们还可以通过 Kubernetes 等容器编排平台进行扩展和管理。</p>
+<h2 id="istio的工作原理">Istio的工作原理</h2>
+<p>Istio的工作机制和架构，分为控制面和数据面两部分。可以看到，控制面主要包括 Pilot、Mixer、Citadel等服务组件;数据面由伴随每个应用程序部署的代理程序Envoy组成，执行针对应用 程序的治理逻辑。</p>
+<h3 id="自动注入">自动注入:</h3>
+<p>指在创建应用程序时自动注入 Sidecar代理。在 Kubernetes场景下创建 Pod时，Kube-apiserver调用管理面组件的 Sidecar-Injector服务，自动修改应用程序的描述信息并注入Sidecar。在真正创建Pod时，在创建业务容器的同时在Pod中创建Sidecar容器。</p>
+<p>在Istio中，Envoy代理的注入到每个Pod中去主要依赖于Kubernetes的Webhook自动注入机制。这个过程主要是通过Istio的Sidecar-Injector组件完成的。下面是具体的步骤：</p>
+<p>当你创建一个名为&quot;foo&quot;的命名空间，并为它打上istio-injection=enabled标签时，其实你是在告诉Kubernetes，你希望在这个命名空间下创建的每个Pod都会触发Istio的自动注入机制。</p>
+<p>例如，你可以通过以下命令来实现这一步：</p>
+<pre><code>   kubectl create namespace foo
+   kubectl label namespace/foo istio-injection=enabled
+</code></pre>
+<p>当我们在foo命名空间下创建一个新的Deployment（比如运行一个简单的httpbin服务）时，Kubernetes的API Server会将这个Deployment的PodSpec发送给注册的Injector Webhook（在这个例子中就是Istio的Sidecar-Injector）。</p>
+<p>在收到PodSpec后，Istio Sidecar-Injector会查看是否有标签istio-injection=enabled。如果有，Sidecar-Injector就会在PodSpec中添加一个新的容器（就是Envoy代理）和一些必要的环境配置，然后再将修改过的PodSpec返回给API Server。<br>
+API Server收到修改后的PodSpec，接下来就会按照这个新的PodSpec创建Pod, 这样每个Pod就会自动运行一个Envoy代理。</p>
+<p>这样，Istio就可以自动地将Envoy Sidecar代理注入到每一个Pod中，而无需我们在每个服务或者每个Pod的配置中手动添加</p>
+<h3 id="流量拦截">流量拦截:</h3>
+<p>当我们在Kubernetes集群中部署Istio并对某个namespace启用自动注入后，Sidecar Injector将会在每个Pod的初始化过程中注入一个Init Container。</p>
+<p>这个Init Container会运行一个脚本，这个脚本会设置iptables规则来将所有的入站和出站流量都转发到Sidecar（即Envoy Proxy）中。这样就可以确保所有的网络流量都会经过Envoy处理，这包括服务间通信和服务与外部世界的通信。</p>
+<h3 id="服务发现">服务发现:</h3>
+<p>Istio服务发现的功能主要由其组件Pilot实现。Pilot负责收集和连接到服务网格各服务的信息，并生成适合的Envoy配置信息。下面是Pilot服务发现的基本工作原理：</p>
+<ol>
+<li>
+<p>Pilot首先从Kubernetes API服务器收集集群的服务信息。这些信息包括服务名、运行的Pod、端口等等。注意Pilot不仅仅支持Kubernetes，它还可以与其他类型的服务注册方式集成，比如Consul或者Eureka。在Kubernetes这里是利用的Kubernetes本地配置，或者Informer系统。</p>
+</li>
+<li>
+<p>收集到这些服务信息后，Pilot便可以理解服务网格中有哪些服务、这些服务运行在哪里以及如何访问它们。</p>
+</li>
+<li>
+<p>当新的服务添加进来或者现有服务有所改变时，Pilot将更新这些信息并生成新的Envoy配置。</p>
+</li>
+<li>
+<p>Pilot将这些更新的配置通过xDS API推送给网格中的每个Envoy实例。这样，每个Envoy都能理解哪个后端服务的请求应该发往哪台主机。</p>
+</li>
+<li>
+<p>因此，当服务的消费者尝试访问服务时，其相关的Envoy代理便已经知道如何路由请求到正确的目的地服务。</p>
+</li>
+</ol>
+<p>这样，Istio通过Pilot实现了服务发现以及为Envoy提供动态配置的功能，使服务网格内的微服务可以彼此发现并与每个其它进行通信</p>
+<h3 id="负载均衡">负载均衡:</h3>
+<p>Istio的负载均衡是通过Envoy代理来实现的，从上面所说的服务发现可知：<br>
+当服务A需要调用服务B时，它会首先发送请求到它的sidecar Envoy。这个Envoy知道所有服务B的实例以及它们的负载情况，Envoy使用这些信息，根据预配置的负载均衡策略（比如轮询、随机、最少请求等），选择一个服务B的实例，然后将请求转发到那里。</p>
+<p>Istio通过使用Pilot提供的服务发现信息和动态路由信息，结合Envoy自己的智能负载均衡能力，从而实现了强大的流量管理功能。这些功能包括请求路由、故障注入、重试、断路器等等，这都有助于增加服务网格中服务间通信的健壮性和灵活性。</p>
+<h3 id="流量治理">流量治理:</h3>
+<p>所有请求流量首先会被服务实例的sidecar Envoy代理拦截。<br>
+根据Istio配置的规则，Envoy将决定如何处理这些请求。比如</p>
+<ul>
+<li>负载均衡</li>
+<li>会话保持</li>
+<li>故障注入</li>
+<li>超时</li>
+<li>重试</li>
+<li>HTTP重定向</li>
+<li>HTTP重写</li>
+<li>熔断</li>
+<li>限流</li>
+<li>服务隔离</li>
+<li>灰度发布</li>
+</ul>
+<p>等治理规则</p>
+<h3 id="访问安全">访问安全:</h3>
+<p>Istio 通过一下几个方式保证访问的安全性：</p>
+<p><strong>1、双向TLS</strong>: 在Istio服务网格中，所有服务间的通信都会被自动升级为双向TLS连接，这意味着通信不仅被加密，同时服务间的身份也被验证。Istio使用Kubernetes的Service Account作为服务的身份，当服务的Envoy代理建立连接时，它会自动将Service Account的标志作为认证证书的一部分，从而实现服务的身份验证。</p>
+<p><strong>2、认证鉴权</strong>: Istio使用的是RBAC（Role-Based Access Control，基于角色的访问控制）模型进行认证鉴权。Istio的RBAC系统基于声明式政策，其中服务将被组织为一个或多个服务角色集。然后，可通过与这些服务角色相关的策略，允许或者拒绝这些服务进行特定的操作。</p>
+<p><strong>3、终端用户验证</strong>：Istio还支持端到端用户验证。这通常通过使用JSON Web Token (JWT)在服务之间身份传递和验证来完成。<br>
+<strong>4、审计日志</strong>: Istio还可以提供一套丰富的审计日志系统，记录谁访问了哪些服务、何时访问以及访问内容等详细信息，这对于安全审计非常有帮助。</p>
+<h3 id="服务遥测">服务遥测:</h3>
+<p>Istio的服务遥测原理主要是通过Envoy代理收集数据，然后再通过Istio的Mixer组件进行处理和分析，最后通过各类工具进行跟踪和可视化。</p>
+<p><strong>1、数据收集</strong>: Istio服务网格中的每一个服务实例都有一个Envoy代理（Sidecar模式），这个Envoy代理负责拦截和转发所有进出服务实例的网络入口和出口。在这个过程中，Envoy会自动收集关于请求和响应的详细数据，例如请求的大小、持续时间、响应的状态码等等。</p>
+<p><strong>2、处理和导出数据</strong>: 这些收集到的数据会被打包成统一格式的报告，然后由Envoy发送给Istio的遥测组件（Mixer）进行处理。Mixer可以对这些报告进行聚合和分析，还可以以插件的方式集成不同的后端系统，用于存储和可视化这些数据。</p>
+<p><strong>3、跟踪和可视化</strong>: Istio支持分布式追踪，可以集成OpenTracing API兼容的追踪系统，如Jaeger、Zipkin等。对于度量指标，Istio还可以集成Prometheus和其他指标系统，从而允许开发者和运维人员通过Grafana等可视化工具对服务性能进行详细的跟踪和监控。</p>
+<h3 id="策略执行">策略执行:</h3>
+<p>Istio的策略执行主要依赖于Mixer组件来完成。以下是其实现原理的步骤：</p>
+<p><strong>1、收集信息</strong> : 当服务间发生通信时，Envoy sidecar代理会拦截这些请求，从中收集如服务公理、源和目标服务、请求路径等信息。</p>
+<p><strong>2、检查策略</strong> ：Envoy代理将这些信息发送给Mixer组件。Mixer组件会基于这些信息，检查对应的策略（Policies）。这些策略可以包含各种规则，如速率限制、访问控制、配额管理等。</p>
+<p><strong>3、策略决策</strong>：Mixer在检查策略后，根据检查的结果做出决策。如果请求符合策略，它会给Envoy一个成功的返回值，允许请求通过。如果请求不符合策略，它会返回错误，告诉Envoy拒绝请求。</p>
+<p><strong>4、执行决策</strong>：在收到Mixer的决策后，Envoy代理执行对应的操作，如放行或拒绝请求。</p>
+<p>此外，Mixer还可以使用各种适配器（Adapters）与外部服务进行集成，这些外部服务可以提供权限认证、监控、日志等功能。通过灵活配置适配器和策略，Istio的Mixer组件能够支持为服务网格提供丰富、灵活的策略执行能力。</p>
+<h3 id="外部访问">外部访问:</h3>
+<p>Istio支持微服务架构的外部访问主要通过Ingress Gateway和Egress Gateway两种方式实现。</p>
+<p><strong>Ingress Gateway</strong>: Ingress Gateway处理进入服务网格的流量。Istio通过配置Ingress Gateway来控制和路由进入集群的流量。这是通过Istio的路由规则来实现的，可以基于URI、headers等请求信息进行复杂的路由和重定向。这个功能为我们提供了一个集中化的流量入口点，同时能帮助我们更好地处理如TLS终止、跨域策略等复杂的入口流量需求。<br>
+<strong>Egress Gateway</strong>: Egress Gateway处理出站流量，即服务网格内部的服务向外部网络发送的请求。Istio允许通过定义ServiceEntry资源来开启对指定外部服务的访问， 我们还可以配置Egress Gateway来作为所有出站流量的集中出口点，并通过配置流量策略来控制和观察出站流量。</p>
+<p>基于上面这两种Gateway，Istio提供了强大的流量管理能力，使得我们能够对服务网格中的流量入口和出口进行精细的控制和观察，进而满足各种复杂的流量策略需求和安全需求。</p>
+<p>—————————————————————————————————————————————</p>
+<blockquote>
+<p>这里总结在以上过程中涉及的动作和动作主体，可以将其中的每个过程都抽象成一句话:服务调用双方的Envoy代理拦截流量，并根据管理面的相关配置执行相应的治理动作，这也是Istio的数据面和控制面的配合方式。</p>
+</blockquote>
+<h2 id="istio-应用实例">Istio 应用实例</h2>
+<h3 id="环境搭建">环境搭建</h3>
+<p>保证在k8s环境已经安装好了Istio,如果未安装请参考<a href="https://istio.io/latest/zh/docs/setup/">Istio setup</a> 进行安装<br>
+1 <strong>创建命名空间</strong></p>
+<pre><code>kubectl  create ns istio-demo
+</code></pre>
+<p>2 <strong>命名空间打标签，允许Istio进行Pod注入</strong></p>
+<pre><code>kubectl label namespace default istio-injection=enabled
+</code></pre>
+<p>3 <strong>部署实验demo</strong></p>
+<pre><code>kubectl apply -f manifest/foreend_all.yaml
+kubectl apply -f manifest/backend_all.yaml
+</code></pre>
+<p>确保所部署Pod/Service/DestinationRule/VirtualService/Gateway 运行成功</p>
+<pre><code>
+kubectl get all -n istio-demo
+&gt;
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/backend-v1-65fd86dcdd-ltcjj   2/2     Running   0          3m43s
+pod/backend-v1-65fd86dcdd-nq648   2/2     Running   0          3m55s
+pod/backend-v2-59c77fb946-m8sm5   2/2     Running   0          3m47s
+pod/foreend-857d6fddcc-vs6cx      2/2     Running   0          8m35s
+
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+service/backend-service   ClusterIP   10.100.178.64   &lt;none&gt;        80/TCP    15m
+service/foreend-service   ClusterIP   10.102.94.224   &lt;none&gt;        80/TCP    15m
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/backend-v1   2/2     2            2           15m
+deployment.apps/backend-v2   1/1     1            1           15m
+deployment.apps/foreend      1/1     1            1           15m
+
+NAME                                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/backend-v1-65fd86dcdd   2         2         2       3m55s
+replicaset.apps/backend-v1-8458cff47    0         0         0       15m
+replicaset.apps/backend-v2-59c77fb946   1         1         1       3m47s
+replicaset.apps/backend-v2-69d465559f   0         0         0       15m
+replicaset.apps/foreend-6cc87765f9      0         0         0       15m
+replicaset.apps/foreend-857d6fddcc      1         1         1       8m35s
+replicaset.apps/foreend-9bb648dcf       0         0         0       9m47s
+
+</code></pre>
+<p>4 <strong>开启外网访问</strong><br>
+部署gateway资源</p>
+<pre><code>kubectl apply -f manifest/gateway.yaml
+</code></pre>
+<p>查看gateway 端口映射</p>
+<pre><code>kubectl  get svc -n istio-system
+&gt;&gt;
+
+NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                                                                      AGE
+grafana                ClusterIP      10.103.120.4     &lt;none&gt;        3000/TCP                                                                     5d18h
+istio-egressgateway    ClusterIP      10.107.71.254    &lt;none&gt;        80/TCP,443/TCP                                                               5d18h
+istio-ingressgateway   LoadBalancer   10.106.234.50    &lt;pending&gt;     15021:31299/TCP,80:31510/TCP,443:30119/TCP,31400:30718/TCP,15443:31501/TCP   5d18h
+istiod                 ClusterIP      10.96.76.135     &lt;none&gt;        15010/TCP,15012/TCP,443/TCP,15014/TCP                                        5d18h
+jaeger-collector       ClusterIP      10.104.113.121   &lt;none&gt;        14268/TCP,14250/TCP,9411/TCP,4317/TCP,4318/TCP                               5d18h
+kiali                  ClusterIP      10.103.75.77     &lt;none&gt;        20001/TCP,9090/TCP                                                           5d18h
+loki-headless          ClusterIP      None             &lt;none&gt;        3100/TCP                                                                     5d18h
+prometheus             ClusterIP      10.109.227.217   &lt;none&gt;        9090/TCP                                                                     5d18h
+tracing                ClusterIP      10.96.28.55      &lt;none&gt;        80/TCP,16685/TCP                                                             5d18h
+zipkin                 ClusterIP      10.111.47.170    &lt;none&gt;        9411/TCP                                                                     5d18h
+root@incleelinux:~/eshop#
+</code></pre>
+<p>我们看到istio-ingressgateway的80端口nodeport 被映射到宿主机31510端口</p>
+<p>配置Nginx代理到集群内部</p>
+<pre><code>upstream gateway-router{
+  server 192.168.1.5:31510;
+}
+server {
+    listen 80;
+    server_name istio-demo.com;
+    location /{
+        proxy_set_header Host $host;
+        proxy_set_header User-Agent $http_user_agent;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://gateway-router;
+    }
+}
+</code></pre>
+<p>配置完hosts 就可以访问到k8s部署的istio-demo服务了</p>
+<pre><code>curl -v http:istio-demo
+&gt;&gt;
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-8768b489-kjp5d&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+</code></pre>
+<h3 id="实例">实例</h3>
+<h4 id="负载均衡-2">负载均衡</h4>
+<p>参考backend-all.ymal的DestinationRule配置：</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  host: backend-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN # 轮训负载均衡
+      # simple: RANDOM # 随机负载均衡  
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN       
+  - name: v2
+    labels:
+      version: v2
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      interval: 1s #每隔1秒发现一次异常
+      consecutive5xxErrors: 2 #连续两次出错就会被认为是异常
+      baseEjectionTime: 5m #发现为异常的实例将在30s内被排除
+      maxEjectionPercent: 50 #安全策略，保证即使某些实例被识别为异常，仍有50%的实例可用，避免全部实例都被熔断
+---
+</code></pre>
+<p>在sepc.trafficPolicy.loadBalancer中更改配置算法，然后请求看对应的响应效果。</p>
+<blockquote>
+<p>subset 内部配置的trafficPolicy 会覆盖掉DestinationRule.spec中的trafficPolicy</p>
+</blockquote>
+<h4 id="灰度发布">灰度发布</h4>
+<h5 id="基于比例的灰度">基于比例的灰度</h5>
+<p>参考backend-all.yaml的VirtualService配置：</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - route:
+    - destination:
+        host: backend-service
+        subset: v1
+      weight: 20
+    - destination:
+        host: backend-service
+        subset: v2
+      weight: 80
+</code></pre>
+<p>更改对应的流量比例（weight），观察流量分发结果。</p>
+<h5 id="基于内容的灰度">基于内容的灰度</h5>
+<pre><code>#根据匹配内容继续流量分发
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - match:
+    - headers:
+        User-Agent:
+          regex: .*(Chrome/([\d.]+)).*  
+    route:
+      - destination:
+          host: backend-service
+          subset: v1
+  - route:
+    - destination:
+        host: backend-service
+        subset: v2
+</code></pre>
+<p>执行的结果为：</p>
+<pre><code>~ $  for i in `seq 100`; do curl -H 'User-Agent: Chrome/12.2' http://backend-service/backend;  echo ''; sleep 1;  done;
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+
+{&quot;Pod\u540d\u5b57&quot;:&quot;backend-v1-6457f5d6b4-h4z26&quot;,&quot;\u670d\u52a1\u7248\u672c&quot;:&quot;v1&quot;}
+</code></pre>
+<blockquote>
+<p>灰度发布和负载均衡之间会相互影响吗？<br>
+在 Istio 的流量管理体系中，灰度发布的比例设置和负载均衡算法是相互独立的。他们各自独立控制不同层次的流量控制和路由。<br>
+灰度发布的比例控制是通过 <code>VirtualService</code> 配置实现的，它主要决定了流量应该被发送到哪些服务的哪些版本(subset)。例如，你可以设置80%的流量发送到<code>v1</code>版本，20%的流量发送到<code>v2</code>。</p>
+</blockquote>
+<blockquote>
+<p>而关于如何在具体的版本(subset)之间，也就是在同一个版本的多个 Pod 之间分配流量，这是由 <code>DestinationRule</code> 中的<code>loadBalancer</code> 字段控制的。你可以在这里指定具体的负载均衡策略，例如 ROUND ROBIN（轮询）、LEAST CONN（最小连接）或者 RANDOM(随机）等。</p>
+</blockquote>
+<blockquote>
+<p>所以，在一个典型的 Istio 配置中，<code>VirtualService</code> 会决定流量向哪个 Service 的哪个版本（subset）流动，而 <code>DestinationRule</code> 则决定这个流量<strong>如何在这个版本的多个 Pod 之间进行分配</strong>。这两部分配置可以独立进行，灰度发布与负载均衡算法相互不影响。</p>
+</blockquote>
+<h4 id="超时">超时</h4>
+<p>我们在backend的VirtualService为subset:v2 路由增加5ms的测试</p>
+<pre><code>#根据匹配内容继续流量分发
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - match:
+    - headers:
+        User-Agent:
+          regex: .*(Chrome/([\d.]+)).*  
+    route:
+      - destination:
+          host: backend-service
+          subset: v1
+  - route:
+    - destination:
+        host: backend-service
+        subset: v2
+    timeout: 5ms
+</code></pre>
+<p>开启测试结果：</p>
+<pre><code> for i in `seq 100`; do curl  http://backend-service/backend;  echo ''; sleep 1;  done;
+upstream request timeout
+upstream request timeout
+upstream request timeout
+upstream request timeout
+</code></pre>
+<h4 id="http-重定向">HTTP 重定向</h4>
+<p>参考foreend的VirtualService</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: foreend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - &quot;istio-demo.com&quot;
+  gateways:
+  - istio-system/istio-demo-gateway
+  http:
+  - match: # 重定向
+    - uri:
+        prefix: /notexist
+    redirect:
+      uri: /default
+      authority: istio-demo.com
+  - match: # 重写
+    - uri:
+        prefix: /rewrite 
+    rewrite:
+      uri: /?panic=1
+    retries:  # 重试
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: 5xx
+    route:
+    - destination:
+        host: foreend-service
+        subset: v1
+  - match: # 故障注入超时 curl -m 1 -v http://istio-demo.com/delay
+    - uri:
+        prefix: /delay
+    fault:
+      delay:  
+        fixedDelay: 3s
+        percent: 100
+    route:
+    - destination:
+        host: foreend-service
+        subset: v1
+  - match: # 故障注入中断 curl -m 1 -v http://istio-demo.com/abort
+    - uri:
+        prefix: /abort
+    fault:
+      abort:
+        httpStatus: 500
+        percentage: 
+          value: 100
+    route:
+    - destination:
+        host: foreend-service
+        subset: v1
+# 默认路由
+  - route:
+    - destination:
+        host: foreend-service
+        subset: v1
+        #timeout: 500ms
+
+</code></pre>
+<p>我们把/notexist从定向到/default</p>
+<h4 id="http-重写">HTTP 重写</h4>
+<p>参考foreend的VirtualService，我们把/rewrite重写到同一个服务的/?panic=1 路径</p>
+<blockquote>
+<p>关于HTTP重定向和重写<br>
+HTTP重定向和HTTP重写是网络中常见的两种技术，它们有相同的目标——改变用户请求的URL，但它们的工作原理和用途是有所不同的。</p>
+</blockquote>
+<blockquote>
+<p>HTTP重定向（Redirect）的工作原理是，当服务器收到用户请求后，会返回一个特别的响应，响应的状态码通常是301（永久重定向）或302（临时重定向），并在响应头中包含一个新的位置（Location），通知客户端重新发送请求到新的位置。重定向通常被用在网站迁移、合并网页、更改URL结构等场景。</p>
+</blockquote>
+<blockquote>
+<p>HTTP重写（Rewrite）则是在服务器内部完成的，当服务器收到用户请求时，会根据预设的规则改变请求的URL，然后再对改变后的URL进行处理。用户一般是看不到这个过程的，URL在地址栏上显示的还是原来的URL。重写通常被用在美化URL、隐藏真实的文件路径、使URL更符合SEO等场景。</p>
+</blockquote>
+<h4 id="重试">重试</h4>
+<p>根据上面的重写，我们把我们把/rewrite重写到同一个服务的/?panic=1 路径，这个路径的请求会返回500错误，这是Envoy代理会开启重试<br>
+我们可以看到foreend 服务端处理日志：</p>
+<pre><code>2024-02-05T21:48:24.190656694+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+
+2024-02-05T21:48:24.237931694+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+
+2024-02-05T21:48:24.288567648+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+
+2024-02-05T21:48:24.315263829+08:00 127.0.0.6 - - [05/Feb/2024 13:48:24] &quot;GET /?panic=1 HTTP/1.1&quot; 500 -
+</code></pre>
+<p>第一条是从写返回的500，后面重试了3次，对应的配置：</p>
+<pre><code>    retries:  # 重试
+        attempts: 3 
+        perTryTimeout: 2s #
+        retryOn: 5xx
+</code></pre>
+<h4 id="熔断">熔断</h4>
+<p>参考配置：</p>
+<pre><code>apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  host: backend-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN # 轮训负载均衡
+      # simple: RANDOM # 随机负载均衡
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      interval: 1s #每隔1秒检测一次异常情况
+      consecutive5xxErrors: 2 #连续两次出错就会被驱逐
+      baseEjectionTime: 5m #实例被重新加入可服务endpoint的间隔
+      maxEjectionPercent: 100 #驱逐百分比，100表示所有pod都可驱逐
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+#根据比例进行流量分发
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: istio-demo 
+spec:
+  hosts:
+  - backend-service
+  http:
+  - route:
+    - destination:
+        host: backend-service
+        subset: v1
+      weight: 50
+    - destination:
+        host: backend-service
+        subset: v2
+      weight: 50
+</code></pre>
+<p>测试请求：</p>
+<pre><code>for i in `seq 100`; do curl  http://backend-service/circlebreak;  echo ''; sleep 1;  done;
+&lt;!doctype html&gt;
+&lt;html lang=en&gt;
+&lt;title&gt;500 Internal Server Error&lt;/title&gt;
+&lt;h1&gt;Internal Server Error&lt;/h1&gt;
+&lt;p&gt;The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.&lt;/p&gt;
+
+{&quot;message&quot;:&quot;ok&quot;}
+
+{&quot;message&quot;:&quot;ok&quot;}
+
+{&quot;message&quot;:&quot;ok&quot;}
+
+&lt;!doctype html&gt;
+&lt;html lang=en&gt;
+&lt;title&gt;500 Internal Server Error&lt;/title&gt;
+&lt;h1&gt;Internal Server Error&lt;/h1&gt;
+&lt;p&gt;The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.&lt;/p&gt;
+
+no healthy upstream
+{&quot;message&quot;:&quot;ok&quot;}
+
+no healthy upstream
+no healthy upstream
+</code></pre>
+<p>v2的circlebreak接口会返回500错误，我们看到返回两次后，v2pod会被认为异常，我们100%把v2的pod驱逐以后，后面到v2的请求返回了<code>no healthy upstream </code></p>
+<h4 id="限流">限流</h4>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC%E5%AE%83%E7%9A%84%E6%8A%80%E6%9C%AF%E8%83%8C%E6%99%AF%E6%98%AF%E4%BB%80%E4%B9%88">什么是服务网格，它的技术背景是什么</a>
+<ul>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86%E7%9A%84%E4%B8%89%E7%A7%8D%E5%BD%A2%E6%80%81">服务治理的三种形态</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC%E6%89%80%E9%9C%80%E8%A6%81%E6%BB%A1%E8%B6%B3%E7%9A%84%E7%89%B9%E6%80%A7">服务网格所需要满足的特性</a></li>
+</ul>
+</li>
+<li><a href="#istio">Istio</a>
+<ul>
+<li><a href="#istio-%E7%AE%80%E4%BB%8B">Istio 简介</a></li>
+<li><a href="#istio%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6">Istio的核心组件</a></li>
+</ul>
+</li>
+<li><a href="#istio%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86">Istio的工作原理</a>
+<ul>
+<li><a href="#%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5">自动注入:</a></li>
+<li><a href="#%E6%B5%81%E9%87%8F%E6%8B%A6%E6%88%AA">流量拦截:</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0">服务发现:</a></li>
+<li><a href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1">负载均衡:</a></li>
+<li><a href="#%E6%B5%81%E9%87%8F%E6%B2%BB%E7%90%86">流量治理:</a></li>
+<li><a href="#%E8%AE%BF%E9%97%AE%E5%AE%89%E5%85%A8">访问安全:</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E9%81%A5%E6%B5%8B">服务遥测:</a></li>
+<li><a href="#%E7%AD%96%E7%95%A5%E6%89%A7%E8%A1%8C">策略执行:</a></li>
+<li><a href="#%E5%A4%96%E9%83%A8%E8%AE%BF%E9%97%AE">外部访问:</a></li>
+</ul>
+</li>
+<li><a href="#istio-%E5%BA%94%E7%94%A8%E5%AE%9E%E4%BE%8B">Istio 应用实例</a>
+<ul>
+<li><a href="#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA">环境搭建</a></li>
+<li><a href="#%E5%AE%9E%E4%BE%8B">实例</a>
+<ul>
+<li><a href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1-2">负载均衡</a></li>
+<li><a href="#%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83">灰度发布</a>
+<ul>
+<li><a href="#%E5%9F%BA%E4%BA%8E%E6%AF%94%E4%BE%8B%E7%9A%84%E7%81%B0%E5%BA%A6">基于比例的灰度</a></li>
+<li><a href="#%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E7%81%B0%E5%BA%A6">基于内容的灰度</a></li>
+</ul>
+</li>
+<li><a href="#%E8%B6%85%E6%97%B6">超时</a></li>
+<li><a href="#http-%E9%87%8D%E5%AE%9A%E5%90%91">HTTP 重定向</a></li>
+<li><a href="#http-%E9%87%8D%E5%86%99">HTTP 重写</a></li>
+<li><a href="#%E9%87%8D%E8%AF%95">重试</a></li>
+<li><a href="#%E7%86%94%E6%96%AD">熔断</a></li>
+<li><a href="#%E9%99%90%E6%B5%81">限流</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/kubelet-yuan-ma-jie-xi/">
+              <span class="post-title">
+                kubelet源码解析&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

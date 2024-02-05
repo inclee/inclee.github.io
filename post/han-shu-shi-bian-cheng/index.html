@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>函数式编程 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="函数式编程 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="函数式编程" />
+  <meta property="og:url" content="https://nomagic.cc/post/han-shu-shi-bian-cheng/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/zy1lBI2aI/" class="tag">编程思想</a>
+                
+              </span>
+              <h1>函数式编程</h1>
+              <span class="meta">
+                Posted on
+                2022-10-07，8 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="函数式编程">函数式编程</h1>
+<h2 id="理论基础">理论基础：</h2>
+<p>真身：不是编程语言里的函数，而是数学里的函数概念。</p>
+<h3 id="λ演算">λ演算</h3>
+<p>一套用于研究函数定义、应用和递归的形式系统</p>
+<p>λ演算被称为最小的通用编程语言。可以用来清晰地定义什么是一个可计算函数。它包括一条变换规则（变量替换）和一条函数定义方式</p>
+<p><strong>语法规则</strong></p>
+<p>任何λ表达式都可以通过下述三条BNF范式描述：</p>
+<p>**范式1、**＜expr＞ ::= ＜identifier＞</p>
+<p>f(x) = x  =&gt; <strong>λ x.</strong></p>
+<p>**范式2、**＜expr＞ ::= (λ ＜identifier＞ . ＜expr＞)</p>
+<ol>
+<li><strong>f (x) = x + 2</strong> =&gt;<strong>λ x. x +2;</strong></li>
+<li>f(x,y)=x+y =&gt;<strong>（λ x. λ y. x + y）</strong></li>
+</ol>
+<p>**范式3、**＜expr＞ ::= (＜expr＞ ＜expr＞)</p>
+<ol>
+<li>f(y)=y+2; f(x)=1-x =&gt;（<strong>λ x.x+2)(λ x.1-x)  ==&gt; f(1-x) = 1-x+2</strong></li>
+</ol>
+<h2 id="无状态和无副作用"><strong>无状态和无副作用</strong>：</h2>
+<h3 id="关于状态">关于状态：</h3>
+<p>一段程序里如果有一个变量需要维护，程序的确定性会比较高，如果有10个变量，emmm想要维护确定性，或者想要知道在某个时刻程序处于什么状态是有难度的。</p>
+<p>那么怎么做？面向对象是把状态的变更封装起来。</p>
+<p><strong>与其建立种种机制来控制可变的状态，不如尽可能消灭可变的状态</strong></p>
+<p>函数式编程如何消灭状态？</p>
+<p>还是对应于数学中的函数的概念：定义域←→映射←→值域，函数除了进行映射之外，其他啥也不干。</p>
+<h3 id="无状态实现">无状态实现</h3>
+<p>每次计算都基于输入产生输出，本身无状态，也不依赖除参数外的任何状态</p>
+<pre><code>threshold =  5
+
+def check(score,threshold):
+    if score &gt; threshold:
+        return &quot;Good&quot;
+    else:
+        return &quot;Bad&quot;
+
+def checkUnSure(score):
+    if score &gt; threshold:
+        return &quot;Good&quot;
+    else:
+        return &quot;Bad&quot;
+        
+assert(check(6,5) == &quot;Good&quot;)
+assert(check(6,5) == &quot;Good&quot;)
+threshold = 7
+assert(checkUnSure(6) == &quot;Good&quot;) //  不确定checkUnSure(6)到底什么结果
+threshold = &quot;a string&quot;			 //  或者其他某个地方悄悄把threshold改掉。
+assert(checkUnSure(6) == &quot;Good&quot;)
+</code></pre>
+<h3 id="无副作用">无副作用</h3>
+<p>除了输出参数外，不会对其他任何东西产生影响</p>
+<pre><code>def checkUnSure(score):
+    if score &gt; threshold:
+    	threshold = &quot;&quot;
+        return &quot;Good&quot;
+    else:
+        return &quot;Bad&quot;
+</code></pre>
+<p><strong>纯函数：没有副作用，仅依赖于输入参数的函数。</strong></p>
+<p><strong>不可变性：将数据视为不可更改的，避免直接修改原始数据。</strong></p>
+<p>还是映射数学中函数的概念：函数没办法修改参数，参数只是求值时的一个定义域元素的拷贝</p>
+<h2 id="核心工具与数据结构"><strong>核心工具与数据结构</strong>：</h2>
+<blockquote>
+<p>用高阶抽象取代基本的控制结构,更接近于自然语言，更容易理解</p>
+</blockquote>
+<h3 id="总得逻辑">总得逻辑</h3>
+<ul>
+<li>做什么而不是怎么做，按照做什么大概分为3类：
+<ul>
+<li>筛选</li>
+<li>映射</li>
+<li>规约</li>
+</ul>
+</li>
+</ul>
+<h3 id="实现的工具">实现的工具</h3>
+<ul>
+<li><strong>filter,map,reduce,every,some,sort,step,concat,slice,split,join,if else than --→ 如果按照是什么，而不是怎么做 那么这种工具会构造出更多</strong></li>
+</ul>
+<h3 id="例子"><strong>例子</strong></h3>
+<pre><code>
+//两端代码比较
+animal = []
+dogs = filter(animal,a.type == &quot;dog&quot;) 
+
+dogs = []   
+for a in animal{    
+    if a.type == &quot;dog&quot;{
+        dogs.append(a)
+    }
+}
+</code></pre>
+<p><strong>分页</strong></p>
+<p><strong>普通实现</strong></p>
+<pre><code>分页
+size = 1000
+pages = []
+list = [...]
+idx = 0
+page = []
+for _,item := range list{
+	if idx == size{
+	 	pages.append(page)
+	 	page = [] 
+	}
+	page = append(item)
+	size ++
+}
+if !page.Empty(){
+	pages.append(page)
+}
+</code></pre>
+<p><strong>Step实现</strong></p>
+<pre><code>//step --&gt;是每多少个元素为一不，而不是如何把元素按个数分割
+func step(count,size,fn func(_s,_e int)){
+	s,e = 0
+	for e &lt; count{
+		fn(s,min(count,e+size))
+		e+=size
+	}
+}
+//用step 实现
+step(len(list),size,func(s,e){ pages.append(list[s:e])})
+//如果想要方面理解，可以在多一层抽象
+
+typedef split step
+
+split(len(list),size,func(s,e){ pages.append(list[s:e])}) //按个数分割
+</code></pre>
+<p>go 错误处理</p>
+<p><strong>普通实现</strong></p>
+<pre><code>
+mtx, err := lock.Mutex(cc, lock.Key(&quot;lock:&quot;+unique), lock.TTL(ttl), retry)
+if err != nil {
+	return err
+}
+if err = mtx.Lock(); err != nil {
+	return err
+}
+defer func(){
+	err = erros.append(mtx.Unlock)
+}()
+if err = dowork();err != nil{
+	return err 
+}
+。。。。 
+if err = fun1();err != nil {
+	return err
+}
+// 无止尽的错误处理代码
+</code></pre>
+<p><strong>if-else-then</strong></p>
+<pre><code>
+type IfThen struct {
+	err error
+}
+
+func If(err error) *IfThen {
+	return &amp;IfThen{err: err}
+}
+func (it *IfThen) If(err error) {
+	it.err = err
+}
+func (it *IfThen) Else(fn func()) *IfThen {
+	if it.err != nil {
+		fn()
+	}
+	return it
+}
+func (it *IfThen) Than(fn func() error) *IfThen {
+	if it.err == nil {
+		it.err = fn()
+	}
+	return it
+}
+func (it *IfThen) Final(fn func()) *IfThen {
+	it.err = errors.append(fn())
+	return it
+}
+func (it IfThen) Error() error {
+	return it.err
+}
+</code></pre>
+<pre><code>var mtx lock.Locker
+	err = If(func() error { mtx, err = lock.Mutex(lx.ctx, lx.opts...); return err }()).
+		Than(func() error { return mtx.Lock() }).
+		Than(func() error { return dowork()}).
+		Final(func() error { return mtx.Unlock() }).
+		Error()
+
+// 如果Go支持λ表达式---&gt;可惜它不支持，随它去吧。
+var mtx lock.Locker
+	err = If({mtx, err = lock.Mutex(lx.ctx, lx.opts...); return err }).
+		Than({mtx.Lock}).
+		Than({dowork}).
+		Final({mtx.UnLock}).
+		Error()
+		
+</code></pre>
+<h2 id="函数组合代码组合和抽象方式"><strong>函数组合</strong>：（代码组合和抽象方式）</h2>
+<blockquote>
+<p>通过将小型纯粹功能组合形成更大型复杂功能来构建程序逻辑。</p>
+</blockquote>
+<p>还是对应的数学中函数的概念-→复合函数</p>
+<h3 id="高阶函数"><strong>高阶函数</strong>：</h3>
+<ul>
+<li>接受一个或多个其他函数作为参数，并/或返回一个新的以其他功能组合而成的功能。</li>
+</ul>
+<p>f(g(c(x)))</p>
+<p>f()(gx)</p>
+<h3 id="柯里化">柯里化</h3>
+<p>减少元的过程</p>
+<pre><code>def logplain(level,model,msg):
+    print(level,model,msg)
+
+def log(level):
+    def mlog(model):
+        def output(msg):
+            print(level,model,msg)
+        return output
+    return mlog 
+
+info = log(&quot;info::&quot;)(&quot;db=&gt;&quot;)
+info(&quot;select id from t_user where name = 'aaa'&quot;)
+info(&quot;很方便&quot;)
+
+logplain(&quot;info&quot;,&quot;db=&gt;&quot;,&quot;msg&quot;)
+logplain(&quot;info&quot;,&quot;db=&gt;&quot;,&quot;msg&quot;)
+logplain(&quot;info&quot;,&quot;db=&gt;&quot;,&quot;msg&quot;)
+
+&quot;info&quot;,&quot;db=&gt;&quot; //很多重复输入
+</code></pre>
+<h3 id="惰性求值"><strong>惰性求值</strong>：</h3>
+<ul>
+<li>只在需要时才进行计算，延迟执行操作可以提高效率并节省资源消耗。</li>
+</ul>
+<h2 id="并行化与异步编程"><strong>并行化与异步编程</strong>：</h2>
+<ul>
+<li>函数式编程对并行化和异步编程提供了天然的支持，因为纯函数不依赖于共享状态。</li>
+</ul>
+<pre><code>class Student:
+    def __init__(self):
+        self.examd  = False
+        self.score = 0
+
+    def setScore(self,score):
+        self.examd = True
+        self.score = score
+
+def dispatch(student):
+    ret = &quot;等待成绩&quot;
+    if student.examd:
+        if student.score &lt; 60:
+            ret = &quot;去打螺丝&quot;
+        else:
+            ret = &quot;继续深造&quot;
+    ret
+
+if __name__ == &quot;__main__&quot;:
+    a = Student()
+    b = Student()
+
+    a.setScore(60)
+    b.setScore(100) ### 虽然考了一百分，不加锁 有可能会跑去打螺丝
+
+    thread1 = Thread(target=dispatch, args=(copy(a),))
+    thread2 = Thread(target=dispatch, args=(b,))
+</code></pre>
+<p>通过复制来减少共享状态，保证了逻辑一致性。</p>
+<ul>
+<li>更容易写出安全代码</li>
+</ul>
+<pre><code>func = aysnc (){}
+funb = aysnc (){}
+result = await funa() * funb()
+#funa,funb 是两个异步独立执行的程序，如果之间相互依赖或者依赖于外部环境，那么这个结果就是无法确定的。
+</code></pre>
+<ul>
+<li>数据并行处理</li>
+</ul>
+<pre><code>MapReduce 的大数据处理中的应用
+通过用户定义的map函数将输入分割成key/value对，然后处理该数据，最终通过Reduce函数将处理完成的记过合并。
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1695279673167.png" alt="" loading="lazy"></figure>
+<h2 id="模块化和可测试性"><strong>模块化和可测试性</strong>：</h2>
+<ul>
+<li>函数式程序易于模块化，代码更容易被拆分成独立、可重用的组件。</li>
+<li>纯函数易于测试，可以通过输入输出验证其正确性。</li>
+</ul>
+<h2 id="总结">总结</h2>
+<ul>
+<li>用高阶抽象取代基本的控制结构，提高语法的表现能力</li>
+<li>减少不确定性因素
+<ul>
+<li>一个操作的行为应该是确定的</li>
+<li>用机制而不是用变量去控制</li>
+</ul>
+</li>
+<li>要做什么，而不是怎么去做。</li>
+<li>各种编程范式之间不是绝对隔离的，而是相互融合，没有极端的状态</li>
+</ul>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B">函数式编程</a>
+<ul>
+<li><a href="#%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80">理论基础：</a>
+<ul>
+<li><a href="#%CE%BB%E6%BC%94%E7%AE%97">λ演算</a></li>
+</ul>
+</li>
+<li><a href="#%E6%97%A0%E7%8A%B6%E6%80%81%E5%92%8C%E6%97%A0%E5%89%AF%E4%BD%9C%E7%94%A8"><strong>无状态和无副作用</strong>：</a>
+<ul>
+<li><a href="#%E5%85%B3%E4%BA%8E%E7%8A%B6%E6%80%81">关于状态：</a></li>
+<li><a href="#%E6%97%A0%E7%8A%B6%E6%80%81%E5%AE%9E%E7%8E%B0">无状态实现</a></li>
+<li><a href="#%E6%97%A0%E5%89%AF%E4%BD%9C%E7%94%A8">无副作用</a></li>
+</ul>
+</li>
+<li><a href="#%E6%A0%B8%E5%BF%83%E5%B7%A5%E5%85%B7%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><strong>核心工具与数据结构</strong>：</a>
+<ul>
+<li><a href="#%E6%80%BB%E5%BE%97%E9%80%BB%E8%BE%91">总得逻辑</a></li>
+<li><a href="#%E5%AE%9E%E7%8E%B0%E7%9A%84%E5%B7%A5%E5%85%B7">实现的工具</a></li>
+<li><a href="#%E4%BE%8B%E5%AD%90"><strong>例子</strong></a></li>
+</ul>
+</li>
+<li><a href="#%E5%87%BD%E6%95%B0%E7%BB%84%E5%90%88%E4%BB%A3%E7%A0%81%E7%BB%84%E5%90%88%E5%92%8C%E6%8A%BD%E8%B1%A1%E6%96%B9%E5%BC%8F"><strong>函数组合</strong>：（代码组合和抽象方式）</a>
+<ul>
+<li><a href="#%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0"><strong>高阶函数</strong>：</a></li>
+<li><a href="#%E6%9F%AF%E9%87%8C%E5%8C%96">柯里化</a></li>
+<li><a href="#%E6%83%B0%E6%80%A7%E6%B1%82%E5%80%BC"><strong>惰性求值</strong>：</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B9%B6%E8%A1%8C%E5%8C%96%E4%B8%8E%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B"><strong>并行化与异步编程</strong>：</a></li>
+<li><a href="#%E6%A8%A1%E5%9D%97%E5%8C%96%E5%92%8C%E5%8F%AF%E6%B5%8B%E8%AF%95%E6%80%A7"><strong>模块化和可测试性</strong>：</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/boltdb-jia-gou-jie-du/">
+              <span class="post-title">
+                boltdb 架构解读&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>boltdb 架构解读 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="boltdb 架构解读 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="boltdb 架构解读" />
+  <meta property="og:url" content="https://nomagic.cc/post/boltdb-jia-gou-jie-du/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/EAUMfuU_1/" class="tag">存储</a>
+                
+                <a href="https://nomagic.cc/tag/7WO-7vE-Pv/" class="tag">DB</a>
+                
+              </span>
+              <h1>boltdb 架构解读</h1>
+              <span class="meta">
+                Posted on
+                2022-09-05，11 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>boltdb 是受LMDB项目的启发，使用的go语言实现的一个本地kv存储引擎。可嵌入到自己的项目中实现kv数据的本地存储，知名的项目etcd,consul,openvpn等使用了boltdb进行数据存储</p>
+<h1 id="逻辑结构">逻辑结构</h1>
+<p>使用单个文件来存储kv数据，通过mmap文件内存映射把文件的磁盘地址映射成逻辑地址。<br>
+在数据组织上，boltdb是一颗大的btree,按照bucket分组数据,相当于表的概念，每一个bucket是一个子b-tree，数据以innode结构存储在b-tree的叶子节点。Cursor 作为b-tree的遍历器。进行节点的查找。</p>
+<h1 id="物理结构">物理结构</h1>
+<p>存储上，通过mmap文件内存映射把文件映射到进程的逻辑地址，通过指针读取的方式读取到文件的内容。文件的开头存储DB的元数据。后面按照页面划分成存储块。每一个b-tree.Node对应一个页面的pid，将整个b-tree的树形结构映射成内存地址的线性结构。</p>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1696844422625.png" alt="" loading="lazy"></figure>
+<h1 id="数据组织">数据组织</h1>
+<p>boltdb 把文件映射到虚拟地址空间，db.data指针指向这个地址，在物理空间上映射的地址空间按照Page进行管理，比如读取一个Page</p>
+<pre><code>type page struct {
+	id       pgid
+	flags    uint16
+	count    uint16
+	overflow uint32
+	ptr      uintptr
+}
+
+func (db *DB) page(id pgid) *page {
+	pos := id * pgid(db.pageSize)
+	return (*page)(unsafe.Pointer(&amp;db.data[pos]))
+}
+</code></pre>
+<p>逻辑上，整个boltdb的数据组织成一颗b-tree，b-tree的一个节点是一个Page，根据节点类型的不同，Page中存储的数据不同，分别存储分支节点数据或叶子节点数据，树的遍历过程中根据BranchPage存储递归到对应的Page</p>
+<pre><code>type branchPageElement struct {
+	pos   uint32
+	ksize uint32
+	pgid  pgid
+}
+type leafPageElement struct {
+	flags uint32 //标识是普通数据，还是嵌套bucket，如果是bucket,value 存储bucket信息
+	pos   uint32
+	ksize uint32
+	vsize uint32
+}
+pos 是数据距离element数组结束处的距离。这样处理方便根据element对象读取数据，参考下面的leafPageElement的key/value读取操作
+
+</code></pre>
+<p>页面数据的物理组织如下图<br>
+<img src="https://nomagic.cc/post-images/1696844505301.png" alt="" loading="lazy"></p>
+<p>page.ptr的地址就是page页面开始存储数据地方，写入的前一部分存储元素（element的元数据），后面是需要存储的kv数据，根据pos+ksize/vsize 对kv进行读写</p>
+<pre><code>//写入
+func (n *node) write(p *page) {
+	if n.isLeaf {
+		p.flags |= leafPageFlag
+	} else {
+		p.flags |= branchPageFlag
+	}
+    //b刚开始指向elements数组结束的地址，也就是第一个数据开始写入的地方。随着数据的写入，b往后移动写入数据的大小。
+	b := (*[maxAllocSize]byte)(unsafe.Pointer(&amp;p.ptr))[n.pageElementSize()*len(n.inodes):]
+	for i, item := range n.inodes {
+		if n.isLeaf {
+			elem := p.leafPageElement(uint16(i))
+			elem.pos = uint32(uintptr(unsafe.Pointer(&amp;b[0])) - uintptr(unsafe.Pointer(elem)))
+			elem.flags = item.flags
+			elem.ksize = uint32(len(item.key))
+			elem.vsize = uint32(len(item.value))
+		} else {
+			elem := p.branchPageElement(uint16(i))
+			elem.pos = uint32(uintptr(unsafe.Pointer(&amp;b[0])) - uintptr(unsafe.Pointer(elem)))
+			elem.ksize = uint32(len(item.key))
+			elem.pgid = item.pgid
+			_assert(elem.pgid != p.id, &quot;write: circular dependency occurred&quot;)
+		}
+
+		klen, vlen := len(item.key), len(item.value)
+		if len(b) &lt; klen+vlen {
+			b = (*[maxAllocSize]byte)(unsafe.Pointer(&amp;b[0]))[:]
+		}
+
+		copy(b[0:], item.key)
+		b = b[klen:]
+		copy(b[0:], item.value)
+		b = b[vlen:]
+	}
+}
+
+//读取
+func (n *leafPageElement) key() []byte {
+	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	return (*[maxAllocSize]byte)(unsafe.Pointer(&amp;buf[n.pos]))[:n.ksize:n.ksize]
+}
+
+// value returns a byte slice of the node value.
+func (n *leafPageElement) value() []byte {
+	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	return (*[maxAllocSize]byte)(unsafe.Pointer(&amp;buf[n.pos+n.ksize]))[:n.vsize:n.vsize]
+}
+</code></pre>
+<p>整体btree 存储结构如下：<br>
+<img src="https://nomagic.cc/post-images/1696844456649.png" alt="" loading="lazy"></p>
+<p>节点Page数据的读取：</p>
+<pre><code>func (p *page) leafPageElement(index uint16) *leafPageElement {
+	n := &amp;((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&amp;p.ptr)))[index]
+	return n
+}
+
+// leafPageElements retrieves a list of leaf nodes.
+func (p *page) leafPageElements() []leafPageElement {
+	if p.count == 0 {
+		return nil
+	}
+	return ((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&amp;p.ptr)))[:]
+}
+
+// branchPageElement retrieves the branch node by index
+func (p *page) branchPageElement(index uint16) *branchPageElement {
+	return &amp;((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&amp;p.ptr)))[index]
+}
+
+// branchPageElements retrieves a list of branch nodes.
+func (p *page) branchPageElements() []branchPageElement {
+	if p.count == 0 {
+		return nil
+	}
+	return ((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&amp;p.ptr)))[:]
+}
+
+
+
+</code></pre>
+<ul>
+<li>0x7FFFFFF:  magic-number<br>
+amd64的使用的是4-bytes的相对地址。所以一个程序不能申请超过2GB(0x7FFFFFFF)的静态数据,又因为sizeOf(branchPageElement) =16 ,这里的大小就是0x7FFFFFF，当然也可以使用其他的值，只是这里需要一个常量，把地址转换成数组指针，然后再转换成slice（slice内部使用是这个数组地址）<br>
+通过index索引就可以直接拿到对应的branchPageElement或者leafPageElement对象。</li>
+</ul>
+<p>数据查询是b-tree搜索的过程，使用Cursor结构作为b-tree的遍历器，<br>
+数据更改是使用cursor.seek搜索到对应的节点，cursor.node中调用bucket.node方法，才把Page加载成为node结构。这样在事务执行的过程中，只有node的数据有变更，需要回写磁盘。</p>
+<pre><code>把Page读为node
+func (n *node) read(p *page) {
+	n.pgid = p.id
+	n.isLeaf = ((p.flags &amp; leafPageFlag) != 0)
+	n.inodes = make(inodes, int(p.count))
+
+	for i := 0; i &lt; int(p.count); i++ {
+		inode := &amp;n.inodes[i]
+		if n.isLeaf {
+			elem := p.leafPageElement(uint16(i))
+			inode.flags = elem.flags
+			inode.key = elem.key()
+			inode.value = elem.value()
+		} else {
+			elem := p.branchPageElement(uint16(i))
+			inode.pgid = elem.pgid
+			inode.key = elem.key()
+		}
+		_assert(len(inode.key) &gt; 0, &quot;read: zero-length inode key&quot;)
+	}
+
+	// Save first key so we can find the node in the parent when we spill.
+	if len(n.inodes) &gt; 0 {
+		n.key = n.inodes[0].key
+		_assert(len(n.key) &gt; 0, &quot;read: zero-length node key&quot;)
+	} else {
+		n.key = nil
+	}
+}
+</code></pre>
+<p>在逻辑上node和page是一一对应关系，只是在事务提交写盘的时候，需要把node映射成新的页面（不覆盖原有页面，用来实现mvcc）,这些新的页面也就是代码中所说的dirty page。</p>
+<h1 id="freelist">freelist</h1>
+<pre><code>type freelist struct {
+	ids     []pgid          // all free and available free page ids.
+	pending map[txid][]pgid // mapping of soon-to-be free page ids by tx.
+	cache   map[pgid]bool   // fast lookup of all free and pending page ids.
+}
+</code></pre>
+<p>在写事物执行的过程中，数据的更改需要申请新的页面，把原来旧的页面缓存到pending,用于更小txid的读取以实现mvcc。<br>
+ids 所有已经不在使用的空闲页面<br>
+cache 为了快速校验一个page是否在freelist</p>
+<p>需要注意的是freelist进行alloc或者事务提交写入page进行pids合并时算法复杂度为n,freelist比较大时有可能会有影响，</p>
+<h1 id="事务的实现">事务的实现</h1>
+<p>事务分为读写事务和只读事务,在b-tree的查找过程中会建立一个查找路径上节点的内存映射。在事务提交时，把对应的内存会写到磁盘，事务回滚时直接丢弃修改。</p>
+<h2 id="原子性实现">原子性实现</h2>
+<p>事务在提交行会把事物执行期间所有变更的node，刷新到新申请的页面（dirty page)，然后write到文件，依赖于meta的保存状态，meta保存只有两种状态：成功或者失败，映射到了事务的原子性概念。</p>
+<h2 id="一致性实现">一致性实现</h2>
+<p>事务的变更数据不会覆盖旧的页面。整个DB的内存映像依赖meta进行构建，原子性的实现依赖于meta信息的正确保存，当前meta数据正确落盘以后，整个事务才算提交成功。如果当前写入meta失败了，由于有两个meta存在，没有在操作meta的映像可以确保在正确的状态，使得整个数据库处于一致性状态。</p>
+<h2 id="隔离实现">隔离实现</h2>
+<p>隔离的实现同样是依赖于MMVC策略，<br>
+事务在建立的过程中，使用磁盘内容建立的各自的内存快照，每个事务内存快照相互独立，在进行修改是也只是修改的自己内存状态，是事务提交时不会覆盖旧的页面，所以其他事物可以完整的读取到自己建立时的内存状态。（快照读的概念）</p>
+<h2 id="持久性实现">持久性实现</h2>
+<p>参照上面的磁盘刷盘</p>
+<ul>
+<li>事务的提交</li>
+</ul>
+<pre><code>func (tx *Tx) Commit() error {
+    ....
+    ///b-tree的再平衡，b-tree node的节点过少，就把node 和兄弟节点合并。
+	var startTime = time.Now()
+	tx.root.rebalance()
+	if tx.stats.Rebalance &gt; 0 {
+		tx.stats.RebalanceTime += time.Since(startTime)
+	}
+
+	///把对应的node 写入page
+    把原来node的page放入free-list,申请新的页面，进行写入。
+    
+	if err := tx.root.spill(); err != nil {
+		tx.rollback()
+		return err
+	}
+	tx.stats.SpillTime += time.Since(startTime)
+	tx.meta.root.root = tx.root.root
+
+    //freelist 重写
+	tx.db.freelist.free(tx.meta.txid, tx.db.page(tx.meta.freelist))
+	p, err := tx.allocate((tx.db.freelist.size() / tx.db.pageSize) + 1)
+	if err != nil {
+		tx.rollback()
+		return err
+	}
+	if err := tx.db.freelist.write(p); err != nil {
+		tx.rollback()
+		return err
+	}
+	tx.meta.freelist = p.id
+
+	//文件大小增长
+	if tx.meta.pgid &gt; opgid {
+		if err := tx.db.grow(int(tx.meta.pgid+1) * tx.db.pageSize); err != nil {
+			tx.rollback()
+			return err
+		}
+	}
+
+	//把tx的脏页面，写入db文件。
+	if err := tx.write(); err != nil {
+		tx.rollback()
+		return err
+	}
+
+	//写元数据信息
+	if err := tx.writeMeta(); err != nil {
+		tx.rollback()
+		return err
+	}
+	tx.stats.WriteTime += time.Since(startTime)
+
+	// Finalize the transaction.
+	tx.close()
+
+	// Execute commit handlers now that the locks have been removed.
+	for _, fn := range tx.commitHandlers {
+		fn()
+	}
+
+	return nil
+}
+</code></pre>
+<ul>
+<li>事务的回滚</li>
+</ul>
+<pre><code>func (tx *Tx) rollback() {
+	if tx.db == nil {
+		return
+	}
+	if tx.writable {
+		tx.db.freelist.rollback(tx.meta.txid)
+		tx.db.freelist.reload(tx.db.page(tx.db.meta().freelist))
+	}
+	tx.close()
+}
+</code></pre>
+<p>如果是写事务，freelist.rollback回滚掉freelist.pending<br>
+freelist.reload 重新加载旧的freelist页面。</p>
+<h1 id="并发">并发</h1>
+<p>因为data的文件加了文件锁，同时只会有一个进程读写db文件，同一个进程内，只允许有一个写事务在执行，这就保证了事务提交时不会有并发的情况。<br>
+所以boltDB 更适用于读多写少的场景，同样需要注意的是，长的事务没有提交前会使freelist中的页面不会释放，导致db文件的快速增长。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E9%80%BB%E8%BE%91%E7%BB%93%E6%9E%84">逻辑结构</a></li>
+<li><a href="#%E7%89%A9%E7%90%86%E7%BB%93%E6%9E%84">物理结构</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E7%BB%84%E7%BB%87">数据组织</a></li>
+<li><a href="#freelist">freelist</a></li>
+<li><a href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%AE%9E%E7%8E%B0">事务的实现</a>
+<ul>
+<li><a href="#%E5%8E%9F%E5%AD%90%E6%80%A7%E5%AE%9E%E7%8E%B0">原子性实现</a></li>
+<li><a href="#%E4%B8%80%E8%87%B4%E6%80%A7%E5%AE%9E%E7%8E%B0">一致性实现</a></li>
+<li><a href="#%E9%9A%94%E7%A6%BB%E5%AE%9E%E7%8E%B0">隔离实现</a></li>
+<li><a href="#%E6%8C%81%E4%B9%85%E6%80%A7%E5%AE%9E%E7%8E%B0">持久性实现</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B9%B6%E5%8F%91">并发</a></li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/kube-proxy/">
+              <span class="post-title">
+                kube-proxy设计及实现&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

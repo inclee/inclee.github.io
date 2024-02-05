@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>容器基础-namespace的实现原理 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="容器基础-namespace的实现原理 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="容器基础-namespace的实现原理" />
+  <meta property="og:url" content="https://nomagic.cc/post/rong-qi-ji-chu-namespace-de-shi-xian-yuan-li/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/0eVBqVXix/" class="tag">container</a>
+                
+              </span>
+              <h1>容器基础-namespace的实现原理</h1>
+              <span class="meta">
+                Posted on
+                2023-09-13，7 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <p>[Toc]<br>
+namespace的主要目的是为了<strong>实现资源的隔离和管理</strong>，以避免不同进程之间的资源竞争和冲突。同时，它也可以提供更高的安全性，因为每个进程只能访问其namespace中的资源，而无法访问其他进程的资源。因此，namespace机制对于需要隔离和管理资源的系统来说是非常有用的。</p>
+<p>这种隔离机制使得不同进程可以运行在各自独立的系统中，不会互相干扰。例如，一个进程的改变不会影响到其他进程，其他进程也无法访问这个进程所拥有的资源。这种特性可以用来实现轻量级虚拟化（容器）服务，让容器中的进程产生错觉，认为它们置身于一个独立的系统中。</p>
+<p>目前支持以下6种Namespace：</p>
+<ul>
+<li>IPC：用于进程间通信，包括SystemV IPC和Posix消息队列等。</li>
+<li>Network：用于隔离Linux系统的设备、IP地址、端口、路由表、防火墙规则等网络资源。</li>
+<li>PID：用于隔离进程。</li>
+<li>UTS：用于隔离主机名和域名。</li>
+<li>Mount：用于隔离文件系统挂载点。</li>
+<li>User：用于隔离用户和权限。</li>
+</ul>
+<h2 id="pid_namespace-实现pid-隔离原理">pid_namespace 实现pid 隔离原理</h2>
+<pre><code>struct task_struct {
+    ...
+    /* namespaces */
+    struct nsproxy *nsproxy;
+    ...
+    struct pid			*thread_pid;
+	struct hlist_node		pid_links[PIDTYPE_MAX];
+    struct pid_link pids[PIDTYPE_MAX];
+    ...
+}
+enum pid_type {
+    PIDTYPE_PID, //进程ID
+    PIDTYPE_PGID, //进程组ID
+    PIDTYPE_SID, //进程会话（session）ID 
+    PIDTYPE_MAX //最大值
+};
+
+struct nsproxy {
+	atomic_t count;
+	struct uts_namespace *uts_ns;
+	struct ipc_namespace *ipc_ns;
+	struct mnt_namespace *mnt_ns;
+	struct pid_namespace *pid_ns_for_children;
+	struct net 	     *net_ns;
+	struct time_namespace *time_ns;
+	struct time_namespace *time_ns_for_children;
+	struct cgroup_namespace *cgroup_ns;
+};
+struct pid
+{
+	refcount_t count;
+	unsigned int level;
+	spinlock_t lock;
+	/* lists of tasks that use this pid */
+	struct hlist_head tasks[PIDTYPE_MAX];
+	struct hlist_head inodes;
+	/* wait queue for pidfd notifications */
+	wait_queue_head_t wait_pidfd;
+	struct rcu_head rcu;
+	struct upid numbers[];
+};
+//user process id
+struct upid {
+	int nr;
+	struct pid_namespace *ns;
+};
+</code></pre>
+<p>通过task_struct结构我们可以看到，隔离的实现被代理到nsproxy</p>
+<blockquote>
+<p>pid_links字段是用于表示进程之间的链接关系的哈希表。<br>
+进程组和会话是Linux内核中的重要概念。进程组是一组具有相同进程的集合，而会话则是一组进程组的集合。每个进程都被分配一个全局进程号（PID），用于唯一标识该进程。<br>
+pid_links字段存储了进程号（PID）与进程组标识符（PGID）和会话标识符（SID）之间的链接关系。通过该字段，可以确定哪些进程属于同一个进程组或同一会话。<br>
+当创建一个新的进程时，内核会根据PID和PID namespace来确定该进程的进程组和会话信息，并将这些信息存储在pid_links字段中。这样，当需要查找或操作某个进程时，可以通过pid_links字段快速定位到该进程的进程组和会话信息，以便进行相应的操作。</p>
+</blockquote>
+<pre><code>struct pid_namespace {
+	struct idr idr; //存储pid
+	struct rcu_head rcu;
+	unsigned int pid_allocated;
+	struct task_struct *child_reaper;
+	struct kmem_cache *pid_cachep;
+	unsigned int level;
+	struct pid_namespace *parent;
+	struct user_namespace *user_ns;
+	struct ucounts *ucounts;
+	int reboot;	/* group exit code if this pidns was rebooted */
+	struct ns_common ns;
+} 
+</code></pre>
+<p>从pid_namespace可以看出，pid_namespace是按照树的结构进行组织的，在下面的pid分配中可以看到(参考pid 分配)，分配nr是会同样在低层级的namespace 中 分配nr,这样，低层级的namespace 就可以访问到高层级的nr(参考下面的pid 查找过程)<br>
+<img src="https://nomagic.cc/post-images/1697536925534.png" alt="" loading="lazy"></p>
+<h3 id="pid-分配">pid 分配</h3>
+<p>可以看到主要是对pid层级结构的初始化，从每一层namespace的idr结构中申请nr ，然后初始化到每一个层级的upid,</p>
+<pre><code>struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+		      size_t set_tid_size)
+{
+	struct pid *pid;
+	enum pid_type type;
+	int i, nr;
+	struct pid_namespace *tmp;
+	struct upid *upid;
+	int retval = -ENOMEM;
+
+	if (set_tid_size &gt; ns-&gt;level + 1)
+		return ERR_PTR(-EINVAL);
+
+	pid = kmem_cache_alloc(ns-&gt;pid_cachep, GFP_KERNEL);
+	if (!pid)
+		return ERR_PTR(retval);
+
+	tmp = ns;
+	pid-&gt;level = ns-&gt;level;
+
+	for (i = ns-&gt;level; i &gt;= 0; i--) {
+		int tid = 0;
+		if (set_tid_size) {
+			tid = set_tid[ns-&gt;level - i];
+			retval = -EINVAL;
+			if (tid &lt; 1 || tid &gt;= pid_max)
+				goto out_free;
+		
+			if (tid != 1 &amp;&amp; !tmp-&gt;child_reaper)
+				goto out_free;
+			retval = -EPERM;
+			if (!checkpoint_restore_ns_capable(tmp-&gt;user_ns))
+				goto out_free;
+			set_tid_size--;
+		}
+
+		idr_preload(GFP_KERNEL);
+		spin_lock_irq(&amp;pidmap_lock);
+        // 在每一层的-dir中分配nr(也就是进程号)
+		if (tid) {
+			nr = idr_alloc(&amp;tmp-&gt;idr, NULL, tid,
+				       tid + 1, GFP_ATOMIC);
+			if (nr == -ENOSPC)
+				nr = -EEXIST;
+		} else {
+			int pid_min = 1;
+			if (idr_get_cursor(&amp;tmp-&gt;idr) &gt; RESERVED_PIDS)
+				pid_min = RESERVED_PIDS;
+			nr = idr_alloc_cyclic(&amp;tmp-&gt;idr, NULL, pid_min,
+					      pid_max, GFP_ATOMIC);
+		}
+		spin_unlock_irq(&amp;pidmap_lock);
+		idr_preload_end();
+
+		if (nr &lt; 0) {
+			retval = (nr == -ENOSPC) ? -EAGAIN : nr;
+			goto out_free;
+		}
+       //初始化每一层的数据
+		pid-&gt;numbers[i].nr = nr;
+		pid-&gt;numbers[i].ns = tmp;
+		tmp = tmp-&gt;parent;
+	}
+	retval = -ENOMEM;
+
+	get_pid_ns(ns);
+	refcount_set(&amp;pid-&gt;count, 1);
+	spin_lock_init(&amp;pid-&gt;lock);
+	for (type = 0; type &lt; PIDTYPE_MAX; ++type)
+		INIT_HLIST_HEAD(&amp;pid-&gt;tasks[type]);
+
+	init_waitqueue_head(&amp;pid-&gt;wait_pidfd);
+	INIT_HLIST_HEAD(&amp;pid-&gt;inodes);
+
+	upid = pid-&gt;numbers + ns-&gt;level;
+	spin_lock_irq(&amp;pidmap_lock);
+	if (!(ns-&gt;pid_allocated &amp; PIDNS_ADDING))
+		goto out_unlock;
+	for ( ; upid &gt;= pid-&gt;numbers; --upid) {
+		/* Make the PID visible to find_pid_ns. */
+		idr_replace(&amp;upid-&gt;ns-&gt;idr, pid, upid-&gt;nr);
+		upid-&gt;ns-&gt;pid_allocated++;
+	}
+	spin_unlock_irq(&amp;pidmap_lock);
+
+	return pid;
+
+out_unlock:
+	spin_unlock_irq(&amp;pidmap_lock);
+	put_pid_ns(ns);
+
+out_free:
+	spin_lock_irq(&amp;pidmap_lock);
+	while (++i &lt;= ns-&gt;level) {
+		upid = pid-&gt;numbers + i;
+		idr_remove(&amp;upid-&gt;ns-&gt;idr, upid-&gt;nr);
+	}
+
+	/* On failure to allocate the first pid, reset the state */
+	if (ns-&gt;pid_allocated == PIDNS_ADDING)
+		idr_set_cursor(&amp;ns-&gt;idr, 0);
+
+	spin_unlock_irq(&amp;pidmap_lock);
+
+	kmem_cache_free(ns-&gt;pid_cachep, pid);
+	return ERR_PTR(retval);
+}
+</code></pre>
+<h3 id="pid隔离">pid隔离</h3>
+<p>进程查找：</p>
+<pre><code>struct pid *find_get_pid(pid_t nr)
+{
+	struct pid *pid;
+
+	rcu_read_lock();
+	pid = get_pid(find_vpid(nr));
+	rcu_read_unlock();
+
+	return pid;
+}
+static inline struct pid *get_pid(struct pid *pid)
+{
+	if (pid)
+		refcount_inc(&amp;pid-&gt;count);
+	return pid;
+}
+struct pid *find_vpid(int nr)
+{
+	return find_pid_ns(nr, task_active_pid_ns(current));
+}
+struct pid_namespace *task_active_pid_ns(struct task_struct *tsk)
+{
+	return ns_of_pid(task_pid(tsk));
+}
+static inline struct pid *task_pid(struct task_struct *task)
+{
+	return task-&gt;thread_pid;
+}
+static inline struct pid_namespace *ns_of_pid(struct pid *pid)
+{
+	struct pid_namespace *ns = NULL;
+	if (pid)
+		ns = pid-&gt;numbers[pid-&gt;level].ns;
+	return ns;
+}
+struct pid *find_pid_ns(int nr, struct pid_namespace *ns)
+{
+	return idr_find(&amp;ns-&gt;idr, nr);
+}
+</code></pre>
+<p>我们看到查找是根据current上下文，获取到current-&gt; pid-&gt;numbers[pid-&gt;level].ns,在这个namespace的idr中进行查找，实现了pid的隔离。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#pid_namespace-%E5%AE%9E%E7%8E%B0pid-%E9%9A%94%E7%A6%BB%E5%8E%9F%E7%90%86">pid_namespace 实现pid 隔离原理</a>
+<ul>
+<li><a href="#pid-%E5%88%86%E9%85%8D">pid 分配</a></li>
+<li><a href="#pid%E9%9A%94%E7%A6%BB">pid隔离</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/istio-jie-shao-yu-ji-ben-shi-yong/">
+              <span class="post-title">
+                Istio 基本原理与使用实践&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

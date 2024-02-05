@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>go micro 源码阅读-Broker | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="go micro 源码阅读-Broker |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="go micro 源码阅读-Broker" />
+  <meta property="og:url" content="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-broker/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/V4vnSrl0y/" class="tag">微服务</a>
+                
+              </span>
+              <h1>go micro 源码阅读-Broker</h1>
+              <span class="meta">
+                Posted on
+                2018-09-25，7 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="作用">作用</h1>
+<p>从前面的<a href="https://www.jianshu.com/p/dafe9a614efc">博文</a>可以看出Broker是Service异步通信的基础功能组件。那么好奇的是Broker的代码逻辑到底是怎么样的，如何提供异步通信呢？</p>
+<h1 id="整体代码逻辑">整体代码逻辑</h1>
+<pre><code class="language-go">type Broker interface {
+	Options() Options
+	Address() string
+	Connect() error	///启动broker服务
+	Disconnect() error ///关闭Broker服务
+	Init(...Option) error
+	Publish(string, *Message, ...PublishOption) error  ///publish topic message
+	Subscribe(string, Handler, ...SubscribeOption) (Subscriber, error)  ///注册 topic message 的 subscribe
+	String() string
+}
+</code></pre>
+<p>从Broker的接口可以看出Broker基于替丁topic 的Pub/Sub的方式提供异步通信。</p>
+<p>通过调用Connect 开启Broker</p>
+<p>通过Subsribe 注册对某个topic的监听</p>
+<p>通过Publish 发布某个topic的消息</p>
+<p>通过调用Disconnect关闭Broker</p>
+<h1 id="代码解析">代码解析</h1>
+<h2 id="创建">创建</h2>
+<pre><code>func NewBroker(opts ...Option) Broker {
+	return newHttpBroker(opts...)
+}
+</code></pre>
+<p>通过NewBroker调用newHTTPBroker返回时间Broker接口的httpBroker实例。[关于Option的处理，<a href="">请参考</a>]</p>
+<pre><code class="language-go">func newHttpBroker(opts ...Option) Broker {
+		.......
+	h := &amp;httpBroker{
+		id:          &quot;broker-&quot; + uuid.NewUUID().String(),
+		address:     addr,
+		opts:        options,
+		r:           reg,
+		c:           &amp;http.Client{Transport: newTransport(options.TLSConfig)},  ///用于publish时发送消息
+		subscribers: make(map[string][]*httpSubscriber),
+		exit:        make(chan chan error),
+		mux:         http.NewServeMux(),
+	}
+
+	h.mux.Handle(DefaultSubPath, h) ///添加默认路由handler，所有publish过来的method 到h.HTTPServer处理
+	return h
+}
+</code></pre>
+<h1 id="启动关闭监听">启动/关闭监听</h1>
+<h3 id="connect">Connect</h3>
+<p>启动监听是Connnect函数，感觉这个名字起得很不好，有点迷惑，并不是去连接什么？其实这个函数的功能是创建HttpServer接受Publisher发送来的消息，并且坚定Broker的exit时间，反注册Subscriber。[Run或者Start含义会更清楚一点]</p>
+<pre><code class="language-go">func (h *httpBroker) Connect() error {
+	....
+    go http.Serve(l, h.mux) ///启动HTTPServer
+	go h.run(l)			   ///帧循环
+	....
+}
+func (h *httpBroker) run(l net.Listener) {
+	t := time.NewTicker(registerInterval)
+	defer t.Stop()
+
+	for {
+		select {
+		// heartbeat for each subscriber
+		case &lt;-t.C:
+			h.RLock()
+			for _, subs := range h.subscribers {
+				for _, sub := range subs {
+					h.r.Register(sub.svc, registry.RegisterTTL(registerTTL))//TTL时间验证服务状态，如果服务Died,则重新注册他。
+				}
+			}
+			h.RUnlock()
+		// received exit signal
+		case ch := &lt;-h.exit:
+			ch &lt;- l.Close()
+			h.RLock()
+			for _, subs := range h.subscribers {
+				for _, sub := range subs {
+					h.r.Deregister(sub.svc)
+				}
+			}
+			h.RUnlock()
+			return
+		}
+	}
+}
+</code></pre>
+<h3 id="disconnect">DisConnect</h3>
+<p>那关闭监听 Disconnect做了什么呢？[同样感觉Stop之类的函数名会清楚一点]</p>
+<pre><code class="language-go">func (h *httpBroker) Disconnect() error {
+	h.Lock()
+	defer h.Unlock()
+
+	if !h.running {
+		return nil
+	}
+
+	// stop rcache
+	rc, ok := h.r.(rcache.Cache)
+	if ok {
+		rc.Stop()
+	}
+
+	// exit and return err
+	ch := make(chan error)
+	h.exit &lt;- ch
+	err := &lt;-ch
+
+	// set not running
+	h.running = false
+	return err
+}
+</code></pre>
+<p>向chan h.exit发送关闭消息，帧循环中会接受到关闭消息，然后进行相应的关闭清理操作。</p>
+<blockquote>
+<p>注意这里发送的关闭消息是err对象，这是一个应该学习的地方，可以知道是正常关闭和异常关闭，如果是异常关闭，可以知道具体错误信息是什么</p>
+</blockquote>
+<h2 id="订阅">订阅</h2>
+<pre><code class="language-go">func (h *httpBroker) Subscribe(topic string, handler Handler, opts ...SubscribeOption) (Subscriber, error) {
+		.....
+	// register service
+    /// 当注册一个subscriber的时候实际上注册了一个服务。然后publish通过服务的名称找到这个注册的地址，然后发送消息。
+	node := &amp;registry.Node{
+		Id:      id,
+		Address: addr,
+		Port:    port,
+		Metadata: map[string]string{
+			&quot;secure&quot;: fmt.Sprintf(&quot;%t&quot;, secure),
+		},
+	}
+
+	// check for queue group or broadcast queue
+	version := options.Queue
+	if len(version) == 0 {
+		version = broadcastVersion
+	}
+
+	service := &amp;registry.Service{
+		Name:    &quot;topic:&quot; + topic,
+		Version: version,
+		Nodes:   []*registry.Node{node},
+	}
+
+	// generate subscriber
+	subscriber := &amp;httpSubscriber{
+		opts:  options,
+		hb:    h,
+		id:    id,
+		topic: topic,
+		fn:    handler,///等收到publish是的回调。
+		svc:   service,
+	}
+
+	// subscribe now
+    ////注册服务。并且把subscribe append 到 httpBroker.subscribers中
+	if err := h.subscribe(subscriber); err != nil {
+		return nil, err
+	}
+
+	// return the subscriber
+	return subscriber, nil
+}
+
+func (h *httpBroker) subscribe(s *httpSubscriber) error {
+	h.Lock()
+	defer h.Unlock()
+
+	if err := h.r.Register(s.svc, registry.RegisterTTL(registerTTL)); err != nil {
+		return err
+	}
+	h.subscribers[s.topic] = append(h.subscribers[s.topic], s)
+	return nil
+}
+</code></pre>
+<p>可以看到订阅服务就是注册一个Topic serivce 到 Consul，如果对应Socke的观点我在这个端口（topic）进行监听了，想发消息的就发给我吧。</p>
+<h2 id="发布">发布</h2>
+<pre><code class="language-go">func (h *httpBroker) Publish(topic string, msg *Message, opts ...PublishOption) error {
+	h.RLock()
+	s, err := h.r.GetService(&quot;topic:&quot; + topic)///发现相关服务
+	if err != nil {
+		h.RUnlock()
+		return err
+	}
+	h.RUnlock()
+
+	m := &amp;Message{
+		Header: make(map[string]string),
+		Body:   msg.Body,
+	}
+
+	for k, v := range msg.Header {
+		m.Header[k] = v
+	}
+
+	m.Header[&quot;:topic&quot;] = topic
+
+	b, err := h.opts.Codec.Marshal(m)///对消息进行编码
+	if err != nil {
+		return err
+	}
+
+	pub := func(node *registry.Node, b []byte) {
+		scheme := &quot;http&quot;
+
+		// check if secure is added in metadata
+		if node.Metadata[&quot;secure&quot;] == &quot;true&quot; {
+			scheme = &quot;https&quot;
+		}
+
+		vals := url.Values{}
+		vals.Add(&quot;id&quot;, node.Id)
+
+		uri := fmt.Sprintf(&quot;%s://%s:%d%s?%s&quot;, scheme, node.Address, node.Port, DefaultSubPath, vals.Encode())
+		r, err := h.c.Post(uri, &quot;application/json&quot;, bytes.NewReader(b))
+		if err == nil {
+			io.Copy(ioutil.Discard, r.Body)
+			r.Body.Close()
+		}
+	}
+
+	for _, service := range s {
+		// only process if we have nodes
+		if len(service.Nodes) == 0 {
+			continue
+		}
+
+		switch service.Version {
+		// broadcast version means broadcast to all nodes
+		case broadcastVersion:///广播
+			for _, node := range service.Nodes {
+				// publish async
+				go pub(node, b)
+			}
+		default:
+			// select node to publish to///随机publish一个service
+			node := service.Nodes[rand.Int()%len(service.Nodes)]
+
+			// publish async
+			go pub(node, b)
+		}
+	}
+
+	return nil
+}
+</code></pre>
+<p>从上面的代码可以肯出，整个逻辑也非常简单</p>
+<ol>
+<li>获取对应topic的server</li>
+<li>编码对应的消息</li>
+<li>按照service的类型把消息通过http post的方式发送出去【异步发送】。</li>
+</ol>
+<h2 id="订阅收到-publisher-发送的消息handle处理">订阅收到 publisher 发送的消息handle处理</h2>
+<p>对应上面Create的时候启动的HTTPServer，收到post的消息，读取然后解码，根据对应的topic获取httpBroker.handler[string]Handler中的handle进行调用。这个逻辑也是比较简单。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E4%BD%9C%E7%94%A8">作用</a></li>
+<li><a href="#%E6%95%B4%E4%BD%93%E4%BB%A3%E7%A0%81%E9%80%BB%E8%BE%91">整体代码逻辑</a></li>
+<li><a href="#%E4%BB%A3%E7%A0%81%E8%A7%A3%E6%9E%90">代码解析</a>
+<ul>
+<li><a href="#%E5%88%9B%E5%BB%BA">创建</a></li>
+</ul>
+</li>
+<li><a href="#%E5%90%AF%E5%8A%A8%E5%85%B3%E9%97%AD%E7%9B%91%E5%90%AC">启动/关闭监听</a><br>
+*
+<ul>
+<li><a href="#connect">Connect</a></li>
+<li><a href="#disconnect">DisConnect</a></li>
+<li><a href="#%E8%AE%A2%E9%98%85">订阅</a></li>
+<li><a href="#%E5%8F%91%E5%B8%83">发布</a></li>
+<li><a href="#%E8%AE%A2%E9%98%85%E6%94%B6%E5%88%B0-publisher-%E5%8F%91%E9%80%81%E7%9A%84%E6%B6%88%E6%81%AFhandle%E5%A4%84%E7%90%86">订阅收到 publisher 发送的消息handle处理</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/gong-yao-si-yao-shu-zi-qian-ming/">
+              <span class="post-title">
+                公钥、私钥、数字签名&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

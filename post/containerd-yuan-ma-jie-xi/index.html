@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>Containerd 源码解析 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="Containerd 源码解析 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="Containerd 源码解析" />
+  <meta property="og:url" content="https://nomagic.cc/post/containerd-yuan-ma-jie-xi/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/KqPYTEiCx/" class="tag">云原生</a>
+                
+                <a href="https://nomagic.cc/tag/ktZOV2JFga/" class="tag">Kubernetes</a>
+                
+                <a href="https://nomagic.cc/tag/0eVBqVXix/" class="tag">container</a>
+                
+              </span>
+              <h1>Containerd 源码解析</h1>
+              <span class="meta">
+                Posted on
+                2022-03-16，14 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h2 id="containerd-介绍">containerd 介绍</h2>
+<p><img src="https://nomagic.cc/post-images/1695710966864.png#pic_left" alt="" width="500" height="500" loading="lazy"><br>
+（图片来源：https://blog.csdn.net/chengyinwu/article/details/121842772）<br>
+Containerd 是一个工业级标准的容器运行时，它强调简单性、健壮性和可移植性。在宿主机中以daemon的方式运行，管理当前主机上完整的容器生命周期，包括容器镜像的传输和存储、容器的执行和管理、存储和网络等。具体来说，Containerd 负责以下任务：<br>
+管理容器的生命周期（从创建容器到销毁容器）。<br>
+拉取/推送容器镜像。<br>
+存储管理（管理镜像及容器数据的存储）。<br>
+调用 runC 运行容器（与 runC 等容器运行时交互）。<br>
+管理容器网络接口及网络。<br>
+Containerd 被设计成嵌入到一个更大的系统中，而不是直接由开发人员或终端用户使用。</p>
+<h2 id="containerd-发展历史">containerd 发展历史</h2>
+<p>参考：https://www.cnblogs.com/tencent-cloud-native/p/14134164.html?spm=wolai.workspace.0.0.f21d6a18xgG3Ac</p>
+<h2 id="containerd-架构图">Containerd 架构图</h2>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1695710683898.png#pic_right" alt="" width="500" height="500" loading="lazy"></figure>
+<h2 id="cri容器运行时接口">CRI（容器运行时接口）</h2>
+<p>https://github.com/kubernetes/cri-api<br>
+在早期 rkt 和 docker 争霸时，kubelet 中需要维护两坨代码分别来适配 docker 和 rkt ，这使得 kubelet 每次发布新功能都需要考虑对运行时组件的适配问题，严重拖慢了新版本发布速度。另外虚拟化已经是一个普遍的需求，如果出现了类型的运行时，SIG-Node 小组可能还需要把和新运行时适配的代码添加到 kubelet 中。这种做法并不是长久之计，于是在 2016 年，SIG-Node提出了容器操作接口 CRI（Container Runtime Interface）。 CRI 是对容器操作的一组抽象，只要每种容器运行时都实现这组接口，kubelet 就能通过这组接口来适配所有的运行时。<br>
+可以说CRI是接入k8s的容器运行时所需要时实现的接口，接口目前定义了两部分RuntimeService、ImageManagerService分别负责容器的管理和镜像的管理</p>
+<blockquote>
+<p>可参考<a href="https://github.com/kubernetes/cri-api/blob/master/pkg/apis/services.go">CRI接口定义</a></p>
+</blockquote>
+<p>从上面的架构图和描述可以看到containerd本身包含蛮多内容，咱们这边文章主要的侧重点是kubelet如何和containerd的cri插件交互，然后创建和管理pod和container的。</p>
+<h2 id="源码分析">源码分析</h2>
+<p>既然kubelet 通过containerd CRI 插件来管理容器，那我们把重点放在containerd的cri plugin上<br>
+对应的源码目录是pkg/cri,入口文件是cri.go</p>
+<h3 id="cri-grpc服务的启动">cri grpc服务的启动。</h3>
+<p>我们知道kubelet 是通过grpc协议的方式和cri 插件通信的，那么cri grpc service 是如何启动的呢？</p>
+<pre><code>func init() {
+	config := criconfig.DefaultConfig()
+	plugin.Register(&amp;plugin.Registration{
+		Type:   plugin.GRPCPlugin,
+		ID:     &quot;cri&quot;,
+		Config: &amp;config,
+		Requires: []plugin.Type{
+			plugin.EventPlugin,
+			plugin.ServicePlugin,
+			plugin.NRIApiPlugin,
+		},
+		InitFn: initCRIService,
+	})
+}
+
+func initCRIService(ic *plugin.InitContext) (interface{}, error) {
+	ready := ic.RegisterReadiness()
+	ic.Meta.Platforms = []imagespec.Platform{platforms.DefaultSpec()}
+	ic.Meta.Exports = map[string]string{&quot;CRIVersion&quot;: constants.CRIVersion}
+	ctx := ic.Context
+	pluginConfig := ic.Config.(*criconfig.PluginConfig)
+	if err := criconfig.ValidatePluginConfig(ctx, pluginConfig); err != nil {
+		return nil, fmt.Errorf(&quot;invalid plugin config: %w&quot;, err)
+	}
+
+	c := criconfig.Config{
+		PluginConfig:       *pluginConfig,
+		ContainerdRootDir:  filepath.Dir(ic.Root),
+		ContainerdEndpoint: ic.Address,
+		RootDir:            ic.Root,
+		StateDir:           ic.State,
+	}
+	log.G(ctx).Infof(&quot;Start cri plugin with config %+v&quot;, c)
+
+	if err := setGLogLevel(); err != nil {
+		return nil, fmt.Errorf(&quot;failed to set glog level: %w&quot;, err)
+	}
+
+	log.G(ctx).Info(&quot;Connect containerd service&quot;)
+	client, err := containerd.New(
+		&quot;&quot;,
+		containerd.WithDefaultNamespace(constants.K8sContainerdNamespace),
+		containerd.WithDefaultPlatform(platforms.Default()),
+		containerd.WithInMemoryServices(ic),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(&quot;failed to create containerd client: %w&quot;, err)
+	}
+
+	var s server.CRIService
+	if os.Getenv(&quot;DISABLE_CRI_SANDBOXES&quot;) == &quot;&quot; {
+		log.G(ctx).Info(&quot;using CRI Sandbox server - use DISABLE_CRI_SANDBOXES=1 to fallback to legacy CRI&quot;)
+		s, err = sbserver.NewCRIService(c, client, getNRIAPI(ic))
+	} else {
+		log.G(ctx).Info(&quot;using legacy CRI server&quot;)
+		s, err = server.NewCRIService(c, client, getNRIAPI(ic))
+	}
+	if err != nil {
+		return nil, fmt.Errorf(&quot;failed to create CRI service: %w&quot;, err)
+	}
+
+	go func() {
+		if err := s.Run(ready); err != nil {
+			log.G(ctx).WithError(err).Fatal(&quot;Failed to run CRI service&quot;)
+		}
+		// TODO(random-liu): Whether and how we can stop containerd.
+	}()
+
+	return s, nil
+}
+....
+</code></pre>
+<p>我们看到包的init方法，把cri插件注册到插件系统，初始化方法是initCRIService。<br>
+在应用入口函数command/main.go.App()的方法中创建了Server实例，Server的构造方法中会加载注册了插件，并调用对应的初始化函数，对插件进行初始化。</p>
+<pre><code>github.com/containerd/containerd/pkg/cri.initCRIService (/home/parallels/Documents/src/containerd/pkg/cri/cri.go:57)
+github.com/containerd/containerd/plugin.(*Registration).Init (/home/parallels/Documents/src/containerd/plugin/plugin.go:121)
+github.com/containerd/containerd/services/server.New (/home/parallels/Documents/src/containerd/services/server/server.go:227)
+github.com/containerd/containerd/cmd/containerd/command.App.func1.1 (/home/parallels/Documents/src/containerd/cmd/containerd/command/main.go:194)
+runtime.goexit (/snap/go/10351/src/runtime/asm_arm64.s:1197)
+</code></pre>
+<p>cri插件的grcp服务端在这里已经正常起到起来了。</p>
+<h3 id="kubelet-和cri-插件的交互">kubelet 和cri 插件的交互</h3>
+<p>在kubelet对Pod进行同步的时候，会调用func (m *kubeGenericRuntimeManager) SyncPod方法，同步POD的期望状态到容器运行时，流程如下图：<br>
+<img src="https://nomagic.cc/post-images/1695709311019.png" alt="" loading="lazy"></p>
+<h4 id="sandbox创建">sandbox创建</h4>
+<p>我们看到创建SandBox的处理函数是：</p>
+<pre><code>func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (_ *runtime.RunPodSandboxResponse, retErr error)
+</code></pre>
+<p>这个函数做了一下几件事情把pod sandbox 创建起来<br>
+① 拉取sandbox的镜像，在containerd中配置<br>
+② 获取创建pod要使用的runtime，可以在创建pod的yaml中指定，如果没指定使用containerd中默认的<br>
+③ 如果pod不是hostNetwork那么添加创建新net namespace，并使用cni插件设置网络<br>
+④ 调用containerd客户端创建一个container<br>
+⑤ 在rootDir/io.containerd.grpc.v1.cri/sandboxes下为当前pod以pod Id为名创建一个目录<br>
+（pkg/cri/cri.go）<br>
+⑥ 根据选择的runtime为sandbox容器创建task<br>
+⑦ 启动sandbox容器的task，将sandbox添加到数据库中<br>
+调用堆栈如下：</p>
+<pre><code>github.com/containerd/containerd/api/runtime/task/v2.(*taskClient).Create (/home/parallels/Documents/src/containerd/api/runtime/task/v2/shim_ttrpc.pb.go:177)
+github.com/containerd/containerd/runtime/v2.(*shimTask).Create (/home/parallels/Documents/src/containerd/runtime/v2/shim.go:523)
+github.com/containerd/containerd/runtime/v2.(*TaskManager).Create (/home/parallels/Documents/src/containerd/runtime/v2/manager.go:420)
+github.com/containerd/containerd/services/tasks.(*local).Create (/home/parallels/Documents/src/containerd/services/tasks/local.go:218)
+github.com/containerd/containerd.(*container).NewTask (/home/parallels/Documents/src/containerd/container.go:303)
+github.com/containerd/containerd/pkg/cri/sbserver/podsandbox.(*Controller).Start (/home/parallels/Documents/src/containerd/pkg/cri/sbserver/podsandbox/sandbox_run.go:227)
+github.com/containerd/containerd/pkg/cri/sbserver.(*criService).RunPodSandbox (/home/parallels/Documents/src/containerd/pkg/cri/sbserver/sandbox_run.go:255)
+</code></pre>
+<p>这里说一下主要的抽象：</p>
+<pre><code>type Container interface {
+	// ID identifies the container
+	ID() string
+	// Info returns the underlying container record type
+	Info(context.Context, ...InfoOpts) (containers.Container, error)
+	// Delete removes the container
+	Delete(context.Context, ...DeleteOpts) error
+	// NewTask creates a new task based on the container metadata
+	NewTask(context.Context, cio.Creator, ...NewTaskOpts) (Task, error)
+	// Spec returns the OCI runtime specification
+	Spec(context.Context) (*oci.Spec, error)
+	// Task returns the current task for the container
+	// the output from the task's fifos
+	Task(context.Context, cio.Attach) (Task, error)
+	// Image returns the image that the container is based on
+	Image(context.Context) (Image, error)
+	// Labels returns the labels set on the container
+	Labels(context.Context) (map[string]string, error)
+	// SetLabels sets the provided labels for the container and returns the final label set
+	SetLabels(context.Context, map[string]string) (map[string]string, error)
+	// Extensions returns the extensions set on the container
+	Extensions(context.Context) (map[string]typeurl.Any, error)
+	// Update a container
+	Update(context.Context, ...UpdateContainerOpts) error
+	// Checkpoint creates a checkpoint image of the current container
+	Checkpoint(context.Context, string, ...CheckpointOpts) (Image, error)
+}
+
+type Task interface {
+	Process
+	// Pause suspends the execution of the task
+	Pause(context.Context) error
+	// Resume the execution of the task
+	Resume(context.Context) error
+	// Exec creates a new process inside the task
+	Exec(context.Context, string, *specs.Process, cio.Creator) (Process, error)
+	// Pids returns a list of system specific process ids inside the task
+	Pids(context.Context) ([]ProcessInfo, error)
+	// Checkpoint serializes the runtime and memory information of a task into an
+	// OCI Index that can be pushed and pulled from a remote resource.
+	//
+	// Additional software like CRIU maybe required to checkpoint and restore tasks
+	// NOTE: Checkpoint supports to dump task information to a directory, in this way,
+	// an empty OCI Index will be returned.
+	Checkpoint(context.Context, ...CheckpointTaskOpts) (Image, error)
+	// Update modifies executing tasks with updated settings
+	Update(context.Context, ...UpdateTaskOpts) error
+	// LoadProcess loads a previously created exec'd process
+	LoadProcess(context.Context, string, cio.Attach) (Process, error)
+	// Metrics returns task metrics for runtime specific metrics
+	// The metric types are generic to containerd and change depending on the runtime
+	// For the built in Linux runtime, github.com/containerd/cgroups.Metrics
+	// are returned in protobuf format
+	Metrics(context.Context) (*types.Metric, error)
+	// Spec returns the current OCI specification for the task
+	Spec(context.Context) (*oci.Spec, error)
+}
+// PlatformRuntime is responsible for the creation and management of
+// tasks and processes for a platform.
+type PlatformRuntime interface {
+	// ID of the runtime
+	ID() string
+	// Create creates a task with the provided id and options.
+	Create(ctx context.Context, taskID string, opts CreateOpts) (Task, error)
+	// Get returns a task.
+	Get(ctx context.Context, taskID string) (Task, error)
+	// Tasks returns all the current tasks for the runtime.
+	// Any container runs at most one task at a time.
+	Tasks(ctx context.Context, all bool) ([]Task, error)
+	// Delete remove a task.
+	Delete(ctx context.Context, taskID string) (*Exit, error)
+}
+
+</code></pre>
+<p>Task 是容器的运行时对象，表示一个应用程序在容器中的运行时实例，所以可以看到在Container.Start的方法中会创建对应的Task,具体创建是调用实例了PlatformRuntime 的TaskManager来执行，PlatformRuntime是管理任务和进程的一个抽象，TaskManager.Create 调用ShimManager创建containerd-shim-runc-v2进程，把创建container的任务提交给containerd-shim-runc-v2。<br>
+containerd-shim-runc-v2以start子命令启动，创建另外一个shim子进程，然后返回这个子进程的ttrpc的监听地址，这样以start启动的进程退出后，containerd和shim进程也就脱离的关系，双方通过ttrpc相互通信，进程的状态不会互相影响。</p>
+<p>TaskManager.Create创建好shim进程并且获取shim监听链接后，会创建shimTask，shimTask利用上面获取的shim链接，发送对应的task创建请求给shim的 task grpc服务</p>
+<pre><code>func (m *TaskManager) Create(ctx context.Context, taskID string, opts runtime.CreateOpts) (runtime.Task, error) {
+	shim, err := m.manager.Start(ctx, taskID, opts)
+	if err != nil {
+		return nil, fmt.Errorf(&quot;failed to start shim: %w&quot;, err)
+	}
+	// Cast to shim task and call task service to create a new container task instance.
+	// This will not be required once shim service / client implemented.
+	shimTask, err := newShimTask(shim)
+	if err != nil {
+		return nil, err
+	}
+	t, err := shimTask.Create(ctx, opts)
+	if err != nil {
+		// NOTE: ctx contains required namespace information.
+		m.manager.shims.Delete(ctx, taskID)
+
+		dctx, cancel := timeout.WithContext(cleanup.Background(ctx), cleanupTimeout)
+		defer cancel()
+
+		sandboxed := opts.SandboxID != &quot;&quot;
+		_, errShim := shimTask.delete(dctx, sandboxed, func(context.Context, string) {})
+		if errShim != nil {
+			if errdefs.IsDeadlineExceeded(errShim) {
+				dctx, cancel = timeout.WithContext(cleanup.Background(ctx), cleanupTimeout)
+				defer cancel()
+			}
+
+			shimTask.Shutdown(dctx)
+			shimTask.Close()
+		}
+
+		return nil, fmt.Errorf(&quot;failed to create shim task: %w&quot;, err)
+	}
+	return t, nil
+}
+</code></pre>
+<p>对应的TaskServer实现在：runtime/v2/runc/task/service.go</p>
+<pre><code>func (s *service) Create(ctx context.Context, r *taskAPI.CreateTaskRequest) (_ *taskAPI.CreateTaskResponse, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	handleStarted, cleanup := s.preStart(nil)
+	defer cleanup()
+
+	container, err := runc.NewContainer(ctx, s.platform, r)
+	if err != nil {
+		return nil, err
+	}
+
+	s.containers[r.ID] = container
+
+	s.send(&amp;eventstypes.TaskCreate{
+		ContainerID: r.ID,
+		Bundle:      r.Bundle,
+		Rootfs:      r.Rootfs,
+		IO: &amp;eventstypes.TaskIO{
+			Stdin:    r.Stdin,
+			Stdout:   r.Stdout,
+			Stderr:   r.Stderr,
+			Terminal: r.Terminal,
+		},
+		Checkpoint: r.Checkpoint,
+		Pid:        uint32(container.Pid()),
+	})
+
+	// The following line cannot return an error as the only state in which that
+	// could happen would also cause the container.Pid() call above to
+	// nil-deference panic.
+	proc, _ := container.Process(&quot;&quot;)
+	handleStarted(container, proc)
+
+	return &amp;taskAPI.CreateTaskResponse{
+		Pid: uint32(container.Pid()),
+	}, nil
+}
+</code></pre>
+<p>调用OCI(runtime)去创建container，这样sandpox对应的容器就被创建起来了。</p>
+<h4 id="container的创建和运行">container的创建和运行</h4>
+<p>可以看到kubelet创建container调用的是</p>
+<pre><code>func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateContainerRequest) (_ *runtime.CreateContainerResponse, retErr error) 
+</code></pre>
+<p>接口，可以看到这里根据传进来的sandbox ID，查询到对一个的sandBox信息，根据穿建立的其他参数信息构造出container的原信息，存储到containerStore service，这里并没有创建和运行task任务<br>
+container的运行是在kubelet调用</p>
+<pre><code>func (c *criService) StartContainer(ctx context.Context, r *runtime.StartContainerRequest) (retRes *runtime.StartContainerResponse, retErr error)
+</code></pre>
+<p>StartContainer 根据传进来的container id 获取到对应的container 元信息，和对应的sandbox 信息，然后创建task任务并start,实质性的运行container的任务，这里和上面创建sandbox container 大致类似了。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#containerd-%E4%BB%8B%E7%BB%8D">containerd 介绍</a></li>
+<li><a href="#containerd-%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2">containerd 发展历史</a></li>
+<li><a href="#containerd-%E6%9E%B6%E6%9E%84%E5%9B%BE">Containerd 架构图</a></li>
+<li><a href="#cri%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6%E6%8E%A5%E5%8F%A3">CRI（容器运行时接口）</a></li>
+<li><a href="#%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90">源码分析</a>
+<ul>
+<li><a href="#cri-grpc%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8">cri grpc服务的启动。</a></li>
+<li><a href="#kubelet-%E5%92%8Ccri-%E6%8F%92%E4%BB%B6%E7%9A%84%E4%BA%A4%E4%BA%92">kubelet 和cri 插件的交互</a>
+<ul>
+<li><a href="#sandbox%E5%88%9B%E5%BB%BA">sandbox创建</a></li>
+<li><a href="#container%E7%9A%84%E5%88%9B%E5%BB%BA%E5%92%8C%E8%BF%90%E8%A1%8C">container的创建和运行</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/rong-qi-di-ceng-yuan-li/">
+              <span class="post-title">
+                容器底层原理&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

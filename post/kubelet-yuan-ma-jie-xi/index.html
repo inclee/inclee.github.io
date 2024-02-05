@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>kubelet源码解析 | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="kubelet源码解析 |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="kubelet源码解析" />
+  <meta property="og:url" content="https://nomagic.cc/post/kubelet-yuan-ma-jie-xi/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/KqPYTEiCx/" class="tag">云原生</a>
+                
+                <a href="https://nomagic.cc/tag/ktZOV2JFga/" class="tag">Kubernetes</a>
+                
+              </span>
+              <h1>kubelet源码解析</h1>
+              <span class="meta">
+                Posted on
+                2023-03-25，10 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="kubelet">kubelet</h1>
+<h2 id="kubelet-主要作用">kubelet 主要作用</h2>
+<ul>
+<li>
+<p>同步pod状态</p>
+<p>从数据源(本地文件，url接口，apiserver)获取Pod的期望状态，同步所管理的pod至期望状态</p>
+</li>
+<li>
+<p>Pod 状态同步至ApiServer</p>
+</li>
+<li>
+<p>容器的健康监测</p>
+<p>监测容器的健康状态，根据Pod设置的重启策略进行重启,</p>
+</li>
+<li>
+<p>节点资源监控</p>
+<p>监控节点资源使用状态，定期向Master节点进行报告</p>
+</li>
+</ul>
+<p>主要逻辑体现在Kubelet的Run 方法</p>
+<pre><code>// Run starts the kubelet reacting to config updates
+func (kl *Kubelet) Run(updates &lt;-chan kubetypes.PodUpdate) {
+	。。。
+	
+
+	// Start volume manager
+	go kl.volumeManager.Run(kl.sourcesReady, wait.NeverStop)
+
+	。。。
+	// 同步Pod 状态到ApiServer
+	kl.statusManager.Start()
+
+	// Start syncing RuntimeClasses if enabled.
+	if kl.runtimeClassManager != nil {
+		kl.runtimeClassManager.Start(wait.NeverStop)
+	}
+
+	// Pod生命周期事件
+	kl.pleg.Start()
+	///Pod 状态同步循环
+	kl.syncLoop(updates, kl)
+}
+</code></pre>
+<h3 id="pleg">pleg</h3>
+<p>PLEG（Pod Lifecycle Event Generator）<strong>确保pod状态和podspec保持一致</strong>。</p>
+<p>PLEG会一直调用container runtime获取本节点containers/sandboxes的信息，并与自身维护的pods cache信息进行对比，生成对应的PodLifecycleEvent，然后输出到eventChannel中，通过eventChannel发送到kubelet syncLoop进行消费。</p>
+<p>简单来说，PLEG的作用包括：</p>
+<ol>
+<li>周期性地从容器运行时获取最新的容器状态。</li>
+<li>生成Pod生命周期事件。</li>
+<li>通过事件通道将这些事件发送给kubelet的同步循环进行处理</li>
+</ol>
+<h2 id="pod-状态同步实现">Pod 状态同步实现</h2>
+<figure data-type="image" tabindex="1"><img src="https://nomagic.cc/post-images/1695636249051.png" alt="" loading="lazy"></figure>
+<p>状态同步是指从数据源获取pod变更时间，同步到本地缓存同步到POD期望状态，并通过cri同步到container runtime</p>
+<h3 id="整体同步流程">整体同步流程</h3>
+<figure data-type="image" tabindex="2"><img src="https://nomagic.cc/post-images/1695636267029.png" alt="" loading="lazy"></figure>
+<h3 id="变更事件的获取">变更事件的获取</h3>
+<figure data-type="image" tabindex="3"><img src="https://nomagic.cc/post-images/1695636274841.png" alt="" loading="lazy"></figure>
+<h4 id="podconfig">PodConfig</h4>
+<p>PodConfig创建和管理 Kubernetes Pod 配置的对象。它提供了一种整合多个配置源的方式，将这些配置源规范化为一个流，进而更新为 Pod 配置，也就是说PodConfig是一个多路复用器，聚合来自本地文件，url请求和api server的事件</p>
+<pre><code>type PodConfig struct {
+	pods *podStorage //接收mux传递过来的PodUpdate，merge成pods缓存和有序的变更写入到updates channel
+	mux  *config.Mux //多路复用器
+
+	// the channel of denormalized changes passed to listeners
+	updates chan kubetypes.PodUpdate 
+
+	// contains the list of all configured sources
+	sourcesLock sync.Mutex
+	sources     sets.String
+}
+
+func NewPodConfig(mode PodConfigNotificationMode, recorder record.EventRecorder) *PodConfig {
+	updates := make(chan kubetypes.PodUpdate, 50)
+	storage := newPodStorage(updates, mode, recorder)
+	podConfig := &amp;PodConfig{
+		pods:    storage,
+		mux:     config.NewMux(storage), // mux 把变更传给 storage,storage 把变更merge到updates channel
+		updates: updates,
+		sources: sets.String{},
+	}
+	return podConfig
+}
+</code></pre>
+<h4 id="configmux">config.Mux</h4>
+<pre><code>type Mux struct {
+	merger Merger //这里对应的实现是podStorage
+	sourceLock sync.RWMutex
+	// Maps source names to channels
+	sources map[string]chan interface{}
+}
+
+func NewMux(merger Merger) *Mux {
+	mux := &amp;Mux{
+		sources: make(map[string]chan interface{}),
+		merger:  merger,
+	}
+	return mux
+}
+// 返回生成的channel，内部监听channel的可读时间，然后回调到merge
+func (m *Mux) ChannelWithContext(ctx context.Context, source string) chan interface{} {
+	if len(source) == 0 {
+		panic(&quot;Channel given an empty name&quot;)
+	}
+	m.sourceLock.Lock()
+	defer m.sourceLock.Unlock()
+	channel, exists := m.sources[source]
+	if exists {
+		return channel
+	}
+	newChannel := make(chan interface{})
+	m.sources[source] = newChannel
+
+	go wait.Until(func() { m.listen(source, newChannel) }, 0, ctx.Done())
+	return newChannel
+}
+
+func (m *Mux) listen(source string, listenChannel &lt;-chan interface{}) {
+	for update := range listenChannel {
+		m.merger.Merge(source, update)
+	}
+}
+</code></pre>
+<h5 id="监听注册">监听注册</h5>
+<p>在创建Kubelet的含函数中调用makePodSourceConfig方法创建PodConfig实例，并且注册了对本地文件，URL和API server的监听，通过监听channel写入podStorage.Merge</p>
+<pre><code>func makePodSourceConfig(kubeCfg *kubeletconfiginternal.KubeletConfiguration, kubeDeps *Dependencies, nodeName types.NodeName, nodeHasSynced func() bool) (*config.PodConfig, error) {
+	
+	// source of all configuration
+	cfg := config.NewPodConfig(config.PodConfigNotificationIncremental, kubeDeps.Recorder)
+	ctx := context.TODO()
+	if kubeCfg.StaticPodPath != &quot;&quot; {
+		config.NewSourceFile(kubeCfg.StaticPodPath, nodeName, kubeCfg.FileCheckFrequency.Duration, cfg.Channel(ctx, kubetypes.FileSource))
+	}
+
+	// define url config source
+	if kubeCfg.StaticPodURL != &quot;&quot; {
+		config.NewSourceURL(kubeCfg.StaticPodURL, manifestURLHeader, nodeName, kubeCfg.HTTPCheckFrequency.Duration, cfg.Channel(ctx, kubetypes.HTTPSource))
+	}
+
+	if kubeDeps.KubeClient != nil {
+		config.NewSourceApiserver(kubeDeps.KubeClient, nodeName, nodeHasSynced, cfg.Channel(ctx, kubetypes.ApiserverSource))
+	}
+	return cfg, nil
+}
+</code></pre>
+<h4 id="podstorage">podStorage</h4>
+<h5 id="merge">Merge</h5>
+<p>把多个数据源里的合并成一组有序的updates变更时间，写入到updates管道，并且管理缓存所维护的pods（这个在merge方法里实现）</p>
+<pre><code>func (s *podStorage) Merge(source string, change interface{}) error {
+	...
+	adds, updates, deletes, removes, reconciles := s.merge(source, change)
+	switch s.mode {
+	case PodConfigNotificationIncremental:
+			s.updates &lt;- *removes
+			s.updates &lt;- *adds
+			s.updates &lt;- *updates
+			s.updates &lt;- *deletes
+			s.updates &lt;- *adds
+			s.updates &lt;- *reconciles
+	...
+	return nil
+}
+</code></pre>
+<h3 id="pod事件分发">Pod事件分发</h3>
+<h4 id="syncloop">syncLoop</h4>
+<p>可以看到Kubelet.Run 开启了， 调用syncLoop同步loop</p>
+<p>syncLoop中处理了</p>
+<ul>
+<li><code>PodUpdate  pod变更事件</code></li>
+<li><code>pleg  生命呢周期事件</code></li>
+<li><code>syncCh 定时同步</code></li>
+<li><code>liveness 事件</code></li>
+<li><code>readiness 事件</code></li>
+</ul>
+<pre><code>func (kl *Kubelet) Run(updates &lt;-chan kubetypes.PodUpdate) {
+	...
+	// Start the cloud provider sync manager
+	if kl.cloudResourceSyncManager != nil {
+		go kl.cloudResourceSyncManager.Run(wait.NeverStop)
+	}
+	...
+	if err := kl.initializeModules(); err != nil {
+		kl.recorder.Eventf(kl.nodeRef, v1.EventTypeWarning, events.KubeletSetupFailed, err.Error())
+		klog.ErrorS(err, &quot;Failed to initialize internal modules&quot;)
+		os.Exit(1)
+	}
+
+	// Start volume manager
+	go kl.volumeManager.Run(kl.sourcesReady, wait.NeverStop)
+	...
+	go wait.Until(kl.updateRuntimeUp, 5*time.Second, wait.NeverStop)
+	...
+	// 同步POD状态到APIServer
+	kl.statusManager.Start()
+
+	if kl.runtimeClassManager != nil {
+		kl.runtimeClassManager.Start(wait.NeverStop)
+	}
+
+	// POD 生命事件处理
+	kl.pleg.Start()
+	kl.syncLoop(updates, kl)
+}
+
+func (kl *Kubelet) syncLoop(updates &lt;-chan kubetypes.PodUpdate, handler SyncHandler) {
+	...
+	for {
+	...
+		if !kl.syncLoopIteration(updates, handler, syncTicker.C, housekeepingTicker.C, plegCh) {
+			break
+		}
+	}
+}
+
+func (kl *Kubelet) syncLoopIteration(configCh &lt;-chan kubetypes.PodUpdate, handler SyncHandler,
+	syncCh &lt;-chan time.Time, housekeepingCh &lt;-chan time.Time, plegCh &lt;-chan *pleg.PodLifecycleEvent) bool {
+	select {
+	case u, open := &lt;-configCh:
+		switch u.Op {
+		case kubetypes.ADD:
+			handler.HandlePodAdditions(u.Pods)
+		case kubetypes.UPDATE:
+			handler.HandlePodUpdates(u.Pods)
+		case kubetypes.REMOVE:
+			handler.HandlePodRemoves(u.Pods)
+		case kubetypes.RECONCILE:
+			handler.HandlePodReconcile(u.Pods)
+		case kubetypes.DELETE:
+			handler.HandlePodUpdates(u.Pods)
+		case kubetypes.SET:
+		default:
+			klog.ErrorS(nil, &quot;Invalid operation type received&quot;, &quot;operation&quot;, u.Op)
+		}
+	case e := &lt;-plegCh:
+		if e.Type == pleg.ContainerStarted {
+			kl.lastContainerStartedTime.Add(e.ID, time.Now())
+		}
+		if isSyncPodWorthy(e) {
+			// PLEG event for a pod; sync it.
+			if pod, ok := kl.podManager.GetPodByUID(e.ID); ok {
+				klog.V(2).InfoS(&quot;SyncLoop (PLEG): event for pod&quot;, &quot;pod&quot;, klog.KObj(pod), &quot;event&quot;, e)
+				handler.HandlePodSyncs([]*v1.Pod{pod})
+			} else {
+				// If the pod no longer exists, ignore the event.
+				klog.V(4).InfoS(&quot;SyncLoop (PLEG): pod does not exist, ignore irrelevant event&quot;, &quot;event&quot;, e)
+			}
+		}
+
+		if e.Type == pleg.ContainerDied {
+			if containerID, ok := e.Data.(string); ok {
+				kl.cleanUpContainersInPod(e.ID, containerID)
+			}
+		}
+	case &lt;-syncCh:
+		podsToSync := kl.getPodsToSync()
+		handler.HandlePodSyncs(podsToSync)
+	case update := &lt;-kl.livenessManager.Updates():
+		if update.Result == proberesults.Failure {
+			handleProbeSync(kl, update, handler, &quot;liveness&quot;, &quot;unhealthy&quot;)
+		}
+	case update := &lt;-kl.readinessManager.Updates():
+		ready := update.Result == proberesults.Success
+		kl.statusManager.SetContainerReadiness(update.PodUID, update.ContainerID, ready)
+		status := &quot;&quot;
+		if ready {
+			status = &quot;ready&quot;
+		}
+		handleProbeSync(kl, update, handler, &quot;readiness&quot;, status)
+	case update := &lt;-kl.startupManager.Updates():
+		started := update.Result == proberesults.Success
+		kl.statusManager.SetContainerStartup(update.PodUID, update.ContainerID, started)
+
+		status := &quot;unhealthy&quot;
+		if started {
+			status = &quot;started&quot;
+		}
+		handleProbeSync(kl, update, handler, &quot;startup&quot;, status)
+	case &lt;-housekeepingCh:
+		if !kl.sourcesReady.AllReady() {
+			// If the sources aren't ready or volume manager has not yet synced the states,
+			// skip housekeeping, as we may accidentally delete pods from unready sources.
+			klog.V(4).InfoS(&quot;SyncLoop (housekeeping, skipped): sources aren't ready yet&quot;)
+		} else {
+			start := time.Now()
+			klog.V(4).InfoS(&quot;SyncLoop (housekeeping)&quot;)
+			if err := handler.HandlePodCleanups(); err != nil {
+				klog.ErrorS(err, &quot;Failed cleaning pods&quot;)
+			}
+			duration := time.Since(start)
+			if duration &gt; housekeepingWarningDuration {
+				klog.ErrorS(fmt.Errorf(&quot;housekeeping took too long&quot;), &quot;Housekeeping took longer than 15s&quot;, &quot;seconds&quot;, duration.Seconds())
+			}
+			klog.V(4).InfoS(&quot;SyncLoop (housekeeping) end&quot;)
+		}
+	}
+	return true
+}
+</code></pre>
+<h5 id="pod变更事件同步">pod变更事件同步</h5>
+<h6 id="处理流程">处理流程</h6>
+<figure data-type="image" tabindex="4"><img src="https://nomagic.cc/post-images/1695636302766.png" alt="" loading="lazy"></figure>
+<p>podupdate 事件统一通过 SyncHandler 的接口的handlerPod*方法投递到podWorkers.UpdatePod中，可以看到podWorkers 为每一个Pod 创建了一个单独的channel 和 managePodLoop 协程来处理这个Pod的变更事件，在managePodLoop协程中将处理Pod的TerminatedPodWork、TerminatingPodWork,其余update时间分别代理到kubelet 的syncPod/syncTerminatingPod/syncTerminatedPod 方法，并把PodId 写入到了podWokers.workQueue 队列</p>
+<p>syncPod/syncTerminatingPod/syncTerminatedPod</p>
+<p>分别调用ContainerRuntime(调用CRI接口)实现容器的创建和删除、状态上报ApiServer、挂载/卸载容器、创建/删除CGroup 和各种Manner的注册与清理操作</p>
+<h5 id="syncch-定时同步">syncCh 定时同步</h5>
+<p>参考Kubelet的syncLoop中处理syncCh的定时逻辑，这里的逻辑就是定期的从podWokers.workQueue中取出pod进行同步</p>
+<h5 id="pleg-生命周期事件同步">pleg 生命周期事件同步</h5>
+<p>PLEG，全称Pod Lifecycle Event Generator，通过周期性的获取Pod状态和本地缓存POD老状态进行对比，从而生成生命周期事件，写入到事件channel</p>
+<p>kubelet 在synLoop循环syncLoopIteration中读取Pod生命周期事件派发到dispatchwork进行状态同步</p>
+<h6 id="处理流程-2">处理流程</h6>
+<figure data-type="image" tabindex="5"><img src="https://nomagic.cc/post-images/1695636316607.png" alt="" loading="lazy"></figure>
+<h5 id="probe-事件处理livenessreadiness">Probe 事件处理（liveness/readiness）</h5>
+<h6 id="处理流程-3">处理流程</h6>
+<figure data-type="image" tabindex="6"><img src="https://nomagic.cc/post-images/1695636322706.png" alt="" loading="lazy"></figure>
+<p>Kubetlet在创建是创建了</p>
+<pre><code>klet.livenessManager = proberesults.NewManager()
+klet.readinessManager = proberesults.NewManager()
+klet.startupManager = proberesults.NewManager()
+</code></pre>
+<p>并且交于ProbeManager进行管理。</p>
+<p>在POD进行synd的过程中（syncPod方法）会通过ProbeManager.Add方法接入probe的管理，按照probe类别，分别生成创建对应.prober.Worker 跑在不同的协程中。每个worker中有一个定时循环定期的调用doProbe进行探测，把探测结果通过对应probeManner.Set写回updates管道。</p>
+<p>kubelet 会在syncLoopIteration循环中监听probe的updates更新，然后通过HandlePodSyncs提交同步任务到syncWorker,后面就是pod的sync流程了。</p>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#kubelet">kubelet</a>
+<ul>
+<li><a href="#kubelet-%E4%B8%BB%E8%A6%81%E4%BD%9C%E7%94%A8">kubelet 主要作用</a>
+<ul>
+<li><a href="#pleg">pleg</a></li>
+</ul>
+</li>
+<li><a href="#pod-%E7%8A%B6%E6%80%81%E5%90%8C%E6%AD%A5%E5%AE%9E%E7%8E%B0">Pod 状态同步实现</a>
+<ul>
+<li><a href="#%E6%95%B4%E4%BD%93%E5%90%8C%E6%AD%A5%E6%B5%81%E7%A8%8B">整体同步流程</a></li>
+<li><a href="#%E5%8F%98%E6%9B%B4%E4%BA%8B%E4%BB%B6%E7%9A%84%E8%8E%B7%E5%8F%96">变更事件的获取</a>
+<ul>
+<li><a href="#podconfig">PodConfig</a></li>
+<li><a href="#configmux">config.Mux</a>
+<ul>
+<li><a href="#%E7%9B%91%E5%90%AC%E6%B3%A8%E5%86%8C">监听注册</a></li>
+</ul>
+</li>
+<li><a href="#podstorage">podStorage</a>
+<ul>
+<li><a href="#merge">Merge</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#pod%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91">Pod事件分发</a>
+<ul>
+<li><a href="#syncloop">syncLoop</a>
+<ul>
+<li><a href="#pod%E5%8F%98%E6%9B%B4%E4%BA%8B%E4%BB%B6%E5%90%8C%E6%AD%A5">pod变更事件同步</a>
+<ul>
+<li><a href="#%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B">处理流程</a></li>
+</ul>
+</li>
+<li><a href="#syncch-%E5%AE%9A%E6%97%B6%E5%90%8C%E6%AD%A5">syncCh 定时同步</a></li>
+<li><a href="#pleg-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8B%E4%BB%B6%E5%90%8C%E6%AD%A5">pleg 生命周期事件同步</a>
+<ul>
+<li><a href="#%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B-2">处理流程</a></li>
+</ul>
+</li>
+<li><a href="#probe-%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86livenessreadiness">Probe 事件处理（liveness/readiness）</a>
+<ul>
+<li><a href="#%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B-3">处理流程</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/wei-fu-wu-jia-gou-xia-de-shu-ju-yi-zhi-xing-fang-an/">
+              <span class="post-title">
+                微服务架构下的数据一致性方案&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>

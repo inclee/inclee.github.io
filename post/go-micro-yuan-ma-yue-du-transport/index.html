@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+<meta name="referrer" content="never">
+<meta name="keywords" content="">
+<meta name="description" content="欢迎访问[]的个人博客">
+<meta name="author" content="kveln">
+<title>go micro 源码阅读-transport | </title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+<link href="https://cdn.bootcss.com/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+<link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+<link
+  href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+  rel='stylesheet' type='text/css'>
+<link rel="alternate" type="application/rss+xml" title="go micro 源码阅读-transport |  » Feed"
+  href="https://nomagic.cc/atom.xml">
+<link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.15.10/build/styles/androidstudio.min.css">
+<link href="https://nomagic.cc/styles/main.css" rel="stylesheet">
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/850552586/ericamcdn@0.1/css/live2d.css">
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+  <meta property="og:description" content="go micro 源码阅读-transport" />
+  <meta property="og:url" content="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-transport/" />
+  <meta property="og:locale" content="zh-CN" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+  <!-- <script src="../assets/styles/scripts/tocScript.js"></script> -->
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <!-- Page Header -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="https://nomagic.cc"></a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+      data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+      aria-label="Toggle navigation">
+      Menu
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/">首页</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/archives">归档</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/tags">标签</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          
+          <a class="nav-link" href="/post/about">关于</a>
+          
+        </li>
+        
+        <li class="nav-item">
+          <div class="gridea-search-container">
+            <form id="gridea-search-form" style="position: relative" data-update="1707147571740"
+              action="/search/index.html">
+              <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+              <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header class="masthead" style="background-image: url('https://nomagic.cc/media/images/home-bg.jpg')">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        
+          <!-- 没Title为其他页面Header -->
+          
+            <!-- 没Title并且有headerType为Post：文章Header -->
+            <div class="post-heading">
+              <span class="tags">
+                
+                <a href="https://nomagic.cc/tag/V4vnSrl0y/" class="tag">微服务</a>
+                
+              </span>
+              <h1>go micro 源码阅读-transport</h1>
+              <span class="meta">
+                Posted on
+                2018-11-11，5 min read
+              </span>
+            </div>
+          
+        
+      </div>
+    </div>
+  </div>
+</header>
+  <!-- Post Content -->
+  <article id="post-content-article">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-10 mx-auto post-content-container">
+          
+          <h1 id="作用">作用</h1>
+<p>从tranport.go的注释和之前的<a href="https://www.jianshu.com/p/dafe9a614efc">博文</a>中可以看出transport的功能是提供异步通信。</p>
+<pre><code class="language-go">// Package is an interface for synchronous communication
+package transport
+</code></pre>
+<h1 id="接口">接口</h1>
+<pre><code class="language-go">type Socket interface {
+	Recv(*Message) error
+	Send(*Message) error
+	Close() error
+}
+
+type Client interface {
+	Socket
+}
+
+type Listener interface {
+	Addr() string
+	Close() error
+	Accept(func(Socket)) error
+}
+
+// Transport is an interface which is used for communication between
+// services. It uses socket send/recv semantics and had various
+// implementations {HTTP, RabbitMQ, NATS, ...}
+type Transport interface {
+	Dial(addr string, opts ...DialOption) (Client, error)
+	Listen(addr string, opts ...ListenOption) (Listener, error)
+	String() string
+}
+</code></pre>
+<p>从之上的代码可以看出：</p>
+<ul>
+<li>
+<p>当Transport作为客户端时：</p>
+<p>提供Dial主动连接功能，连接成功返回代表一个连接的Client，Client内嵌Socket，提供Send/Recv的网络收发功能。</p>
+</li>
+<li>
+<p>当Transport作为服务端时：</p>
+<p>提供Listen监听功能，当Listener.Accept成功返回时，返回一个代表连接的Socket，提供Send/Recv的网络收发功能。</p>
+</li>
+</ul>
+<p>Send和Recv的数据是Message结构</p>
+<pre><code class="language-go">type Message struct {
+	Header map[string]string
+	Body   []byte
+}
+</code></pre>
+<p>由上可以看出Client是客户端语义，Socket是服务端语义。</p>
+<p><strong>transport在Go-micro内部的实现是httpTransport</strong></p>
+<h1 id="dial">Dial</h1>
+<p>从代码中可以看出本身Dial的逻辑很简单调用</p>
+<pre><code class="language-go">		conn, err = tls.DialWithDialer
+	或
+		conn, err = net.DialTimeout
+</code></pre>
+<p>最终返回httpTransportClient对象</p>
+<pre><code class="language-go">type httpTransportClient struct {
+	ht       *httpTransport
+	addr     string
+	conn     net.Conn
+	dialOpts DialOptions
+	once     sync.Once
+
+	sync.Mutex
+	r    chan *http.Request
+	bl   []*http.Request
+	buff *bufio.Reader
+}
+</code></pre>
+<p>httpTransportClient 实现Client 接口提供Send、Recv网络首发功能。</p>
+<p>通过httpTransportClient 的Send代码可以看出，通过tpc的链接发送http请求。</p>
+<pre><code>func (h *httpTransportClient) Send(m *Message) error {
+	header := make(http.Header)
+
+	for k, v := range m.Header {
+		header.Set(k, v)
+	}
+
+	reqB := bytes.NewBuffer(m.Body)
+	defer reqB.Reset()
+	buf := &amp;buffer{
+		reqB,
+	}
+
+	req := &amp;http.Request{
+		Method: &quot;POST&quot;,
+		URL: &amp;url.URL{
+			Scheme: &quot;http&quot;,
+			Host:   h.addr,
+		},
+		Header:        header,
+		Body:          buf,
+		ContentLength: int64(reqB.Len()),
+		Host:          h.addr,
+	}
+    ///&gt;&gt;&gt;&gt;&gt;&gt;
+	h.Lock()
+	h.bl = append(h.bl, req)
+	select {
+	case h.r &lt;- h.bl[0]:
+		h.bl = h.bl[1:]
+	default:
+	}
+	h.Unlock()
+	///&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+	// set timeout if its greater than 0
+	if h.ht.opts.Timeout &gt; time.Duration(0) {
+		h.conn.SetDeadline(time.Now().Add(h.ht.opts.Timeout))	///设置超时
+	}
+
+	return req.Write(h.conn)
+}
+</code></pre>
+<p>其他的代码都好理解，唯独///&gt;&gt;&gt;&gt;&gt;&gt; 	///&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;中间的部分，为什么一直往h.bl中append,仅仅h.r可写的情况下remove.</p>
+<p>猜想这里是不是应该这么写</p>
+<pre><code class="language-go">	if !h.dialOpts.Stream {
+		h.Lock()
+		h.bl = append(h.bl, req)
+		select {
+			case h.r &lt;- h.bl[0]:
+			h.bl = h.bl[1:]
+			default:
+			}
+		h.Unlock()
+	}
+</code></pre>
+<pre><code>func (h *httpTransportClient) Recv(m *Message) error {
+	if m == nil {
+		return errors.New(&quot;message passed in is nil&quot;)
+	}
+
+	var r *http.Request
+	if !h.dialOpts.Stream {
+		rc, ok := &lt;-h.r
+		if !ok {
+			return io.EOF
+		}
+		r = rc
+	}
+
+	h.Lock()
+	defer h.Unlock()
+	if h.buff == nil {
+		return io.EOF
+	}
+
+	// set timeout if its greater than 0
+	if h.ht.opts.Timeout &gt; time.Duration(0) {
+		h.conn.SetDeadline(time.Now().Add(h.ht.opts.Timeout))
+	}
+
+	rsp, err := http.ReadResponse(h.buff, r)
+	if err != nil {
+		return err
+	}
+	defer rsp.Body.Close()
+
+	b, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return err
+	}
+
+	if rsp.StatusCode != 200 {
+		return errors.New(rsp.Status + &quot;: &quot; + string(b))
+	}
+
+	m.Body = b
+
+	if m.Header == nil {
+		m.Header = make(map[string]string)
+	}
+
+	for k, v := range rsp.Header {
+		if len(v) &gt; 0 {
+			m.Header[k] = v[0]
+		} else {
+			m.Header[k] = &quot;&quot;
+		}
+	}
+
+	return nil
+}
+</code></pre>
+<p>从if !h.dialOpts.Stream //这里也可以看出Stream的Send和对应的Recv直接不能插入其他的其他的Stream.Send。</p>
+<h2 id="listener">Listener</h2>
+<p>根据传进来的addr，然后net/tls.Listen创建的Listener对象。</p>
+<h2 id="accept">Accept</h2>
+<p>上面返回的Listener对象上进行Accept操作，如果有新的连接成功的话，创建Socket对应，用Socket调用注入的接口 fn.</p>
+<pre><code class="language-go">func (h *httpTransportListener) Accept(fn func(Socket)) error
+</code></pre>
+
+          <div class="toc-container"><ul class="markdownIt-TOC">
+<li><a href="#%E4%BD%9C%E7%94%A8">作用</a></li>
+<li><a href="#%E6%8E%A5%E5%8F%A3">接口</a></li>
+<li><a href="#dial">Dial</a>
+<ul>
+<li><a href="#listener">Listener</a></li>
+<li><a href="#accept">Accept</a></li>
+</ul>
+</li>
+</ul>
+</div>
+          
+          <hr />
+          <p class="next-post">下一篇：
+            <a href="https://nomagic.cc/post/go-micro-yuan-ma-yue-du-broker/">
+              <span class="post-title">
+                go micro 源码阅读-Broker&rarr;
+              </span>
+            </a>
+          </p>
+          
+          <div class="comment" style="text-align: center;">
+            
+
+            
+            
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script>
+  var gitalk = new Gitalk({
+    clientID: '910a466f2e7c12fc7c14',
+    clientSecret: '840d149e4d341d488093798855a6bcb9339ca75b',
+    repo: 'gittalk',
+    owner: 'inclee',
+    admin: ['inclee'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+  gitalk.render('gitalk-container')
+</script>
+
+            
+            
+            
+            
+          </div>
+        </div>
+      </div>
+  </article>
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <ul class="list-inline text-center">
+            
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+            
+              
+              <!-- <li class="list-inline-item">
+              <a href="https://nomagic.cc/atom.xml" target="_blank">
+                <span class="fa-stack fa-lg">
+                  <i class="fas fa-circle fa-stack-2x"></i>
+                  <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+                </span>
+              </a>
+              </li> -->
+          </ul>
+          <p class="copyright text-muted">Copyright &copy;<span></span><br><a href="https://github.com/getgridea/gridea" class="Themeinfo">Powered by Gridea</a></p>
+        </div>
+      </div>
+    </div>
+   </footer>
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/bootstrap.bundle.min.js"></script> -->
+  <!-- Bootstrap core JavaScript -->
+  <script src="https://cdn.jsdelivr.net/gh/Alanrk/clean-cdn@1.0/scripts/clean-blog.min.js"></script>
+  <!-- <script src="https://nomagic.cc/media/scripts/clean-blog.min.js"></script> -->
+  <script src="//instant.page/3.0.0" type="module" defer integrity="sha384-OeDn4XE77tdHo8pGtE1apMPmAipjoxUQ++eeJa6EtJCfHlvijigWiJpD7VDPWXV1"></script>
+  <style type="text/css">a.back_to_top{text-decoration:none;position:fixed;bottom:40px;right:30px;background:#f0f0f0;height:40px;width:40px;border-radius:50%;line-height:36px;font-size:18px;text-align:center;transition-duration:.5s;transition-propety:background-color;display:none}a.back_to_top span{color:#888}a.back_to_top:hover{cursor:pointer;background:#dfdfdf}a.back_to_top:hover span{color:#555}@media print,screen and(max-width:580px){.back_to_top{display:none!important}}</style>
+<a id="back_to_top" href="#" class="back_to_top">
+  <span>▲</span></a>
+<script>$(document).ready((function(_this) {
+    return function() {
+      var bt;
+      bt = $('#back_to_top');
+      if ($(document).width() > 480) {
+        $(window).scroll(function() {
+          var st;
+          st = $(window).scrollTop();
+          if (st > 30) {
+            return bt.css('display', 'block')
+          } else {
+            return bt.css('display', 'none')
+          }
+        });
+        return bt.click(function() {
+          $('body,html').animate({
+            scrollTop: 0
+          },
+          800);
+          return false
+        })
+      }
+    }
+  })(this));</script>
+  
+  <script src="https://nomagic.cc/media/scripts/tocScript.js"></script>
+</body>
+
+</html>
